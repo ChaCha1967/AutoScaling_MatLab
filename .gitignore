@@ -1,0 +1,15 @@
+# MATLAB auto-save and temporary files
+*.asv
+*.m~
+*.req
+
+# Heavy data files (ionograms, matrices, datasets)
+*.mat
+
+# Compiled binaries and exported figures
+*.mex*
+*.fig
+
+# OS generated files
+Thumbs.db
+.DS_Store
