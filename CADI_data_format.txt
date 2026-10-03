@@ -1,0 +1,60 @@
+note on data storage in C language: char, unsigned char are 1 Byte; int are 2 Bytes
+
+1) file starts with fileheader which consists of:
+
+struct fileheader
+{
+char timestamp[25];
+struct datablock dataBlock;
+};
+
+timestamp is a 25 character ascii string consisting of:-
+stationname ( 3 char) + time when file was opened (space + 21 char)
+datablock is as follows:-
+
+struct datablock
+{
+char filetype; // filetypes are: 'I'= individual files, 'H' = one file per hour
+int no of frequ;
+unsigned char doppler series length;
+int min height;
+int max height;
+unsigned char pulses per sec;
+unsigned char noof pulses averaged;
+int basethreshold100; // basethreshold100 = 100× min power (bits sq.) before save
+int noisethreshold100; // noisethreshold100 = 100×multiplier for average noise power
+//(bits sq.) to set threshold based on noise
+unsigned char minimum number of dopplers before saving;
+int seconds between samples;
+char gaincontrol; // gaincontrol: 'N'= none, or a number
+char sigprocess; // sigprocess: 'F'=do FFT (then save all components above threshold),
+//'T'= timeseq (FFT, saves entire spectrum if any component is above threshold)
+// or 'N'= none (save raw data)
+unsigned char number of receivers;
+unsigned char spares[11];
+};
+
+2) next the list of all the frequencies used is written to the file as floating point numbers (4 Bytes each)
+
+3) next comes the data structured as follows:-
+start of next_record:
+time_min (Byte)
+time_sec (Byte)
+start of next_frequency:
+gainflag (Byte: E0 (hex) to EF: EF = none)
+noiseflag (Byte, F0 (hex) = basethreshold, F1 = noisethreshold)
+averagenoisepower10 (unsigned int: 10×averagenoisepower)
+start of next height:
+hnum (Byte) virtual height is 3*hnum, for extended height range CADIs: if hnum > 200 then
+hnum = hnum -200 and tnum = tnum + 128 (use high bit of tnum as a flag)
+tnum (Byte): number of Doppler bins saved
+for each of the tnum Doppler bins write:
+{
+data ((1+2xnumber of receivers) Bytes: Doppler bin # then 2 Bytes real, imaginary components
+for each receiver)
+}
+if: more heights goto start of next height,
+if: more frequencies goto start of next frequency, else (end of last frequency) so write
+endfrequflag (Byte = FF (hex))
+if: more records in the file then goto start next record
+else end of file

@@ -1,0 +1,1 @@
+run_parse_polan_synced('N:\cadi_synced_rec_err', 'log', [50, 510], [0.5, 12]);
