@@ -159,7 +159,7 @@ for i = 1:length(fileList)
         %%%%%%%%%%%%%%%%%%%%
         % PLOT FILTERED DATA
         % plot channel 1
-        subplot(2,3,1);
+        subplot(2,4,1);
         pcolor(F./1e6,h,ion1_clean);
         shading flat;
         set(gca, 'XScale', 'log');
@@ -172,7 +172,7 @@ for i = 1:length(fileList)
         title(cb,'dB');
         
         % plot channel 2
-        subplot(2,3,4);
+        subplot(2,4,5);
         pcolor(F./1e6,h,ion2_clean);
         shading flat;
         set(gca, 'XScale', 'log');
@@ -185,7 +185,7 @@ for i = 1:length(fileList)
         title(cb,'dB');
         
         % plot channel 3
-        subplot(2,3,2);
+        subplot(2,4,2);
         pcolor(F./1e6,h,ion3_clean);
         shading flat;
         set(gca, 'XScale', 'log');
@@ -211,7 +211,7 @@ for i = 1:length(fileList)
         title(cb,'dB');
         
         % plot channel average
-        subplot(2,3,3);
+        subplot(2,4,6);
         pcolor(F./1e6,h,iona_clean);
         shading flat;
         set(gca, 'XScale', 'log');
@@ -222,92 +222,105 @@ for i = 1:length(fileList)
         xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
         cb = colorbar('vert');
         title(cb,'dB');
+
+        % plot channel 1-2 Phase diagram 
+        subplot(2,4,7);
+        histogram(vec_no_nan34*180/pi,-180:10:180);
+        title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filtered, Ch1-2, Thr = %02d dB',...
+               DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),dBthr));
+
+        % plot channel 1-2 Phase diagram 
+        subplot(2,4,8);
+        histogram(vec_no_nan34*180/pi,-180:10:180);
+        title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filtered, Ch3-4, Thr = %02d dB',...
+            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),dBthr));
+
         
         % Export the figure with filtered data to PNG with high resolution (300 DPI).
         % exportgraphics is the standard method for MATLAB R2020a and newer.
         exportgraphics(hFig, outFullPathF, 'Resolution', 300);
         fprintf('Saved image: %s\n', outFileNameF);
     
-        %%%%%%%%%%%%%%%%%%%%
-        % PLOT ORIGINAL DATA
-        % remove background less than dBthr
-        if dBthr>0
-            ion1(ion1 < dBthr) = NaN;
-            ion2(ion2 < dBthr) = NaN;
-            ion3(ion3 < dBthr) = NaN;
-            ion4(ion4 < dBthr) = NaN;
-            iona(iona < dBthr) = NaN;
-        end
-
-        % plot channel 1
-        subplot(2,3,1);
-        pcolor(F./1e6,h,ion1);
-        shading flat;
-        set(gca, 'XScale', 'log');
-        title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, ch(1)  = %s, Thr = %02d dB',...
-            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(1)+1),dBthr));
-        ylabel('Virtual height, km');
-        xlabel('Sounding frequency, MHz');
-        xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
-        cb = colorbar('vert');
-        title(cb,'dB');
-        
-        % plot channel 2
-        subplot(2,3,4);
-        pcolor(F./1e6,h,ion2);
-        shading flat;
-        set(gca, 'XScale', 'log');
-        title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, ch(2) = %s, Thr = %d dB',...
-            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(2)+1),dBthr));
-        ylabel('Virtual height, km');
-        xlabel('Sounding frequency, MHz');
-        xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
-        cb = colorbar('vert');
-        title(cb,'dB');
-        
-        % plot channel 3
-        subplot(2,3,2);
-        pcolor(F./1e6,h,ion3);
-        shading flat;
-        set(gca, 'XScale', 'log');
-        title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, ch(3) = %s, Thr = %d dB',...
-            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(3)+1),dBthr));
-        ylabel('Virtual height, km');
-        xlabel('Sounding frequency, MHz');
-        xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
-        cb = colorbar('vert');
-        title(cb,'dB');
-        
-        % plot channel 4
-        subplot(2,3,5);
-        pcolor(F./1e6,h,ion4);
-        shading flat;
-        set(gca, 'XScale', 'log');
-        title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, ch(4) = %s, Thr = %d dB',...
-            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(4)+1),dBthr));
-        ylabel('Virtual height, km');
-        xlabel('Sounding frequency, MHz');
-        xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
-        cb = colorbar('vert');
-        title(cb,'dB');
-        
-        % plot channel average
-        subplot(2,3,3);
-        pcolor(F./1e6,h,iona);
-        shading flat;
-        set(gca, 'XScale', 'log');
-        title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, average, Thr = %02d dB',...
-            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),dBthr));
-        ylabel('Virtual height, km');
-        xlabel('Sounding frequency, MHz');
-        xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
-        cb = colorbar('vert');
-        title(cb,'dB');
-    
-        % Export the figure with original data to PNG with high resolution (300 DPI).
-        % exportgraphics is the standard method for MATLAB R2020a and newer.
-        exportgraphics(hFig, outFullPath, 'Resolution', 300);
-        fprintf('Saved image: %s\n', outFileName);
+        % % %%%%%%%%%%%%%%%%%%%%
+        % % % PLOT ORIGINAL DATA
+        % % % remove background less than dBthr
+        % % if dBthr>0
+        % %     ion1(ion1 < dBthr) = NaN;
+        % %     ion2(ion2 < dBthr) = NaN;
+        % %     ion3(ion3 < dBthr) = NaN;
+        % %     ion4(ion4 < dBthr) = NaN;
+        % %     iona(iona < dBthr) = NaN;
+        % % end
+        % % 
+        % % % plot channel 1
+        % % subplot(2,3,1);
+        % % pcolor(F./1e6,h,ion1);
+        % % shading flat;
+        % % set(gca, 'XScale', 'log');
+        % % title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, ch(1)  = %s, Thr = %02d dB',...
+        % %     DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(1)+1),dBthr));
+        % % ylabel('Virtual height, km');
+        % % xlabel('Sounding frequency, MHz');
+        % % xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
+        % % cb = colorbar('vert');
+        % % title(cb,'dB');
+        % % 
+        % % % plot channel 2
+        % % subplot(2,3,4);
+        % % pcolor(F./1e6,h,ion2);
+        % % shading flat;
+        % % set(gca, 'XScale', 'log');
+        % % title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, ch(2) = %s, Thr = %d dB',...
+        % %     DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(2)+1),dBthr));
+        % % ylabel('Virtual height, km');
+        % % xlabel('Sounding frequency, MHz');
+        % % xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
+        % % cb = colorbar('vert');
+        % % title(cb,'dB');
+        % % 
+        % % % plot channel 3
+        % % subplot(2,3,2);
+        % % pcolor(F./1e6,h,ion3);
+        % % shading flat;
+        % % set(gca, 'XScale', 'log');
+        % % title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, ch(3) = %s, Thr = %d dB',...
+        % %     DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(3)+1),dBthr));
+        % % ylabel('Virtual height, km');
+        % % xlabel('Sounding frequency, MHz');
+        % % xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
+        % % cb = colorbar('vert');
+        % % title(cb,'dB');
+        % % 
+        % % % plot channel 4
+        % % subplot(2,3,5);
+        % % pcolor(F./1e6,h,ion4);
+        % % shading flat;
+        % % set(gca, 'XScale', 'log');
+        % % title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, ch(4) = %s, Thr = %d dB',...
+        % %     DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(4)+1),dBthr));
+        % % ylabel('Virtual height, km');
+        % % xlabel('Sounding frequency, MHz');
+        % % xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
+        % % cb = colorbar('vert');
+        % % title(cb,'dB');
+        % % 
+        % % % plot channel average
+        % % subplot(2,3,3);
+        % % pcolor(F./1e6,h,iona);
+        % % shading flat;
+        % % set(gca, 'XScale', 'log');
+        % % title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, average, Thr = %02d dB',...
+        % %     DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),dBthr));
+        % % ylabel('Virtual height, km');
+        % % xlabel('Sounding frequency, MHz');
+        % % xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
+        % % cb = colorbar('vert');
+        % % title(cb,'dB');
+        % % 
+        % % % Export the figure with original data to PNG with high resolution (300 DPI).
+        % % % exportgraphics is the standard method for MATLAB R2020a and newer.
+        % % exportgraphics(hFig, outFullPath, 'Resolution', 300);
+        % % fprintf('Saved image: %s\n', outFileName);
     
         %%% PROCESSING FINISH 
 
