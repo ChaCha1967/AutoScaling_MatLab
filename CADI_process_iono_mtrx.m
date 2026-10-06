@@ -9,7 +9,7 @@ sStation = 'HA';
 Year = 2009;
 Month = 07;
 Date = 24;
-Hour = 05;
+Hour = 23;
 sFileType = 'md2';
 OutYN = 0;
 
