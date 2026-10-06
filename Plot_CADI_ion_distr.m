@@ -14,6 +14,13 @@ fileList = dir(searchPattern);
 % Display the number of found files
 fprintf('Found %d "*_ion.mat" files.\n', length(fileList));
 
+% Create a new figure for the ionogram plot. 
+% Setting 'Visible' to 'off' prevents the window from popping up,
+% which drastically speeds up the loop and prevents focus stealing.
+    % hFig = figure('Visible', 'off');
+    hFig1 = figure(1);
+    hFig2 = figure(2);
+
 % Loop through each file sequentially
 for i = 1:length(fileList)
     % Get the current file name and construct the full path
@@ -25,11 +32,6 @@ for i = 1:length(fileList)
     % Load the .mat file into memory (creates a struct containing file variables)
     ionoData = load(currentFullPath);
 
-    % Create a new figure for the ionogram plot. 
-    % Setting 'Visible' to 'off' prevents the window from popping up,
-    % which drastically speeds up the loop and prevents focus stealing.
-    hFig = figure('Visible', 'off');
-
     % Extract the base file name without the .mat extension 
     [~, baseName, ~] = fileparts(currentFileName);
     inFileName = [baseName, '.mat'];
@@ -37,9 +39,13 @@ for i = 1:length(fileList)
     % load *_ion.mat
     load(inFullPath);
 
-    % Construct the output PNG file name and full path for filtered data
-    outFileNameF = [baseName, '_flt.png'];
-    outFullPathF = fullfile(selectedFolder, outFileNameF);
+    % Construct the output PNG file name and full path for ion filtered data
+    outFileNameIonF = [baseName, '_flt.png'];
+    outFullPathIonF = fullfile(selectedFolder, outFileNameIonF);
+
+    % Construct the output PNG file name and full path for ion distribution filtered data
+    outFileNameDisF = [baseName, '_distr_flt.png'];
+    outFullPathDisF = fullfile(selectedFolder, outFileNameDisF);
 
     % % Construct the output PNG file name and full path for original data
     % outFileName = [baseName, '.png'];
@@ -49,6 +55,7 @@ for i = 1:length(fileList)
     
         % Plot ionogram for testing
         AntDir = ["East", "West", "North", "South"];
+        AntDirChar(1:4) = 'EWNS';
         F = double(headerStruct.datablock.FreqS);
         h = double(headerStruct.datablock.heights);
         antOrder = headerStruct.datablock.antOrder;
@@ -139,14 +146,26 @@ for i = 1:length(fileList)
         Ph3 = Ph3.*mask*siteStruct.polarity(3);
         Ph4 = Ph4.*mask*siteStruct.polarity(4);
         % Calculate phase difference
-        dPh12 = Ph1-Ph2;
-        dPh34 = Ph3-Ph4;
+        dPh12 = wrapToPi(Ph2-Ph1);
+        dPh23 = wrapToPi(Ph3-Ph2);
+        dPh34 = wrapToPi(Ph4-Ph3);
+        dPh41 = wrapToPi(Ph1-Ph4);
+        dPh13 = wrapToPi(Ph3-Ph1);
+        dPh24 = wrapToPi(Ph4-Ph2);
 
         % Correct phase differences
         Ph12arr = dPh12(:);
         vec_no_nan12 = Ph12arr(~isnan(Ph12arr));
+        Ph23arr = dPh23(:);
+        vec_no_nan23 = Ph23arr(~isnan(Ph23arr));
         Ph34arr = dPh34(:);
         vec_no_nan34 = Ph34arr(~isnan(Ph34arr));
+        Ph41arr = dPh41(:);
+        vec_no_nan41 = Ph41arr(~isnan(Ph41arr));
+        Ph13arr = dPh13(:);
+        vec_no_nan13 = Ph12arr(~isnan(Ph13arr));
+        Ph24arr = dPh24(:);
+        vec_no_nan24 = Ph12arr(~isnan(Ph24arr));
 
         % REMOVE_CADI_INTERFERENCE FILTER FINISHED
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -156,10 +175,15 @@ for i = 1:length(fileList)
         % REMOVE_CADI_INTERFERENCE FILTER FINISHED
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         
+        % Clear window hFig1 content
+        clf(hFig1);
+        figure(1);
+
         %%%%%%%%%%%%%%%%%%%%
         % PLOT FILTERED DATA
+        % Plot filtered ionograms
         % plot channel 1
-        subplot(2,4,1);
+        subplot(2,3,1);
         pcolor(F./1e6,h,ion1_clean);
         shading flat;
         set(gca, 'XScale', 'log');
@@ -172,7 +196,7 @@ for i = 1:length(fileList)
         title(cb,'dB');
         
         % plot channel 2
-        subplot(2,4,5);
+        subplot(2,3,4);
         pcolor(F./1e6,h,ion2_clean);
         shading flat;
         set(gca, 'XScale', 'log');
@@ -185,7 +209,7 @@ for i = 1:length(fileList)
         title(cb,'dB');
         
         % plot channel 3
-        subplot(2,4,2);
+        subplot(2,3,2);
         pcolor(F./1e6,h,ion3_clean);
         shading flat;
         set(gca, 'XScale', 'log');
@@ -211,7 +235,7 @@ for i = 1:length(fileList)
         title(cb,'dB');
         
         % plot channel average
-        subplot(2,4,6);
+        subplot(2,3,3);
         pcolor(F./1e6,h,iona_clean);
         shading flat;
         set(gca, 'XScale', 'log');
@@ -223,23 +247,75 @@ for i = 1:length(fileList)
         cb = colorbar('vert');
         title(cb,'dB');
 
-        % plot channel 1-2 Phase diagram 
-        subplot(2,4,7);
-        histogram(vec_no_nan34*180/pi,-180:10:180);
-        title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filtered, Ch1-2, Thr = %02d dB',...
-               DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),dBthr));
+        % Export the figure with filtered data to PNG with high resolution (300 DPI).
+        % exportgraphics is the standard method for MATLAB R2020a and newer.
+        exportgraphics(hFig1, outFullPathIonF, 'Resolution', 300);
+        fprintf('Saved image: %s\n', outFileNameIonF);
+
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % Plotting Phase distributions
+        % Clear window hFig2 content
+        clf(hFig2);
+        figure(2);
 
         % plot channel 1-2 Phase diagram 
-        subplot(2,4,8);
-        histogram(vec_no_nan34*180/pi,-180:10:180);
-        title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filtered, Ch3-4, Thr = %02d dB',...
-            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),dBthr));
+        subplot(2,3,1);
+        histogram(vec_no_nan12*180/pi,-180:10:180);
+        title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filt, Ch1-2(%s%s), Thr = %02d dB',...
+               DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),...
+               AntDirChar(antOrder(2)+1),AntDirChar(antOrder(1)+1),dBthr));
+        xticks([-180 -135 -90 -45 0 45 90 135 180]);
+        grid on;
 
+        % plot channel 2-3 Phase diagram 
+        subplot(2,3,4);
+        histogram(vec_no_nan23*180/pi,-180:10:180);
+        title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filt, Ch2-3(%s%s), Th=%02d dB',...
+            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),...
+            AntDirChar(antOrder(3)+1),AntDirChar(antOrder(2)+1),dBthr));
+        xticks([-180 -135 -90 -45 0 45 90 135 180]);
+        grid on;
+
+        % plot channel 3-4 Phase diagram 
+        subplot(2,3,2);
+        histogram(vec_no_nan34*180/pi,-180:10:180);
+        title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filt, Ch3-4(%s%s), Th=%02d dB',...
+            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),...
+            AntDirChar(antOrder(4)+1),AntDirChar(antOrder(3)+1),dBthr));
+        xticks([-180 -135 -90 -45 0 45 90 135 180]);
+        grid on;
+
+        % plot channel 4-1 Phase diagram 
+        subplot(2,3,5);
+        histogram(vec_no_nan41*180/pi,-180:10:180);
+        title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filt, Ch4-1(%s%s), Th=%02d dB',...
+            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),...
+            AntDirChar(antOrder(1)+1),AntDirChar(antOrder(4)+1),dBthr));
+        xticks([-180 -135 -90 -45 0 45 90 135 180]);
+        grid on;
+
+        % plot channel 1-3 Phase diagram 
+        subplot(2,3,3);
+        histogram(vec_no_nan13*180/pi,-180:10:180);
+        title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filt, Ch1-3(%s%s), Th=%02d dB',...
+            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),...
+            AntDirChar(antOrder(3)+1),AntDirChar(antOrder(1)+1),dBthr));
+        xticks([-180 -135 -90 -45 0 45 90 135 180]);
+        grid on;
+
+        % plot channel 2-4 Phase diagram 
+        subplot(2,3,6);
+        histogram(vec_no_nan24*180/pi,-180:10:180);
+        title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filt, Ch2-4(%s%s), Th=%02d dB',...
+            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),...
+            AntDirChar(antOrder(4)+1),AntDirChar(antOrder(2)+1),dBthr));
+        xticks([-180 -135 -90 -45 0 45 90 135 180]);
+        grid on;
         
         % Export the figure with filtered data to PNG with high resolution (300 DPI).
         % exportgraphics is the standard method for MATLAB R2020a and newer.
-        exportgraphics(hFig, outFullPathF, 'Resolution', 300);
-        fprintf('Saved image: %s\n', outFileNameF);
+        exportgraphics(hFig2, outFullPathDisF, 'Resolution', 300);
+        fprintf('Saved image: %s\n', outFileNameDisF);
     
         % % %%%%%%%%%%%%%%%%%%%%
         % % % PLOT ORIGINAL DATA
@@ -325,7 +401,7 @@ for i = 1:length(fileList)
         %%% PROCESSING FINISH 
 
     % Close the figure to free up system memory (critical for loops)
-    close(hFig);
+    %%% close(hFig);
 end
 
 disp('All files have been successfully processed and saved.');

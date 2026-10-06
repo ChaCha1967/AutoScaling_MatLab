@@ -1,12 +1,14 @@
 % REMOVE_CADI_INTERFERENCE_V2 Removes solid and dashed vertical noise lines.
 
-
 function M_clean = remove_cadi_interference_v2(M_raw, spike_thresh_dB, min_extent, min_count, dBthr)
+%%%%%%%%%%%%%%%%% Input values 
 % M_raw: Original numerical matrix in dB (no NaNs).
 % spike_thresh_dB: Threshold for identifying a spike above background (e.g., 2-6 dB).
 % min_extent: Minimum vertical span in pixels between the lowest and highest spike (e.g., 20-30).
 % min_count: Minimum number of spike pixels in a column to classify it as noise (e.g., 3-4).
 % dBthr: Absolute dB threshold for the white background format (0 = do not remove).
+%%%%%%%%%%%%%%%%% Output values
+% M_raw: Cleaned numerical matrix in dB (with NaNs if dBthr > 0).
 
 % 1. Create the reference matrix (horizontal median filter)
 horiz_window = 5;      
