@@ -47,7 +47,7 @@ remove_mask = spike_mask & bad_cols;
 M_clean = M_raw;
 M_clean(remove_mask) = M_ref(remove_mask);
 
-% 5. Optional conversion to white background (removal of weak signals entirely)
+% 5. Conversion to white background (removal of weak signals entirely)
 if dBthr > 0
     M_clean(M_clean < dBthr) = NaN;
 end

@@ -1,3 +1,12 @@
+% What figures plot 
+lFion = 1; % filtered ionogram
+lFdis = 1; % filtered distribution
+lion = 1; % original ionogram
+ldis = 1; % original distribution
+
+% Set Phase step in histogram
+DPh = 20;
+
 % Prompt the user to select the directory
 selectedFolder = uigetdir(pwd, 'Select the folder containing *_ion.mat files');
 
@@ -20,6 +29,8 @@ fprintf('Found %d "*_ion.mat" files.\n', length(fileList));
     % hFig = figure('Visible', 'off');
     hFig1 = figure(1);
     hFig2 = figure(2);
+    hFig3 = figure(3);
+    hFig4 = figure(4);
 
 % Loop through each file sequentially
 for i = 1:length(fileList)
@@ -46,6 +57,14 @@ for i = 1:length(fileList)
     % Construct the output PNG file name and full path for ion distribution filtered data
     outFileNameDisF = [baseName, '_distr_flt.png'];
     outFullPathDisF = fullfile(selectedFolder, outFileNameDisF);
+
+    % Construct the output PNG file name and full path for ion filtered data
+    outFileNameIon = [baseName, '.png'];
+    outFullPathIon = fullfile(selectedFolder, outFileNameIon);
+
+    % Construct the output PNG file name and full path for ion distribution filtered data
+    outFileNameDis = [baseName, '_distr.png'];
+    outFullPathDis = fullfile(selectedFolder, outFileNameDis);
 
     % % Construct the output PNG file name and full path for original data
     % outFileName = [baseName, '.png'];
@@ -116,6 +135,16 @@ for i = 1:length(fileList)
         ion3_clean = remove_cadi_interference_v2(ion3, spike_thresh_dB, min_extent, min_count, dBthr);
         ion4_clean = remove_cadi_interference_v2(ion4, spike_thresh_dB, min_extent, min_count, dBthr);
         iona_clean = remove_cadi_interference_v2(iona, spike_thresh_dB, min_extent, min_count, dBthr);
+
+        % Conversion initial ion to white background (removal of weak signals entirely)
+        if dBthr > 0
+            ion1(ion1 < dBthr) = NaN;
+            ion2(ion2 < dBthr) = NaN;
+            ion3(ion3 < dBthr) = NaN;
+            ion4(ion4 < dBthr) = NaN;
+            iona(iona < dBthr) = NaN;
+        end
+
         
         % 1. Count the "votes" from the antennas.
         % The ~isnan function returns 1 if there is a signal in the pixel, and 0 if it is NaN.
@@ -140,12 +169,12 @@ for i = 1:length(fileList)
         ion4_clean = ion4_clean .* mask;
         iona_clean = iona_clean .* mask;
 
-        % Calculate Ph considering polarity
+        % Calculate filtered Ph considering polarity
         Ph1 = Ph1.*mask*siteStruct.polarity(1);
         Ph2 = Ph2.*mask*siteStruct.polarity(2);
         Ph3 = Ph3.*mask*siteStruct.polarity(3);
         Ph4 = Ph4.*mask*siteStruct.polarity(4);
-        % Calculate phase difference
+        % Calculate filtered phase difference
         dPh12 = wrapToPi(Ph2-Ph1);
         dPh23 = wrapToPi(Ph3-Ph2);
         dPh34 = wrapToPi(Ph4-Ph3);
@@ -153,7 +182,7 @@ for i = 1:length(fileList)
         dPh13 = wrapToPi(Ph3-Ph1);
         dPh24 = wrapToPi(Ph4-Ph2);
 
-        % Correct phase differences
+        % Remove NaN from phase differences
         Ph12arr = dPh12(:);
         vec_no_nan12 = Ph12arr(~isnan(Ph12arr));
         Ph23arr = dPh23(:);
@@ -172,151 +201,266 @@ for i = 1:length(fileList)
 
         %%%%%%%%%%%%%%%%%%%%
         % PLOT FILTERED DATA
-        % REMOVE_CADI_INTERFERENCE FILTER FINISHED
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        
-        % Clear window hFig1 content
-        clf(hFig1);
-        figure(1);
-
-        %%%%%%%%%%%%%%%%%%%%
-        % PLOT FILTERED DATA
-        % Plot filtered ionograms
-        % plot channel 1
-        subplot(2,3,1);
-        pcolor(F./1e6,h,ion1_clean);
-        shading flat;
-        set(gca, 'XScale', 'log');
-        title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filtered, ch(1)  = %s, Thr = %02d dB',...
-              DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(1)+1),dBthr));
-        ylabel('Virtual height, km');
-        xlabel('Sounding frequency, MHz');
-        xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
-        cb = colorbar('vert');
-        title(cb,'dB');
-        
-        % plot channel 2
-        subplot(2,3,4);
-        pcolor(F./1e6,h,ion2_clean);
-        shading flat;
-        set(gca, 'XScale', 'log');
-        title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filtered, ch(2) = %s, Thr = %d dB',...
-              DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(2)+1),dBthr));
-        ylabel('Virtual height, km');
-        xlabel('Sounding frequency, MHz');
-        xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
-        cb = colorbar('vert');
-        title(cb,'dB');
-        
-        % plot channel 3
-        subplot(2,3,2);
-        pcolor(F./1e6,h,ion3_clean);
-        shading flat;
-        set(gca, 'XScale', 'log');
-        title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filtered, ch(3) = %s, Thr = %d dB',...
-              DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(3)+1),dBthr));
-        ylabel('Virtual height, km');
-        xlabel('Sounding frequency, MHz');
-        xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
-        cb = colorbar('vert');
-        title(cb,'dB');
-        
-        % plot channel 4
-        subplot(2,3,5);
-        pcolor(F./1e6,h,ion4_clean);
-        shading flat;
-        set(gca, 'XScale', 'log');
-        title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filtered, ch(4) = %s, Thr = %d dB',...
-              DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(4)+1),dBthr));
-        ylabel('Virtual height, km');
-        xlabel('Sounding frequency, MHz');
-        xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
-        cb = colorbar('vert');
-        title(cb,'dB');
-        
-        % plot channel average
-        subplot(2,3,3);
-        pcolor(F./1e6,h,iona_clean);
-        shading flat;
-        set(gca, 'XScale', 'log');
-        title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filtered, average, Thr = %02d dB',...
-              DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),dBthr));
-        ylabel('Virtual height, km');
-        xlabel('Sounding frequency, MHz');
-        xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
-        cb = colorbar('vert');
-        title(cb,'dB');
-
-        % Export the figure with filtered data to PNG with high resolution (300 DPI).
-        % exportgraphics is the standard method for MATLAB R2020a and newer.
-        exportgraphics(hFig1, outFullPathIonF, 'Resolution', 300);
-        fprintf('Saved image: %s\n', outFileNameIonF);
+        if lFion
+            % Clear window hFig1 content
+            clf(hFig1);
+            figure(1);
+    
+            %%%%%%%%%%%%%%%%%%%%
+            % PLOT FILTERED DATA
+            % Plot filtered ionograms
+            % plot channel 1
+            subplot(2,3,1);
+            pcolor(F./1e6,h,ion1_clean);
+            shading flat;
+            set(gca, 'XScale', 'log');
+            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filtered, ch(1)  = %s, Thr = %02d dB',...
+                  DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(1)+1),dBthr));
+            ylabel('Virtual height, km');
+            xlabel('Sounding frequency, MHz');
+            xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
+            cb = colorbar('vert');
+            title(cb,'dB');
+            
+            % plot channel 2
+            subplot(2,3,4);
+            pcolor(F./1e6,h,ion2_clean);
+            shading flat;
+            set(gca, 'XScale', 'log');
+            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filtered, ch(2) = %s, Thr = %d dB',...
+                  DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(2)+1),dBthr));
+            ylabel('Virtual height, km');
+            xlabel('Sounding frequency, MHz');
+            xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
+            cb = colorbar('vert');
+            title(cb,'dB');
+            
+            % plot channel 3
+            subplot(2,3,2);
+            pcolor(F./1e6,h,ion3_clean);
+            shading flat;
+            set(gca, 'XScale', 'log');
+            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filtered, ch(3) = %s, Thr = %d dB',...
+                  DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(3)+1),dBthr));
+            ylabel('Virtual height, km');
+            xlabel('Sounding frequency, MHz');
+            xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
+            cb = colorbar('vert');
+            title(cb,'dB');
+            
+            % plot channel 4
+            subplot(2,3,5);
+            pcolor(F./1e6,h,ion4_clean);
+            shading flat;
+            set(gca, 'XScale', 'log');
+            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filtered, ch(4) = %s, Thr = %d dB',...
+                  DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(4)+1),dBthr));
+            ylabel('Virtual height, km');
+            xlabel('Sounding frequency, MHz');
+            xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
+            cb = colorbar('vert');
+            title(cb,'dB');
+            
+            % plot channel average
+            subplot(2,3,3);
+            pcolor(F./1e6,h,iona_clean);
+            shading flat;
+            set(gca, 'XScale', 'log');
+            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filtered, average, Thr = %02d dB',...
+                  DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),dBthr));
+            ylabel('Virtual height, km');
+            xlabel('Sounding frequency, MHz');
+            xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
+            cb = colorbar('vert');
+            title(cb,'dB');
+    
+            % Export the figure with filtered data to PNG with high resolution (300 DPI).
+            % exportgraphics is the standard method for MATLAB R2020a and newer.
+            exportgraphics(hFig1, outFullPathIonF, 'Resolution', 300);
+            fprintf('Saved image: %s\n', outFileNameIonF);
+        end
 
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         % Plotting Phase distributions
         % Clear window hFig2 content
-        clf(hFig2);
-        figure(2);
-
-        % plot channel 1-2 Phase diagram 
-        subplot(2,3,1);
-        histogram(vec_no_nan12*180/pi,-180:10:180);
-        title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filt, Ch1-2(%s%s), Thr = %02d dB',...
-               DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),...
-               AntDirChar(antOrder(2)+1),AntDirChar(antOrder(1)+1),dBthr));
-        xticks([-180 -135 -90 -45 0 45 90 135 180]);
-        grid on;
-
-        % plot channel 2-3 Phase diagram 
-        subplot(2,3,4);
-        histogram(vec_no_nan23*180/pi,-180:10:180);
-        title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filt, Ch2-3(%s%s), Th=%02d dB',...
-            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),...
-            AntDirChar(antOrder(3)+1),AntDirChar(antOrder(2)+1),dBthr));
-        xticks([-180 -135 -90 -45 0 45 90 135 180]);
-        grid on;
-
-        % plot channel 3-4 Phase diagram 
-        subplot(2,3,2);
-        histogram(vec_no_nan34*180/pi,-180:10:180);
-        title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filt, Ch3-4(%s%s), Th=%02d dB',...
-            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),...
-            AntDirChar(antOrder(4)+1),AntDirChar(antOrder(3)+1),dBthr));
-        xticks([-180 -135 -90 -45 0 45 90 135 180]);
-        grid on;
-
-        % plot channel 4-1 Phase diagram 
-        subplot(2,3,5);
-        histogram(vec_no_nan41*180/pi,-180:10:180);
-        title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filt, Ch4-1(%s%s), Th=%02d dB',...
-            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),...
-            AntDirChar(antOrder(1)+1),AntDirChar(antOrder(4)+1),dBthr));
-        xticks([-180 -135 -90 -45 0 45 90 135 180]);
-        grid on;
-
-        % plot channel 1-3 Phase diagram 
-        subplot(2,3,3);
-        histogram(vec_no_nan13*180/pi,-180:10:180);
-        title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filt, Ch1-3(%s%s), Th=%02d dB',...
-            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),...
-            AntDirChar(antOrder(3)+1),AntDirChar(antOrder(1)+1),dBthr));
-        xticks([-180 -135 -90 -45 0 45 90 135 180]);
-        grid on;
-
-        % plot channel 2-4 Phase diagram 
-        subplot(2,3,6);
-        histogram(vec_no_nan24*180/pi,-180:10:180);
-        title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filt, Ch2-4(%s%s), Th=%02d dB',...
-            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),...
-            AntDirChar(antOrder(4)+1),AntDirChar(antOrder(2)+1),dBthr));
-        xticks([-180 -135 -90 -45 0 45 90 135 180]);
-        grid on;
-        
-        % Export the figure with filtered data to PNG with high resolution (300 DPI).
-        % exportgraphics is the standard method for MATLAB R2020a and newer.
-        exportgraphics(hFig2, outFullPathDisF, 'Resolution', 300);
-        fprintf('Saved image: %s\n', outFileNameDisF);
+        if lFdis
+            clf(hFig2);
+            figure(2);
     
+            % plot channel 1-2 Phase diagram 
+            subplot(2,3,1);
+            histogram(vec_no_nan12*180/pi,-180:DPh:180, 'Normalization', 'probability');
+            hold on
+            plot([-90 -90 0 90 90],[0 0.25 NaN 0 0.25],'LineWidth',2,'LineStyle',':');
+            hold off
+            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filtered, Ch1-2(%s%s), Thr = %02d dB',...
+                   DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),...
+                   AntDirChar(antOrder(2)+1),AntDirChar(antOrder(1)+1),dBthr));
+            ylim([0, 0.25]);
+            xlim([-180, 180]);
+            xticks([-180 -135 -90 -45 0 45 90 135 180]);
+            grid on;
+    
+            % plot channel 2-3 Phase diagram 
+            subplot(2,3,4);
+            histogram(vec_no_nan23*180/pi,-180:DPh:180, 'Normalization', 'probability');
+            hold on
+            plot([-90 -90 0 90 90],[0 0.25 NaN 0 0.25],'LineWidth',2,'LineStyle',':');
+            hold off
+            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filtered, Ch2-3(%s%s), Th=%02d dB',...
+                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),...
+                AntDirChar(antOrder(3)+1),AntDirChar(antOrder(2)+1),dBthr));
+            ylim([0, 0.25]);
+            xlim([-180, 180]);
+            xticks([-180 -135 -90 -45 0 45 90 135 180]);
+            grid on;
+    
+            % plot channel 3-4 Phase diagram 
+            subplot(2,3,2);
+            histogram(vec_no_nan34*180/pi,-180:DPh:180, 'Normalization', 'probability');
+            hold on
+            plot([-90 -90 0 90 90],[0 0.25 NaN 0 0.25],'LineWidth',2,'LineStyle',':');
+            hold off
+            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filtered, Ch3-4(%s%s), Th=%02d dB',...
+                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),...
+                AntDirChar(antOrder(4)+1),AntDirChar(antOrder(3)+1),dBthr));
+            ylim([0, 0.25]);
+            xlim([-180, 180]);
+            xticks([-180 -135 -90 -45 0 45 90 135 180]);
+            grid on;
+    
+            % plot channel 4-1 Phase diagram 
+            subplot(2,3,5);
+            histogram(vec_no_nan41*180/pi,-180:DPh:180, 'Normalization', 'probability');
+            hold on
+            plot([-90 -90 0 90 90],[0 0.25 NaN 0 0.25],'LineWidth',2,'LineStyle',':');
+            hold off
+            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filtered, Ch4-1(%s%s), Th=%02d dB',...
+                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),...
+                AntDirChar(antOrder(1)+1),AntDirChar(antOrder(4)+1),dBthr));
+            ylim([0, 0.25]);
+            xlim([-180, 180]);
+            xticks([-180 -135 -90 -45 0 45 90 135 180]);
+            grid on;
+    
+            % plot channel 1-3 Phase diagram 
+            subplot(2,3,3);
+            histogram(vec_no_nan13*180/pi,-180:DPh:180, 'Normalization', 'probability');
+            hold on
+            plot([0 0],[0 0.25],'LineWidth',2,'LineStyle',':');
+            hold off
+            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filtered, Ch1-3(%s%s), Th=%02d dB',...
+                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),...
+                AntDirChar(antOrder(3)+1),AntDirChar(antOrder(1)+1),dBthr));
+            ylim([0, 0.25]);
+            xlim([-180, 180]);
+            xticks([-180 -135 -90 -45 0 45 90 135 180]);
+            grid on;
+    
+            % plot channel 2-4 Phase diagram 
+            subplot(2,3,6);
+            histogram(vec_no_nan24*180/pi,-180:DPh:180, 'Normalization', 'probability');
+            hold on
+            plot([0 0],[0 0.25],'LineWidth',2,'LineStyle',':');
+            hold off
+            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filtered, Ch2-4(%s%s), Th=%02d dB',...
+                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),...
+                AntDirChar(antOrder(4)+1),AntDirChar(antOrder(2)+1),dBthr));
+            ylim([0, 0.25]);
+            xlim([-180, 180]);
+            xticks([-180 -135 -90 -45 0 45 90 135 180]);
+            grid on;
+            
+            % Export the figure with filtered data to PNG with high resolution (300 DPI).
+            % exportgraphics is the standard method for MATLAB R2020a and newer.
+            exportgraphics(hFig2, outFullPathDisF, 'Resolution', 300);
+            fprintf('Saved image: %s\n', outFileNameDisF);
+        end
+
+        %%%%%%%%%%%%%%%%%%%%
+        % PLOT ORIGINAL DATA
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        if lion
+            % Clear window hFig1 content
+            clf(hFig3);
+            figure(3);
+
+            %%%%%%%%%%%%%%%%%%%%
+            % PLOT FILTERED DATA
+            % Plot filtered ionograms
+            % plot channel 1
+            subplot(2,3,1);
+            pcolor(F./1e6,h,ion1);
+            shading flat;
+            set(gca, 'XScale', 'log');
+            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, original, ch(1)  = %s, Thr = %02d dB',...
+                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(1)+1),dBthr));
+            ylabel('Virtual height, km');
+            xlabel('Sounding frequency, MHz');
+            xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
+            cb = colorbar('vert');
+            title(cb,'dB');
+
+            % plot channel 2
+            subplot(2,3,4);
+            pcolor(F./1e6,h,ion2);
+            shading flat;
+            set(gca, 'XScale', 'log');
+            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, original, ch(2) = %s, Thr = %d dB',...
+                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(2)+1),dBthr));
+            ylabel('Virtual height, km');
+            xlabel('Sounding frequency, MHz');
+            xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
+            cb = colorbar('vert');
+            title(cb,'dB');
+
+            % plot channel 3
+            subplot(2,3,2);
+            pcolor(F./1e6,h,ion3);
+            shading flat;
+            set(gca, 'XScale', 'log');
+            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, original, ch(3) = %s, Thr = %d dB',...
+                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(3)+1),dBthr));
+            ylabel('Virtual height, km');
+            xlabel('Sounding frequency, MHz');
+            xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
+            cb = colorbar('vert');
+            title(cb,'dB');
+
+            % plot channel 4
+            subplot(2,3,5);
+            pcolor(F./1e6,h,ion4);
+            shading flat;
+            set(gca, 'XScale', 'log');
+            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, original, ch(4) = %s, Thr = %d dB',...
+                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(4)+1),dBthr));
+            ylabel('Virtual height, km');
+            xlabel('Sounding frequency, MHz');
+            xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
+            cb = colorbar('vert');
+            title(cb,'dB');
+
+            % plot channel average
+            subplot(2,3,3);
+            pcolor(F./1e6,h,iona);
+            shading flat;
+            set(gca, 'XScale', 'log');
+            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, original, average, Thr = %02d dB',...
+                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),dBthr));
+            ylabel('Virtual height, km');
+            xlabel('Sounding frequency, MHz');
+            xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
+            cb = colorbar('vert');
+            title(cb,'dB');
+
+            % Export the figure with filtered data to PNG with high resolution (300 DPI).
+            % exportgraphics is the standard method for MATLAB R2020a and newer.
+            exportgraphics(hFig3, outFullPathIon, 'Resolution', 300);
+            fprintf('Saved image: %s\n', outFileNameIon);
+        end
+
+
         % % %%%%%%%%%%%%%%%%%%%%
         % % % PLOT ORIGINAL DATA
         % % % remove background less than dBthr
