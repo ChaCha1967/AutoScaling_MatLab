@@ -86,11 +86,12 @@ for i = 1:length(fileList)
         ion4(:,:) = 20*log10(abs(ionoIQ(4,:,:)));
         iona(:,:) = 20*log10(mean(abs(ionoIQ(:,:,:)),1));
 
-        % Calculate ionograms matrixes phase angles in radian
-        Ph1(:,:) = angle(ionoIQ(1,:,:));
-        Ph2(:,:) = angle(ionoIQ(2,:,:));
-        Ph3(:,:) = angle(ionoIQ(3,:,:));
-        Ph4(:,:) = angle(ionoIQ(4,:,:));
+        % Calculate ionograms matrixes phase angles in radian taking into
+        % account polarity of individual antennas
+        Ph1(:,:) = angle(ionoIQ(1,:,:))*siteStruct.polarity(1);
+        Ph2(:,:) = angle(ionoIQ(2,:,:))*siteStruct.polarity(2);
+        Ph3(:,:) = angle(ionoIQ(3,:,:))*siteStruct.polarity(3);
+        Ph4(:,:) = angle(ionoIQ(4,:,:))*siteStruct.polarity(4);
         
         % OLD FILTERING FUNCTION - COMMENTED
         % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -169,12 +170,7 @@ for i = 1:length(fileList)
         ion4_clean = ion4_clean .* mask;
         iona_clean = iona_clean .* mask;
 
-        % Calculate filtered Ph considering polarity
-        Ph1 = Ph1.*mask*siteStruct.polarity(1);
-        Ph2 = Ph2.*mask*siteStruct.polarity(2);
-        Ph3 = Ph3.*mask*siteStruct.polarity(3);
-        Ph4 = Ph4.*mask*siteStruct.polarity(4);
-        % Calculate filtered phase difference
+        % Calculate original phase difference
         dPh12 = wrapToPi(Ph2-Ph1);
         dPh23 = wrapToPi(Ph3-Ph2);
         dPh34 = wrapToPi(Ph4-Ph3);
@@ -182,7 +178,7 @@ for i = 1:length(fileList)
         dPh13 = wrapToPi(Ph3-Ph1);
         dPh24 = wrapToPi(Ph4-Ph2);
 
-        % Remove NaN from phase differences
+        % Remove NaN from original phase differences
         Ph12arr = dPh12(:);
         vec_no_nan12 = Ph12arr(~isnan(Ph12arr));
         Ph23arr = dPh23(:);
@@ -195,6 +191,34 @@ for i = 1:length(fileList)
         vec_no_nan13 = Ph12arr(~isnan(Ph13arr));
         Ph24arr = dPh24(:);
         vec_no_nan24 = Ph12arr(~isnan(Ph24arr));
+
+        % Calculate filtered Ph considering polarity
+        Ph1f = Ph1.*mask;
+        Ph2f = Ph2.*mask;
+        Ph3f = Ph3.*mask;
+        Ph4f = Ph4.*mask;
+
+        % Calculate filtered phase difference
+        dPh12f = wrapToPi(Ph2f-Ph1f);
+        dPh23f = wrapToPi(Ph3f-Ph2f);
+        dPh34f = wrapToPi(Ph4f-Ph3f);
+        dPh41f = wrapToPi(Ph1f-Ph4f);
+        dPh13f = wrapToPi(Ph3f-Ph1f);
+        dPh24f = wrapToPi(Ph4f-Ph2f);
+
+        % Remove NaN from filtered phase differences
+        Ph12arrf = dPh12f(:);
+        vec_no_nan12f = Ph12arrf(~isnan(Ph12arrf));
+        Ph23arrf = dPh23f(:);
+        vec_no_nan23f = Ph23arrf(~isnan(Ph23arrf));
+        Ph34arrf = dPh34f(:);
+        vec_no_nan34f = Ph34arrf(~isnan(Ph34arrf));
+        Ph41arrf = dPh41f(:);
+        vec_no_nan41f = Ph41arrf(~isnan(Ph41arrf));
+        Ph13arrf = dPh13f(:);
+        vec_no_nan13f = Ph12arrf(~isnan(Ph13arrf));
+        Ph24arrf = dPh24f(:);
+        vec_no_nan24f = Ph12arrf(~isnan(Ph24arrf));
 
         % REMOVE_CADI_INTERFERENCE FILTER FINISHED
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -282,7 +306,7 @@ for i = 1:length(fileList)
         end
 
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        % Plotting Phase distributions
+        % Plotting filtered Phase distributions
         % Clear window hFig2 content
         if lFdis
             clf(hFig2);
@@ -290,7 +314,7 @@ for i = 1:length(fileList)
     
             % plot channel 1-2 Phase diagram 
             subplot(2,3,1);
-            histogram(vec_no_nan12*180/pi,-180:DPh:180, 'Normalization', 'probability');
+            histogram(vec_no_nan12f*180/pi,-180:DPh:180, 'Normalization', 'probability');
             hold on
             plot([-90 -90 0 90 90],[0 0.25 NaN 0 0.25],'LineWidth',2,'LineStyle',':');
             hold off
@@ -304,7 +328,7 @@ for i = 1:length(fileList)
     
             % plot channel 2-3 Phase diagram 
             subplot(2,3,4);
-            histogram(vec_no_nan23*180/pi,-180:DPh:180, 'Normalization', 'probability');
+            histogram(vec_no_nan23f*180/pi,-180:DPh:180, 'Normalization', 'probability');
             hold on
             plot([-90 -90 0 90 90],[0 0.25 NaN 0 0.25],'LineWidth',2,'LineStyle',':');
             hold off
@@ -318,7 +342,7 @@ for i = 1:length(fileList)
     
             % plot channel 3-4 Phase diagram 
             subplot(2,3,2);
-            histogram(vec_no_nan34*180/pi,-180:DPh:180, 'Normalization', 'probability');
+            histogram(vec_no_nan34f*180/pi,-180:DPh:180, 'Normalization', 'probability');
             hold on
             plot([-90 -90 0 90 90],[0 0.25 NaN 0 0.25],'LineWidth',2,'LineStyle',':');
             hold off
@@ -332,7 +356,7 @@ for i = 1:length(fileList)
     
             % plot channel 4-1 Phase diagram 
             subplot(2,3,5);
-            histogram(vec_no_nan41*180/pi,-180:DPh:180, 'Normalization', 'probability');
+            histogram(vec_no_nan41f*180/pi,-180:DPh:180, 'Normalization', 'probability');
             hold on
             plot([-90 -90 0 90 90],[0 0.25 NaN 0 0.25],'LineWidth',2,'LineStyle',':');
             hold off
@@ -346,7 +370,7 @@ for i = 1:length(fileList)
     
             % plot channel 1-3 Phase diagram 
             subplot(2,3,3);
-            histogram(vec_no_nan13*180/pi,-180:DPh:180, 'Normalization', 'probability');
+            histogram(vec_no_nan13f*180/pi,-180:DPh:180, 'Normalization', 'probability');
             hold on
             plot([0 0],[0 0.25],'LineWidth',2,'LineStyle',':');
             hold off
@@ -360,7 +384,7 @@ for i = 1:length(fileList)
     
             % plot channel 2-4 Phase diagram 
             subplot(2,3,6);
-            histogram(vec_no_nan24*180/pi,-180:DPh:180, 'Normalization', 'probability');
+            histogram(vec_no_nan24f*180/pi,-180:DPh:180, 'Normalization', 'probability');
             hold on
             plot([0 0],[0 0.25],'LineWidth',2,'LineStyle',':');
             hold off
@@ -381,6 +405,7 @@ for i = 1:length(fileList)
         %%%%%%%%%%%%%%%%%%%%
         % PLOT ORIGINAL DATA
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % Plot original ionograms
         if lion
             % Clear window hFig1 content
             clf(hFig3);
@@ -460,6 +485,102 @@ for i = 1:length(fileList)
             fprintf('Saved image: %s\n', outFileNameIon);
         end
 
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % Plotting Phase distributions
+        % Clear window hFig2 content
+        if ldis
+            clf(hFig4);
+            figure(4);
+
+            % plot channel 1-2 Phase diagram 
+            subplot(2,3,1);
+            histogram(vec_no_nan12*180/pi,-180:DPh:180, 'Normalization', 'probability');
+            hold on
+            plot([-90 -90 0 90 90],[0 0.25 NaN 0 0.25],'LineWidth',2,'LineStyle',':');
+            hold off
+            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, original, Ch1-2(%s%s), Thr = %02d dB',...
+                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),...
+                AntDirChar(antOrder(2)+1),AntDirChar(antOrder(1)+1),dBthr));
+            ylim([0, 0.25]);
+            xlim([-180, 180]);
+            xticks([-180 -135 -90 -45 0 45 90 135 180]);
+            grid on;
+
+            % plot channel 2-3 Phase diagram 
+            subplot(2,3,4);
+            histogram(vec_no_nan23*180/pi,-180:DPh:180, 'Normalization', 'probability');
+            hold on
+            plot([-90 -90 0 90 90],[0 0.25 NaN 0 0.25],'LineWidth',2,'LineStyle',':');
+            hold off
+            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, original, Ch2-3(%s%s), Th=%02d dB',...
+                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),...
+                AntDirChar(antOrder(3)+1),AntDirChar(antOrder(2)+1),dBthr));
+            ylim([0, 0.25]);
+            xlim([-180, 180]);
+            xticks([-180 -135 -90 -45 0 45 90 135 180]);
+            grid on;
+
+            % plot channel 3-4 Phase diagram 
+            subplot(2,3,2);
+            histogram(vec_no_nan34*180/pi,-180:DPh:180, 'Normalization', 'probability');
+            hold on
+            plot([-90 -90 0 90 90],[0 0.25 NaN 0 0.25],'LineWidth',2,'LineStyle',':');
+            hold off
+            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, original, Ch3-4(%s%s), Th=%02d dB',...
+                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),...
+                AntDirChar(antOrder(4)+1),AntDirChar(antOrder(3)+1),dBthr));
+            ylim([0, 0.25]);
+            xlim([-180, 180]);
+            xticks([-180 -135 -90 -45 0 45 90 135 180]);
+            grid on;
+
+            % plot channel 4-1 Phase diagram 
+            subplot(2,3,5);
+            histogram(vec_no_nan41*180/pi,-180:DPh:180, 'Normalization', 'probability');
+            hold on
+            plot([-90 -90 0 90 90],[0 0.25 NaN 0 0.25],'LineWidth',2,'LineStyle',':');
+            hold off
+            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, original, Ch4-1(%s%s), Th=%02d dB',...
+                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),...
+                AntDirChar(antOrder(1)+1),AntDirChar(antOrder(4)+1),dBthr));
+            ylim([0, 0.25]);
+            xlim([-180, 180]);
+            xticks([-180 -135 -90 -45 0 45 90 135 180]);
+            grid on;
+
+            % plot channel 1-3 Phase diagram 
+            subplot(2,3,3);
+            histogram(vec_no_nan13*180/pi,-180:DPh:180, 'Normalization', 'probability');
+            hold on
+            plot([0 0],[0 0.25],'LineWidth',2,'LineStyle',':');
+            hold off
+            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, original, Ch1-3(%s%s), Th=%02d dB',...
+                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),...
+                AntDirChar(antOrder(3)+1),AntDirChar(antOrder(1)+1),dBthr));
+            ylim([0, 0.25]);
+            xlim([-180, 180]);
+            xticks([-180 -135 -90 -45 0 45 90 135 180]);
+            grid on;
+
+            % plot channel 2-4 Phase diagram 
+            subplot(2,3,6);
+            histogram(vec_no_nan24*180/pi,-180:DPh:180, 'Normalization', 'probability');
+            hold on
+            plot([0 0],[0 0.25],'LineWidth',2,'LineStyle',':');
+            hold off
+            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, original, Ch2-4(%s%s), Th=%02d dB',...
+                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),...
+                AntDirChar(antOrder(4)+1),AntDirChar(antOrder(2)+1),dBthr));
+            ylim([0, 0.25]);
+            xlim([-180, 180]);
+            xticks([-180 -135 -90 -45 0 45 90 135 180]);
+            grid on;
+
+            % Export the figure with filtered data to PNG with high resolution (300 DPI).
+            % exportgraphics is the standard method for MATLAB R2020a and newer.
+            exportgraphics(hFig4, outFullPathDis, 'Resolution', 300);
+            fprintf('Saved image: %s\n', outFileNameDis);
+        end
 
         % % %%%%%%%%%%%%%%%%%%%%
         % % % PLOT ORIGINAL DATA
