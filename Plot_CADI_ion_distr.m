@@ -1,3 +1,5 @@
+tic;
+
 % What figures plot 
 lFion = 1; % filtered ionogram
 lFdis = 1; % filtered distribution
@@ -33,12 +35,20 @@ fprintf('Found %d "*_ion.mat" files.\n', length(fileList));
 % Setting 'Visible' to 'off' prevents the window from popping up,
 % which drastically speeds up the loop and prevents focus stealing.
     % hFig = figure('Visible', 'off');
+
     hFig1 = figure(1);
     hFig2 = figure(2);
     hFig3 = figure(3);
     hFig4 = figure(4);
     hFig5 = figure(5);
     hFig6 = figure(6);
+
+    % set(hFig1, 'Visible', 'off');
+    % set(hFig2, 'Visible', 'off');
+    % set(hFig3, 'Visible', 'off');
+    % set(hFig4, 'Visible', 'off');
+    % set(hFig5, 'Visible', 'off');
+    % set(hFig6, 'Visible', 'off');
 
 % Loop through each file sequentially
 for i = 1:length(fileList)
@@ -48,15 +58,20 @@ for i = 1:length(fileList)
 
     fprintf('Loading and processing: %s\n', currentFileName);
 
-    % Load the .mat file into memory (creates a struct containing file variables)
-    ionoData = load(currentFullPath);
-
-    % Extract the base file name without the .mat extension 
+    % % Load the .mat file into memory (creates a struct containing file variables)
+    % ionoData = load(currentFullPath);
+    % 
+    % % Extract the base file name without the .mat extension 
+    % [~, baseName, ~] = fileparts(currentFileName);
+    % inFileName = [baseName, '.mat'];
+    % inFullPath = fullfile(selectedFolder, inFileName);
+    % % load *_ion.mat
+    % load(inFullPath);
+    
+    % Extract the base file name to construct output image filenames
     [~, baseName, ~] = fileparts(currentFileName);
-    inFileName = [baseName, '.mat'];
-    inFullPath = fullfile(selectedFolder, inFileName);
-    % load *_ion.mat
-    load(inFullPath);
+    % Load variables from the file directly into memory (only ONCE)
+    load(currentFullPath);
 
     % Construct the output PNG file name and full path for ion filtered data
     outFileNameIonF = [baseName, '_flt.png'];
@@ -152,7 +167,7 @@ for i = 1:length(fileList)
         ion4_clean = remove_cadi_interference_v2(ion4, spike_thresh_dB, min_extent, min_count, dBthr);
         iona_clean = remove_cadi_interference_v2(iona, spike_thresh_dB, min_extent, min_count, dBthr);
 
-        % Conversion initial ion to white background (removal of weak signals entirely)
+        % Removal of weak signals less than dBthr
         if dBthr > 0
             ion1(ion1 < dBthr) = NaN;
             ion2(ion2 < dBthr) = NaN;
@@ -203,9 +218,9 @@ for i = 1:length(fileList)
         Ph41arr = dPh41(:);
         vec_no_nan41 = Ph41arr(~isnan(Ph41arr));
         Ph13arr = dPh13(:);
-        vec_no_nan13 = Ph12arr(~isnan(Ph13arr));
+        vec_no_nan13 = Ph13arr(~isnan(Ph13arr));
         Ph24arr = dPh24(:);
-        vec_no_nan24 = Ph12arr(~isnan(Ph24arr));
+        vec_no_nan24 = Ph24arr(~isnan(Ph24arr));
 
         % Calculate filtered Ph considering polarity
         Ph1f = Ph1.*mask;
@@ -231,9 +246,17 @@ for i = 1:length(fileList)
         Ph41arrf = dPh41f(:);
         vec_no_nan41f = Ph41arrf(~isnan(Ph41arrf));
         Ph13arrf = dPh13f(:);
-        vec_no_nan13f = Ph12arrf(~isnan(Ph13arrf));
+        vec_no_nan13f = Ph13arrf(~isnan(Ph13arrf));
         Ph24arrf = dPh24f(:);
-        vec_no_nan24f = Ph12arrf(~isnan(Ph24arrf));
+        vec_no_nan24f = Ph24arrf(~isnan(Ph24arrf));
+
+        % Change 0 to NaN in original phase difference (polarization iono)
+        dPh12(dPh12 == 0) = NaN;
+        dPh23(dPh23 == 0) = NaN;
+        dPh34(dPh34 == 0) = NaN;
+        dPh41(dPh41 == 0) = NaN;
+        dPh13(dPh13 == 0) = NaN;
+        dPh24(dPh24 == 0) = NaN;
 
         % REMOVE_CADI_INTERFERENCE FILTER FINISHED
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -245,6 +268,8 @@ for i = 1:length(fileList)
             % Clear window hFig1 content
             clf(hFig1);
             figure(1);
+            % set(0, 'CurrentFigure', hFig1);
+
             % Apply 'jet' colormap
             colormap(hFig1, jet);
     
@@ -253,8 +278,16 @@ for i = 1:length(fileList)
             % Plot filtered ionograms
             % plot channel 1
             subplot(2,3,1);
-            pcolor(F./1e6,h,ion1_clean);
-            shading flat;
+
+            % % pcolor(F./1e6,h,ion1_clean);
+            % % shading flat;
+            % Plot data using imagesc instead of pcolor for drastic speed improvement
+            hImg = imagesc(F./1e6, h, ion1_clean);
+            % Make NaN values transparent to keep the white background
+            set(hImg, 'AlphaData', ~isnan(ion1_clean));
+            % Restore normal Y-axis direction (imagesc flips it by default)
+            set(gca, 'YDir', 'normal');            
+            
             set(gca, 'XScale', 'log');
             title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filtered, ch(1)  = %s, Thr = %02d dB',...
                   DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(1)+1),dBthr));
@@ -266,8 +299,16 @@ for i = 1:length(fileList)
             
             % plot channel 2
             subplot(2,3,4);
-            pcolor(F./1e6,h,ion2_clean);
-            shading flat;
+            
+            % % pcolor(F./1e6,h,ion2_clean);
+            % % shading flat;
+            % Plot data using imagesc instead of pcolor for drastic speed improvement
+            hImg = imagesc(F./1e6, h, ion2_clean);
+            % Make NaN values transparent to keep the white background
+            set(hImg, 'AlphaData', ~isnan(ion2_clean));
+            % Restore normal Y-axis direction (imagesc flips it by default)
+            set(gca, 'YDir', 'normal');            
+
             set(gca, 'XScale', 'log');
             title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filtered, ch(2) = %s, Thr = %d dB',...
                   DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(2)+1),dBthr));
@@ -279,8 +320,16 @@ for i = 1:length(fileList)
             
             % plot channel 3
             subplot(2,3,2);
-            pcolor(F./1e6,h,ion3_clean);
-            shading flat;
+
+            % % pcolor(F./1e6,h,ion3_clean);
+            % % shading flat;
+            % Plot data using imagesc instead of pcolor for drastic speed improvement
+            hImg = imagesc(F./1e6, h, ion3_clean);
+            % Make NaN values transparent to keep the white background
+            set(hImg, 'AlphaData', ~isnan(ion3_clean));
+            % Restore normal Y-axis direction (imagesc flips it by default)
+            set(gca, 'YDir', 'normal');            
+
             set(gca, 'XScale', 'log');
             title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filtered, ch(3) = %s, Thr = %d dB',...
                   DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(3)+1),dBthr));
@@ -292,8 +341,16 @@ for i = 1:length(fileList)
             
             % plot channel 4
             subplot(2,3,5);
-            pcolor(F./1e6,h,ion4_clean);
-            shading flat;
+
+            % % pcolor(F./1e6,h,ion4_clean);
+            % % shading flat;
+            % Plot data using imagesc instead of pcolor for drastic speed improvement
+            hImg = imagesc(F./1e6, h, ion4_clean);
+            % Make NaN values transparent to keep the white background
+            set(hImg, 'AlphaData', ~isnan(ion4_clean));
+            % Restore normal Y-axis direction (imagesc flips it by default)
+            set(gca, 'YDir', 'normal');            
+
             set(gca, 'XScale', 'log');
             title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filtered, ch(4) = %s, Thr = %d dB',...
                   DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(4)+1),dBthr));
@@ -305,8 +362,16 @@ for i = 1:length(fileList)
             
             % plot channel average
             subplot(2,3,3);
-            pcolor(F./1e6,h,iona_clean);
-            shading flat;
+
+            % % pcolor(F./1e6,h,iona_clean);
+            % % shading flat;
+            % Plot data using imagesc instead of pcolor for drastic speed improvement
+            hImg = imagesc(F./1e6, h, iona_clean);
+            % Make NaN values transparent to keep the white background
+            set(hImg, 'AlphaData', ~isnan(iona_clean));
+            % Restore normal Y-axis direction (imagesc flips it by default)
+            set(gca, 'YDir', 'normal');            
+
             set(gca, 'XScale', 'log');
             title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filtered, average, Thr = %02d dB',...
                   DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),dBthr));
@@ -318,7 +383,8 @@ for i = 1:length(fileList)
     
             % Export the figure with filtered data to PNG with high resolution (300 DPI).
             % exportgraphics is the standard method for MATLAB R2020a and newer.
-            exportgraphics(hFig1, outFullPathIonF, 'Resolution', 300);
+            % exportgraphics(hFig1, outFullPathIonF, 'Resolution', 150);
+            print(hFig1, outFullPathIonF, '-dpng', '-r150');
             fprintf('Saved image: %s\n', outFileNameIonF);
         end
 
@@ -327,8 +393,9 @@ for i = 1:length(fileList)
         % Clear window hFig2 content
         if lFdis
             clf(hFig2);
-            figure(2);
-    
+            % figure(2);
+            set(0, 'CurrentFigure', hFig2);
+
             % plot channel 1-2 Phase diagram 
             subplot(2,3,1);
             histogram(vec_no_nan12f*180/pi,-180:DPh:180, 'Normalization', 'probability');
@@ -413,9 +480,10 @@ for i = 1:length(fileList)
             xticks([-180 -135 -90 -45 0 45 90 135 180]);
             grid on;
             
-            % Export the figure with filtered data to PNG with high resolution (300 DPI).
-            % exportgraphics is the standard method for MATLAB R2020a and newer.
-            exportgraphics(hFig2, outFullPathDisF, 'Resolution', 300);
+            % % Export the figure with filtered data to PNG with high resolution (300 DPI).
+            % % exportgraphics is the standard method for MATLAB R2020a and newer.
+            % exportgraphics(hFig2, outFullPathDisF, 'Resolution', 300);
+            print(hFig2, outFullPathDisF, '-dpng', '-r150');
             fprintf('Saved image: %s\n', outFileNameDisF);
         end
 
@@ -426,7 +494,9 @@ for i = 1:length(fileList)
         if lion
             % Clear window hFig1 content
             clf(hFig3);
-            figure(3);
+            % figure(3);
+            set(0, 'CurrentFigure', hFig3);
+
             % Apply 'jet' colormap
             colormap(hFig3, jet);
 
@@ -498,9 +568,10 @@ for i = 1:length(fileList)
             cb = colorbar('vert');
             title(cb,'dB');
 
-            % Export the figure with filtered data to PNG with high resolution (300 DPI).
-            % exportgraphics is the standard method for MATLAB R2020a and newer.
-            exportgraphics(hFig3, outFullPathIon, 'Resolution', 300);
+            % % Export the figure with filtered data to PNG with high resolution (300 DPI).
+            % % exportgraphics is the standard method for MATLAB R2020a and newer.
+            % exportgraphics(hFig3, outFullPathIon, 'Resolution', 300);
+            print(hFig3, outFullPathIon, '-dpng', '-r150');
             fprintf('Saved image: %s\n', outFileNameIon);
         end
 
@@ -509,7 +580,8 @@ for i = 1:length(fileList)
         % Clear window hFig2 content
         if ldis
             clf(hFig4);
-            figure(4);
+            % figure(4);
+            set(0, 'CurrentFigure', hFig4);
 
             % plot channel 1-2 Phase diagram 
             subplot(2,3,1);
@@ -595,9 +667,10 @@ for i = 1:length(fileList)
             xticks([-180 -135 -90 -45 0 45 90 135 180]);
             grid on;
 
-            % Export the figure with filtered data to PNG with high resolution (300 DPI).
-            % exportgraphics is the standard method for MATLAB R2020a and newer.
-            exportgraphics(hFig4, outFullPathDis, 'Resolution', 300);
+            % % Export the figure with filtered data to PNG with high resolution (300 DPI).
+            % % exportgraphics is the standard method for MATLAB R2020a and newer.
+            % exportgraphics(hFig4, outFullPathDis, 'Resolution', 300);
+            print(hFig4, outFullPathDis, '-dpng', '-r150');
             fprintf('Saved image: %s\n', outFileNameDis);
         end
 
@@ -605,7 +678,9 @@ for i = 1:length(fileList)
         if lPFion
             % Clear window hFig1 content
             clf(hFig5);
-            figure(5);
+            % figure(5);
+            set(0, 'CurrentFigure', hFig5);
+
             % Apply 'PionCmap' colormap
             colormap(hFig5, PionCmap);
 
@@ -664,9 +739,10 @@ for i = 1:length(fileList)
             cb = colorbar('vert');
             title(cb,'POL');
 
-            % Export the figure with filtered data to PNG with high resolution (300 DPI).
-            % exportgraphics is the standard method for MATLAB R2020a and newer.
-            exportgraphics(hFig5, outFullPathIonPF, 'Resolution', 300);
+            % % Export the figure with filtered data to PNG with high resolution (300 DPI).
+            % % exportgraphics is the standard method for MATLAB R2020a and newer.
+            % exportgraphics(hFig5, outFullPathIonPF, 'Resolution', 300);
+            print(hFig5, outFullPathIonPF, '-dpng', '-r150');
             fprintf('Saved image: %s\n', outFileNameIonPF);
         end
 
@@ -675,7 +751,9 @@ for i = 1:length(fileList)
         if lPion
             % Clear window hFig1 content
             clf(hFig6);
-            figure(6);
+            % figure(6);
+            set(0, 'CurrentFigure', hFig6);
+
             % Apply 'PionCmap' colormap
             colormap(hFig6, PionCmap);
 
@@ -734,19 +812,15 @@ for i = 1:length(fileList)
             cb = colorbar('vert');
             title(cb,'POL');
 
-           % Export the figure with filtered data to PNG with high resolution (300 DPI).
-            % exportgraphics is the standard method for MATLAB R2020a and newer.
-            exportgraphics(hFig6, outFullPathIonP, 'Resolution', 300);
-            fprintf('Saved image: %s\n', outFileNameIonP);
+           % % Export the figure with filtered data to PNG with high resolution (300 DPI).
+           %  % exportgraphics is the standard method for MATLAB R2020a and newer.
+           %  exportgraphics(hFig6, outFullPathIonP, 'Resolution', 300);
+           print(hFig6, outFullPathIonP, '-dpng', '-r150');
+           fprintf('Saved image: %s\n', outFileNameIonP);
         end
     
 end
 
 disp('All files have been successfully processed and saved.');
 
-
-
-
-
-
-
+toc;
