@@ -13,7 +13,8 @@ DPh = 20;
 PionCmap = CustomColormap;
 
 % Prompt the user to select the directory
-selectedFolder = uigetdir(pwd, 'Select the folder containing *_ion.mat files');
+%selectedFolder = uigetdir(pwd, 'Select the folder containing *_ion.mat files');
+selectedFolder = 'N:\cadi_ionotest';
 
 % Check if the user canceled the dialog
 if selectedFolder == 0
@@ -89,6 +90,9 @@ for i = 1:length(fileList)
         F = double(headerStruct.datablock.FreqS);
         h = double(headerStruct.datablock.heights);
         antOrder = headerStruct.datablock.antOrder;
+        anrX = siteStruct.antennax;
+        antPol = siteStruct.polarity;
+        Ch2Pol = antPol(antOrder+1);
         
         % Calculate ionograms matrixes in dB
         ion1(:,:) = 20*log10(abs(ionoIQ(1,:,:)));
@@ -99,10 +103,10 @@ for i = 1:length(fileList)
 
         % Calculate ionograms matrixes phase angles in radian taking into
         % account polarity of individual antennas
-        Ph1(:,:) = angle(ionoIQ(1,:,:))*siteStruct.polarity(1);
-        Ph2(:,:) = angle(ionoIQ(2,:,:))*siteStruct.polarity(2);
-        Ph3(:,:) = angle(ionoIQ(3,:,:))*siteStruct.polarity(3);
-        Ph4(:,:) = angle(ionoIQ(4,:,:))*siteStruct.polarity(4);
+        Ph1(:,:) = angle(ionoIQ(1,:,:))*Ch2Pol(1); %*siteStruct.polarity(1);
+        Ph2(:,:) = angle(ionoIQ(2,:,:))*Ch2Pol(2); %*siteStruct.polarity(2);
+        Ph3(:,:) = angle(ionoIQ(3,:,:))*Ch2Pol(3); %*siteStruct.polarity(3);
+        Ph4(:,:) = angle(ionoIQ(4,:,:))*Ch2Pol(4); %*siteStruct.polarity(4);
         
         % OLD FILTERING FUNCTION - COMMENTED
         % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -613,8 +617,8 @@ for i = 1:length(fileList)
             pcolor(F./1e6,h,dPh12f*180/pi);
             shading flat;
             set(gca, 'XScale', 'log');
-            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filtered, ch(1)  = %s, Thr = %02d dB',...
-                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(1)+1),dBthr));
+            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filtered, Ch1-2(%s%s), Thr = %02d dB',...
+                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDirChar(antOrder(2)+1),AntDirChar(antOrder(1)+1),dBthr));
             ylabel('Virtual height, km');
             xlabel('Sounding frequency, MHz');
             xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
@@ -626,8 +630,8 @@ for i = 1:length(fileList)
             pcolor(F./1e6,h,dPh23f*180/pi);
             shading flat;
             set(gca, 'XScale', 'log');
-            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filtered, ch(2) = %s, Thr = %d dB',...
-                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(2)+1),dBthr));
+            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filtered, Ch2-3(%s%s), Thr = %d dB',...
+                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDirChar(antOrder(3)+1),AntDirChar(antOrder(2)+1),dBthr));
             ylabel('Virtual height, km');
             xlabel('Sounding frequency, MHz');
             xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
@@ -639,8 +643,8 @@ for i = 1:length(fileList)
             pcolor(F./1e6,h,dPh34f*180/pi);
             shading flat;
             set(gca, 'XScale', 'log');
-            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filtered, ch(3) = %s, Thr = %d dB',...
-                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(3)+1),dBthr));
+            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filtered, Ch3-4(%s%s), Thr = %d dB',...
+                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDirChar(antOrder(4)+1),AntDirChar(antOrder(3)+1),dBthr));
             ylabel('Virtual height, km');
             xlabel('Sounding frequency, MHz');
             xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
@@ -652,8 +656,8 @@ for i = 1:length(fileList)
             pcolor(F./1e6,h,dPh41f*180/pi);
             shading flat;
             set(gca, 'XScale', 'log');
-            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filtered, ch(4) = %s, Thr = %d dB',...
-                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(4)+1),dBthr));
+            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filtered, Ch4-1(%s%s), Thr = %d dB',...
+                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDirChar(antOrder(1)+1),AntDirChar(antOrder(4)+1),dBthr));
             ylabel('Virtual height, km');
             xlabel('Sounding frequency, MHz');
             xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
@@ -683,8 +687,8 @@ for i = 1:length(fileList)
             pcolor(F./1e6,h,dPh12*180/pi);
             shading flat;
             set(gca, 'XScale', 'log');
-            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filtered, ch(1)  = %s, Thr = %02d dB',...
-                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(1)+1),dBthr));
+            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filtered, Ch1-2(%s%s), Thr = %02d dB',...
+                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDirChar(antOrder(2)+1),AntDirChar(antOrder(1)+1),dBthr));
             ylabel('Virtual height, km');
             xlabel('Sounding frequency, MHz');
             xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
@@ -696,8 +700,8 @@ for i = 1:length(fileList)
             pcolor(F./1e6,h,dPh23*180/pi);
             shading flat;
             set(gca, 'XScale', 'log');
-            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filtered, ch(2) = %s, Thr = %d dB',...
-                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(2)+1),dBthr));
+            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filtered, Ch2-3(%s%s), Thr = %d dB',...
+                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDirChar(antOrder(3)+1),AntDirChar(antOrder(2)+1),dBthr));
             ylabel('Virtual height, km');
             xlabel('Sounding frequency, MHz');
             xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
@@ -709,8 +713,8 @@ for i = 1:length(fileList)
             pcolor(F./1e6,h,dPh34*180/pi);
             shading flat;
             set(gca, 'XScale', 'log');
-            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filtered, ch(3) = %s, Thr = %d dB',...
-                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(3)+1),dBthr));
+            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filtered, Ch3-4(%s%s), Thr = %d dB',...
+                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDirChar(antOrder(4)+1),AntDirChar(antOrder(3)+1),dBthr));
             ylabel('Virtual height, km');
             xlabel('Sounding frequency, MHz');
             xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
@@ -722,8 +726,8 @@ for i = 1:length(fileList)
             pcolor(F./1e6,h,dPh41*180/pi);
             shading flat;
             set(gca, 'XScale', 'log');
-            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filtered, ch(4) = %s, Thr = %d dB',...
-                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(4)+1),dBthr));
+            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filtered, Ch4-1(%s%s), Thr = %d dB',...
+                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDirChar(antOrder(1)+1),AntDirChar(antOrder(4)+1),dBthr));
             ylabel('Virtual height, km');
             xlabel('Sounding frequency, MHz');
             xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
