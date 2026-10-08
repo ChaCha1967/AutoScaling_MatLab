@@ -1,12 +1,13 @@
+% Start calculating running time
 tic;
 
 % What figures plot 
-lFion = 1; % filtered ionogram
-lFdis = 1; % filtered distribution
-lion = 1; % original ionogram
-ldis = 1; % original distribution
-lPFion = 1; % filtered polarization ionogram
-lPion = 1; % original polarization ionogram
+% lFion = 1; % filtered ionogram
+% lFdis = 1; % filtered distribution
+% lion = 1; % original ionogram
+% ldis = 1; % original distribution
+% lPFion = 1; % filtered polarization ionogram
+% lPion = 1; % original polarization ionogram
 
 % Set Phase step in histogram
 DPh = 20;
@@ -29,27 +30,21 @@ searchPattern = fullfile(selectedFolder, '*_ion.mat');
 fileList = dir(searchPattern);
 
 % Display the number of found files
-fprintf('Found %d "*_ion.mat" files.\n', length(fileList));
+NmatF = length(fileList);
+fprintf('Found %d "*_ion.mat" files.\n', NmatF);
 
-% Create a new figure for the ionogram plot. 
-    % hFig = figure('Visible', 'off');
-
-    hFig1 = figure(1);
-    hFig2 = figure(2);
-    hFig3 = figure(3);
-    hFig4 = figure(4);
-    hFig5 = figure(5);
-    hFig6 = figure(6);
-
-    % set(hFig1, 'Visible', 'off');
-    % set(hFig2, 'Visible', 'off');
-    % set(hFig3, 'Visible', 'off');
-    % set(hFig4, 'Visible', 'off');
-    % set(hFig5, 'Visible', 'off');
-    % set(hFig6, 'Visible', 'off');
+% Force MATLAB to use Figure 1 and assign it to hFig
+hFig = figure(1);
+% set(hFig, 'Visible', 'off', ...
+%     'Position', [10, 10, 1920, 1080], ...
+%     'PaperPositionMode', 'auto');
+set(hFig, 'Visible', 'on');
+% Clear the current content of the figure
+clf(hFig);
 
 % Loop through each file sequentially
 for i = 1:length(fileList)
+
     % Get the current file name and construct the full path
     currentFileName = fileList(i).name;
     currentFullPath = fullfile(selectedFolder, currentFileName);
@@ -60,29 +55,29 @@ for i = 1:length(fileList)
     % Load variables from the file directly into memory (only ONCE)
     load(currentFullPath);
 
-    % Construct the output PNG file name and full path for ion filtered data
-    outFileNameIonF = [baseName, '_flt.png'];
-    outFullPathIonF = fullfile(selectedFolder, outFileNameIonF);
+    % Construct the output PNG file name and full path for all ion plots
+    outFileNameIonA = [baseName, 'a.png'];
+    outFullPathIonA = fullfile(selectedFolder, outFileNameIonA);
 
-    % Construct the output PNG file name and full path for ion distribution filtered data
-    outFileNameDisF = [baseName, '_distr_flt.png'];
-    outFullPathDisF = fullfile(selectedFolder, outFileNameDisF);
-
-    % Construct the output PNG file name and full path for ion filtered data
-    outFileNameIonPF = [baseName, '_p_flt.png'];
-    outFullPathIonPF = fullfile(selectedFolder, outFileNameIonPF);
-
-    % Construct the output PNG file name and full path for ion filtered data
-    outFileNameIon = [baseName, '.png'];
-    outFullPathIon = fullfile(selectedFolder, outFileNameIon);
-
-    % Construct the output PNG file name and full path for ion distribution filtered data
-    outFileNameDis = [baseName, '_distr.png'];
-    outFullPathDis = fullfile(selectedFolder, outFileNameDis);
-
-    % Construct the output PNG file name and full path for ion original data
-    outFileNameIonP = [baseName, '_p.png'];
-    outFullPathIonP = fullfile(selectedFolder, outFileNameIonP);
+    % % Construct the output PNG file name and full path for ion distribution filtered data
+    % outFileNameDisF = [baseName, '_distr_flt.png'];
+    % outFullPathDisF = fullfile(selectedFolder, outFileNameDisF);
+    % 
+    % % Construct the output PNG file name and full path for ion filtered data
+    % outFileNameIonPF = [baseName, '_p_flt.png'];
+    % outFullPathIonPF = fullfile(selectedFolder, outFileNameIonPF);
+    % 
+    % % Construct the output PNG file name and full path for ion filtered data
+    % outFileNameIon = [baseName, '.png'];
+    % outFullPathIon = fullfile(selectedFolder, outFileNameIon);
+    % 
+    % % Construct the output PNG file name and full path for ion distribution filtered data
+    % outFileNameDis = [baseName, '_distr.png'];
+    % outFullPathDis = fullfile(selectedFolder, outFileNameDis);
+    % 
+    % % Construct the output PNG file name and full path for ion original data
+    % outFileNameIonP = [baseName, '_p.png'];
+    % outFullPathIonP = fullfile(selectedFolder, outFileNameIonP);
 
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%% PROCESSING START 
@@ -252,508 +247,316 @@ for i = 1:length(fileList)
         % PROCESSING FINISHED
         % PLOT DATA BEGIN
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+        % Clear the current content of the figure
+        clf(hFig);
+        % Set hFig as the active figure for drawing without forcing it to pop up
+        set(0, 'CurrentFigure', hFig);
  
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        % Plot filtered ionograms
-        if lFion
-            % Clear window hFig1 content
-            clf(hFig1);
-            figure(1);
-            % set(0, 'CurrentFigure', hFig1);
-
-            % Apply 'jet' colormap
-            colormap(hFig1, jet);
-             
-            % plot channel 1
-            subplot(2,3,1);
-            pcolor(F./1e6,h,ion1_clean);
-            shading flat;
-            set(gca, 'XScale', 'log');
-            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filtered, ch(1)  = %s, Thr = %02d dB',...
-                  DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(1)+1),dBthr));
-            ylabel('Virtual height, km');
-            xlabel('Sounding frequency, MHz');
-            xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
-            cb = colorbar('vert');
-            title(cb,'dB');
-            
-            % plot channel 2
-            subplot(2,3,4);
-            pcolor(F./1e6,h,ion2_clean);
-            shading flat;
-            set(gca, 'XScale', 'log');
-            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filtered, ch(2) = %s, Thr = %d dB',...
-                  DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(2)+1),dBthr));
-            ylabel('Virtual height, km');
-            xlabel('Sounding frequency, MHz');
-            xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
-            cb = colorbar('vert');
-            title(cb,'dB');
-            
-            % plot channel 3
-            subplot(2,3,2);
-            pcolor(F./1e6,h,ion3_clean);
-            shading flat;
-            set(gca, 'XScale', 'log');
-            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filtered, ch(3) = %s, Thr = %d dB',...
-                  DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(3)+1),dBthr));
-            ylabel('Virtual height, km');
-            xlabel('Sounding frequency, MHz');
-            xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
-            cb = colorbar('vert');
-            title(cb,'dB');
-            
-            % plot channel 4
-            subplot(2,3,5);
-            pcolor(F./1e6,h,ion4_clean);
-            shading flat;
-            set(gca, 'XScale', 'log');
-            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filtered, ch(4) = %s, Thr = %d dB',...
-                  DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(4)+1),dBthr));
-            ylabel('Virtual height, km');
-            xlabel('Sounding frequency, MHz');
-            xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
-            cb = colorbar('vert');
-            title(cb,'dB');
-            
-            % plot channel average
-            subplot(2,3,3);
-
-            pcolor(F./1e6,h,iona_clean);
-            shading flat;
-
-            set(gca, 'XScale', 'log');
-            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filtered, average, Thr = %02d dB',...
-                  DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),dBthr));
-            ylabel('Virtual height, km');
-            xlabel('Sounding frequency, MHz');
-            xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
-            cb = colorbar('vert');
-            title(cb,'dB');
-    
-            % Export the figure to PNG
-            % exportgraphics(hFig1, outFullPathIonF, 'Resolution', 150);
-            print(hFig1, outFullPathIonF, '-dpng', '-r150');
-            fprintf('Saved image: %s\n', outFileNameIonF);
-        end
-
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        % Plotting filtered Phase distributions
-        if lFdis
-            clf(hFig2);
-            figure(2);
-            % set(0, 'CurrentFigure', hFig2);
-
-            % plot channel 1-2 Phase diagram 
-            subplot(2,3,1);
-            histogram(vec_no_nan12f*180/pi,-180:DPh:180, 'Normalization', 'probability');
-            hold on
-            plot([-90 -90 0 90 90],[0 0.25 NaN 0 0.25],'LineWidth',2,'LineStyle',':');
-            hold off
-            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filtered, Ch1-2(%s%s), Thr = %02d dB',...
-                   DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),...
-                   AntDirChar(antOrder(2)+1),AntDirChar(antOrder(1)+1),dBthr));
-            ylim([0, 0.25]);
-            xlim([-180, 180]);
-            xticks([-180 -135 -90 -45 0 45 90 135 180]);
-            grid on;
-    
-            % plot channel 2-3 Phase diagram 
-            subplot(2,3,4);
-            histogram(vec_no_nan23f*180/pi,-180:DPh:180, 'Normalization', 'probability');
-            hold on
-            plot([-90 -90 0 90 90],[0 0.25 NaN 0 0.25],'LineWidth',2,'LineStyle',':');
-            hold off
-            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filtered, Ch2-3(%s%s), Th=%02d dB',...
-                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),...
-                AntDirChar(antOrder(3)+1),AntDirChar(antOrder(2)+1),dBthr));
-            ylim([0, 0.25]);
-            xlim([-180, 180]);
-            xticks([-180 -135 -90 -45 0 45 90 135 180]);
-            grid on;
-    
-            % plot channel 3-4 Phase diagram 
-            subplot(2,3,2);
-            histogram(vec_no_nan34f*180/pi,-180:DPh:180, 'Normalization', 'probability');
-            hold on
-            plot([-90 -90 0 90 90],[0 0.25 NaN 0 0.25],'LineWidth',2,'LineStyle',':');
-            hold off
-            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filtered, Ch3-4(%s%s), Th=%02d dB',...
-                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),...
-                AntDirChar(antOrder(4)+1),AntDirChar(antOrder(3)+1),dBthr));
-            ylim([0, 0.25]);
-            xlim([-180, 180]);
-            xticks([-180 -135 -90 -45 0 45 90 135 180]);
-            grid on;
-    
-            % plot channel 4-1 Phase diagram 
-            subplot(2,3,5);
-            histogram(vec_no_nan41f*180/pi,-180:DPh:180, 'Normalization', 'probability');
-            hold on
-            plot([-90 -90 0 90 90],[0 0.25 NaN 0 0.25],'LineWidth',2,'LineStyle',':');
-            hold off
-            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filtered, Ch4-1(%s%s), Th=%02d dB',...
-                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),...
-                AntDirChar(antOrder(1)+1),AntDirChar(antOrder(4)+1),dBthr));
-            ylim([0, 0.25]);
-            xlim([-180, 180]);
-            xticks([-180 -135 -90 -45 0 45 90 135 180]);
-            grid on;
-    
-            % plot channel 1-3 Phase diagram 
-            subplot(2,3,3);
-            histogram(vec_no_nan13f*180/pi,-180:DPh:180, 'Normalization', 'probability');
-            hold on
-            plot([0 0],[0 0.25],'LineWidth',2,'LineStyle',':');
-            hold off
-            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filtered, Ch1-3(%s%s), Th=%02d dB',...
-                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),...
-                AntDirChar(antOrder(3)+1),AntDirChar(antOrder(1)+1),dBthr));
-            ylim([0, 0.25]);
-            xlim([-180, 180]);
-            xticks([-180 -135 -90 -45 0 45 90 135 180]);
-            grid on;
-    
-            % plot channel 2-4 Phase diagram 
-            subplot(2,3,6);
-            histogram(vec_no_nan24f*180/pi,-180:DPh:180, 'Normalization', 'probability');
-            hold on
-            plot([0 0],[0 0.25],'LineWidth',2,'LineStyle',':');
-            hold off
-            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filtered, Ch2-4(%s%s), Th=%02d dB',...
-                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),...
-                AntDirChar(antOrder(4)+1),AntDirChar(antOrder(2)+1),dBthr));
-            ylim([0, 0.25]);
-            xlim([-180, 180]);
-            xticks([-180 -135 -90 -45 0 45 90 135 180]);
-            grid on;
-            
-            % Export the figure to PNG 
-            % exportgraphics(hFig2, outFullPathDisF, 'Resolution', 300);
-            print(hFig2, outFullPathDisF, '-dpng', '-r150');
-            fprintf('Saved image: %s\n', outFileNameDisF);
-        end
-
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         % Plot original ionograms
-        if lion
-            % Clear window hFig1 content
-            clf(hFig3);
-            figure(3);
-            % set(0, 'CurrentFigure', hFig3);
 
-            % Apply 'jet' colormap
-            colormap(hFig3, jet);
+        % plot channel 1
+        subplot(4,5,1);
+        pcolor(F./1e6,h,ion1);
+        shading flat;
+        colormap(gca, jet);
+        set(gca, 'XScale', 'log');
+        title(sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s (%02ddB, orig)',...
+              DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(1)+1),dBthr));
+        ylabel('Virtual height, km');
+        xlabel('Sounding frequency, MHz');
+        xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
+        cb = colorbar('vert');
+        title(cb,'dB');
 
-            % plot channel 1
-            subplot(2,3,1);
-            pcolor(F./1e6,h,ion1);
-            shading flat;
-            set(gca, 'XScale', 'log');
-            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, original, ch(1)  = %s, Thr = %02d dB',...
-                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(1)+1),dBthr));
-            ylabel('Virtual height, km');
-            xlabel('Sounding frequency, MHz');
-            xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
-            cb = colorbar('vert');
-            title(cb,'dB');
+        % plot channel 2
+        subplot(4,5,2);
+        pcolor(F./1e6,h,ion2);
+        shading flat;
+        colormap(gca, jet);
+        set(gca, 'XScale', 'log');
+        title(sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s (%02ddB, orig)',...
+            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(2)+1),dBthr));
+        ylabel('Virtual height, km');
+        xlabel('Sounding frequency, MHz');
+        xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
+        cb = colorbar('vert');
+        title(cb,'dB');
 
-            % plot channel 2
-            subplot(2,3,4);
-            pcolor(F./1e6,h,ion2);
-            shading flat;
-            set(gca, 'XScale', 'log');
-            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, original, ch(2) = %s, Thr = %d dB',...
-                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(2)+1),dBthr));
-            ylabel('Virtual height, km');
-            xlabel('Sounding frequency, MHz');
-            xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
-            cb = colorbar('vert');
-            title(cb,'dB');
+        % plot channel 3
+        subplot(4,5,3);
+        pcolor(F./1e6,h,ion3);
+        shading flat;
+        colormap(gca, jet);
+        set(gca, 'XScale', 'log');
+        title(sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s (%02ddB, orig)',...
+            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(3)+1),dBthr));
+        ylabel('Virtual height, km');
+        xlabel('Sounding frequency, MHz');
+        xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
+        cb = colorbar('vert');
+        title(cb,'dB');
 
-            % plot channel 3
-            subplot(2,3,2);
-            pcolor(F./1e6,h,ion3);
-            shading flat;
-            set(gca, 'XScale', 'log');
-            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, original, ch(3) = %s, Thr = %d dB',...
-                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(3)+1),dBthr));
-            ylabel('Virtual height, km');
-            xlabel('Sounding frequency, MHz');
-            xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
-            cb = colorbar('vert');
-            title(cb,'dB');
+        % plot channel 4
+        subplot(4,5,4);
+        pcolor(F./1e6,h,ion4);
+        shading flat;
+        colormap(gca, jet);
+        set(gca, 'XScale', 'log');
+        title(sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s (%02ddB, orig)',...
+            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(4)+1),dBthr));
+        ylabel('Virtual height, km');
+        xlabel('Sounding frequency, MHz');
+        xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
+        cb = colorbar('vert');
+        title(cb,'dB');
 
-            % plot channel 4
-            subplot(2,3,5);
-            pcolor(F./1e6,h,ion4);
-            shading flat;
-            set(gca, 'XScale', 'log');
-            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, original, ch(4) = %s, Thr = %d dB',...
-                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(4)+1),dBthr));
-            ylabel('Virtual height, km');
-            xlabel('Sounding frequency, MHz');
-            xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
-            cb = colorbar('vert');
-            title(cb,'dB');
+        % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % Plot filtered ionograms
 
-            % plot channel average
-            subplot(2,3,3);
-            pcolor(F./1e6,h,iona);
-            shading flat;
-            set(gca, 'XScale', 'log');
-            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, original, average, Thr = %02d dB',...
-                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),dBthr));
-            ylabel('Virtual height, km');
-            xlabel('Sounding frequency, MHz');
-            xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
-            cb = colorbar('vert');
-            title(cb,'dB');
+        % plot channel 1
+        subplot(4,5,6);
+        pcolor(F./1e6,h,ion1_clean);
+        shading flat;
+        colormap(gca, jet);
+        set(gca, 'XScale', 'log');
+        title(sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s (%02ddB, fltr)',...
+            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(1)+1),dBthr));
+        ylabel('Virtual height, km');
+        xlabel('Sounding frequency, MHz');
+        xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
+        cb = colorbar('vert');
+        title(cb,'dB');
 
-            % Export the figure with to PNG
-            % exportgraphics(hFig3, outFullPathIon, 'Resolution', 300);
-            print(hFig3, outFullPathIon, '-dpng', '-r150');
-            fprintf('Saved image: %s\n', outFileNameIon);
-        end
+        % plot channel 2
+        subplot(4,5,7);
+        pcolor(F./1e6,h,ion2_clean);
+        shading flat;
+        colormap(gca, jet);
+        set(gca, 'XScale', 'log');
+        title(sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s (%02ddB, fltr)',...
+            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(2)+1),dBthr));
+        ylabel('Virtual height, km');
+        xlabel('Sounding frequency, MHz');
+        xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
+        cb = colorbar('vert');
+        title(cb,'dB');
 
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        % Plotting Phase distributions
-        if ldis
-            clf(hFig4);
-            figure(4);
-            % set(0, 'CurrentFigure', hFig4);
+        % plot channel 3
+        subplot(4,5,8);
+        pcolor(F./1e6,h,ion3_clean);
+        shading flat;
+        colormap(gca, jet);
+        set(gca, 'XScale', 'log');
+        title(sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s (%02ddB, fltr)',...
+            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(3)+1),dBthr));
+        ylabel('Virtual height, km');
+        xlabel('Sounding frequency, MHz');
+        xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
+        cb = colorbar('vert');
+        title(cb,'dB');
 
-            % plot channel 1-2 Phase diagram 
-            subplot(2,3,1);
-            histogram(vec_no_nan12*180/pi,-180:DPh:180, 'Normalization', 'probability');
-            hold on
-            plot([-90 -90 0 90 90],[0 0.25 NaN 0 0.25],'LineWidth',2,'LineStyle',':');
-            hold off
-            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, original, Ch1-2(%s%s), Thr = %02d dB',...
-                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),...
-                AntDirChar(antOrder(2)+1),AntDirChar(antOrder(1)+1),dBthr));
-            ylim([0, 0.25]);
-            xlim([-180, 180]);
-            xticks([-180 -135 -90 -45 0 45 90 135 180]);
-            grid on;
+        % plot channel 4
+        subplot(4,5,9);
+        pcolor(F./1e6,h,ion4_clean);
+        shading flat;
+        colormap(gca, jet);
+        set(gca, 'XScale', 'log');
+        title(sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s (%02ddB, fltr)',...
+            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(4)+1),dBthr));
+        ylabel('Virtual height, km');
+        xlabel('Sounding frequency, MHz');
+        xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
+        cb = colorbar('vert');
+        title(cb,'dB');
 
-            % plot channel 2-3 Phase diagram 
-            subplot(2,3,4);
-            histogram(vec_no_nan23*180/pi,-180:DPh:180, 'Normalization', 'probability');
-            hold on
-            plot([-90 -90 0 90 90],[0 0.25 NaN 0 0.25],'LineWidth',2,'LineStyle',':');
-            hold off
-            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, original, Ch2-3(%s%s), Th=%02d dB',...
-                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),...
-                AntDirChar(antOrder(3)+1),AntDirChar(antOrder(2)+1),dBthr));
-            ylim([0, 0.25]);
-            xlim([-180, 180]);
-            xticks([-180 -135 -90 -45 0 45 90 135 180]);
-            grid on;
+        % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % Plot original polarization ionograms
+ 
+        % plot channel 12
+        subplot(4,5,11);
+        pcolor(F./1e6,h,dPh12*180/pi);
+        shading flat;
+        colormap(gca, PionCmap);
+        set(gca, 'XScale', 'log');
+        title(sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s%s (%02ddB, pol orig)',...
+            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDirChar(antOrder(2)+1),AntDirChar(antOrder(1)+1),dBthr));
+        ylabel('Virtual height, km');
+        xlabel('Sounding frequency, MHz');
+        xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
+        cb = colorbar('vert');
+        title(cb,'POL');
 
-            % plot channel 3-4 Phase diagram 
-            subplot(2,3,2);
-            histogram(vec_no_nan34*180/pi,-180:DPh:180, 'Normalization', 'probability');
-            hold on
-            plot([-90 -90 0 90 90],[0 0.25 NaN 0 0.25],'LineWidth',2,'LineStyle',':');
-            hold off
-            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, original, Ch3-4(%s%s), Th=%02d dB',...
-                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),...
-                AntDirChar(antOrder(4)+1),AntDirChar(antOrder(3)+1),dBthr));
-            ylim([0, 0.25]);
-            xlim([-180, 180]);
-            xticks([-180 -135 -90 -45 0 45 90 135 180]);
-            grid on;
+        % plot channel 23
+        subplot(4,5,13);
+        pcolor(F./1e6,h,dPh23*180/pi);
+        shading flat;
+        colormap(gca, PionCmap);
+        set(gca, 'XScale', 'log');
+        title(sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s%s (%02ddB, pol orig)',...
+            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDirChar(antOrder(3)+1),AntDirChar(antOrder(2)+1),dBthr));
+        ylabel('Virtual height, km');
+        xlabel('Sounding frequency, MHz');
+        xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
+        cb = colorbar('vert');
+        title(cb,'POL');
 
-            % plot channel 4-1 Phase diagram 
-            subplot(2,3,5);
-            histogram(vec_no_nan41*180/pi,-180:DPh:180, 'Normalization', 'probability');
-            hold on
-            plot([-90 -90 0 90 90],[0 0.25 NaN 0 0.25],'LineWidth',2,'LineStyle',':');
-            hold off
-            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, original, Ch4-1(%s%s), Th=%02d dB',...
-                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),...
-                AntDirChar(antOrder(1)+1),AntDirChar(antOrder(4)+1),dBthr));
-            ylim([0, 0.25]);
-            xlim([-180, 180]);
-            xticks([-180 -135 -90 -45 0 45 90 135 180]);
-            grid on;
+        % plot channel 34
+        subplot(4,5,12);
+        pcolor(F./1e6,h,dPh34*180/pi);
+        shading flat;
+        colormap(gca, PionCmap);
+        set(gca, 'XScale', 'log');
+        title(sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s%s (%02ddB, pol orig)',...
+            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDirChar(antOrder(4)+1),AntDirChar(antOrder(3)+1),dBthr));
+        ylabel('Virtual height, km');
+        xlabel('Sounding frequency, MHz');
+        xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
+        cb = colorbar('vert');
+        title(cb,'POL');
 
-            % plot channel 1-3 Phase diagram 
-            subplot(2,3,3);
-            histogram(vec_no_nan13*180/pi,-180:DPh:180, 'Normalization', 'probability');
-            hold on
-            plot([0 0],[0 0.25],'LineWidth',2,'LineStyle',':');
-            hold off
-            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, original, Ch1-3(%s%s), Th=%02d dB',...
-                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),...
-                AntDirChar(antOrder(3)+1),AntDirChar(antOrder(1)+1),dBthr));
-            ylim([0, 0.25]);
-            xlim([-180, 180]);
-            xticks([-180 -135 -90 -45 0 45 90 135 180]);
-            grid on;
+        % plot channel 41
+        subplot(4,5,14);
+        pcolor(F./1e6,h,dPh41*180/pi);
+        shading flat;
+        colormap(gca, PionCmap);
+        set(gca, 'XScale', 'log');
+        title(sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s%s (%02ddB, pol orig)',...
+            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDirChar(antOrder(1)+1),AntDirChar(antOrder(4)+1),dBthr));
+        ylabel('Virtual height, km');
+        xlabel('Sounding frequency, MHz');
+        xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
+        cb = colorbar('vert');
+        title(cb,'POL');
 
-            % plot channel 2-4 Phase diagram 
-            subplot(2,3,6);
-            histogram(vec_no_nan24*180/pi,-180:DPh:180, 'Normalization', 'probability');
-            hold on
-            plot([0 0],[0 0.25],'LineWidth',2,'LineStyle',':');
-            hold off
-            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, original, Ch2-4(%s%s), Th=%02d dB',...
-                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),...
-                AntDirChar(antOrder(4)+1),AntDirChar(antOrder(2)+1),dBthr));
-            ylim([0, 0.25]);
-            xlim([-180, 180]);
-            xticks([-180 -135 -90 -45 0 45 90 135 180]);
-            grid on;
+        % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % Plot filtered polarization ionograms
 
-            % Export the figure to PNG
-            % exportgraphics(hFig4, outFullPathDis, 'Resolution', 300);
-            print(hFig4, outFullPathDis, '-dpng', '-r150');
-            fprintf('Saved image: %s\n', outFileNameDis);
-        end
+        % plot channel 12
+        subplot(4,5,16);
+        pcolor(F./1e6,h,dPh12f*180/pi);
+        shading flat;
+        colormap(gca, PionCmap);
+        set(gca, 'XScale', 'log');
+        title(sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s%s (%02ddB, pol fltr)',...
+            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDirChar(antOrder(2)+1),AntDirChar(antOrder(1)+1),dBthr));
+        ylabel('Virtual height, km');
+        xlabel('Sounding frequency, MHz');
+        xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
+        cb = colorbar('vert');
+        title(cb,'POL');
 
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        % Plot filtered polarization ionogram
-        if lPFion
-            % Clear window hFig1 content
-            clf(hFig5);
-            figure(5);
-            % set(0, 'CurrentFigure', hFig5);
+        % plot channel 23
+        subplot(4,5,18);
+        pcolor(F./1e6,h,dPh23f*180/pi);
+        shading flat;
+        colormap(gca, PionCmap);
+        set(gca, 'XScale', 'log');
+        title(sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s%s (%02ddB, pol fltr)',...
+            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDirChar(antOrder(3)+1),AntDirChar(antOrder(2)+1),dBthr));
+        ylabel('Virtual height, km');
+        xlabel('Sounding frequency, MHz');
+        xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
+        cb = colorbar('vert');
+        title(cb,'POL');
 
-            % Apply 'PionCmap' colormap
-            colormap(hFig5, PionCmap);
+        % plot channel 34
+        subplot(4,5,17);
+        pcolor(F./1e6,h,dPh34f*180/pi);
+        shading flat;
+        colormap(gca, PionCmap);
+        set(gca, 'XScale', 'log');
+        title(sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s%s (%02ddB, pol fltr)',...
+            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDirChar(antOrder(4)+1),AntDirChar(antOrder(3)+1),dBthr));
+        ylabel('Virtual height, km');
+        xlabel('Sounding frequency, MHz');
+        xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
+        cb = colorbar('vert');
+        title(cb,'POL');
 
-            % plot channel 12
-            subplot(2,3,1);
-            pcolor(F./1e6,h,dPh12f*180/pi);
-            shading flat;
-            set(gca, 'XScale', 'log');
-            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filtered, Ch1-2(%s%s), Thr = %02d dB',...
-                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDirChar(antOrder(2)+1),AntDirChar(antOrder(1)+1),dBthr));
-            ylabel('Virtual height, km');
-            xlabel('Sounding frequency, MHz');
-            xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
-            cb = colorbar('vert');
-            title(cb,'POL');
+        % plot channel 41
+        subplot(4,5,19);
+        pcolor(F./1e6,h,dPh41f*180/pi);
+        shading flat;
+        colormap(gca, PionCmap);
+        set(gca, 'XScale', 'log');
+        title(sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s%s (%02ddB, pol fltr)',...
+            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDirChar(antOrder(1)+1),AntDirChar(antOrder(4)+1),dBthr));
+        ylabel('Virtual height, km');
+        xlabel('Sounding frequency, MHz');
+        xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
+        cb = colorbar('vert');
+        title(cb,'POL');
 
-            % plot channel 23
-            subplot(2,3,4);
-            pcolor(F./1e6,h,dPh23f*180/pi);
-            shading flat;
-            set(gca, 'XScale', 'log');
-            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filtered, Ch2-3(%s%s), Thr = %d dB',...
-                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDirChar(antOrder(3)+1),AntDirChar(antOrder(2)+1),dBthr));
-            ylabel('Virtual height, km');
-            xlabel('Sounding frequency, MHz');
-            xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
-            cb = colorbar('vert');
-            title(cb,'POL');
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % Plotting filtered Phase distributions
 
-            % plot channel 34
-            subplot(2,3,2);
-            pcolor(F./1e6,h,dPh34f*180/pi);
-            shading flat;
-            set(gca, 'XScale', 'log');
-            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filtered, Ch3-4(%s%s), Thr = %d dB',...
-                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDirChar(antOrder(4)+1),AntDirChar(antOrder(3)+1),dBthr));
-            ylabel('Virtual height, km');
-            xlabel('Sounding frequency, MHz');
-            xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
-            cb = colorbar('vert');
-            title(cb,'POL');
+        % plot channel 1-2 Phase diagram 
+        subplot(4,5,5);
+        histogram(vec_no_nan12f*180/pi,-180:DPh:180, 'Normalization', 'probability');
+        hold on
+        plot([-90 -90 0 90 90],[0 0.25 NaN 0 0.25],'LineWidth',2,'LineStyle',':');
+        hold off
+        title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, %s%s, (%02d, fltr)',...
+               DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),...
+               AntDirChar(antOrder(2)+1),AntDirChar(antOrder(1)+1),dBthr));
+        ylim([0, 0.25]);
+        xlim([-180, 180]);
+        xticks([-180 -135 -90 -45 0 45 90 135 180]);
+        grid on;
 
-            % plot channel 41
-            subplot(2,3,5);
-            pcolor(F./1e6,h,dPh41f*180/pi);
-            shading flat;
-            set(gca, 'XScale', 'log');
-            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filtered, Ch4-1(%s%s), Thr = %d dB',...
-                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDirChar(antOrder(1)+1),AntDirChar(antOrder(4)+1),dBthr));
-            ylabel('Virtual height, km');
-            xlabel('Sounding frequency, MHz');
-            xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
-            cb = colorbar('vert');
-            title(cb,'POL');
+        % plot channel 2-3 Phase diagram 
+        subplot(4,5,15);
+        histogram(vec_no_nan23f*180/pi,-180:DPh:180, 'Normalization', 'probability');
+        hold on
+        plot([-90 -90 0 90 90],[0 0.25 NaN 0 0.25],'LineWidth',2,'LineStyle',':');
+        hold off
+        title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, %s%s, (%02d, fltr)',...
+            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),...
+            AntDirChar(antOrder(3)+1),AntDirChar(antOrder(2)+1),dBthr));
+        ylim([0, 0.25]);
+        xlim([-180, 180]);
+        xticks([-180 -135 -90 -45 0 45 90 135 180]);
+        grid on;
 
-            % Export the figure to PNG
-            % exportgraphics(hFig5, outFullPathIonPF, 'Resolution', 300);
-            print(hFig5, outFullPathIonPF, '-dpng', '-r150');
-            fprintf('Saved image: %s\n', outFileNameIonPF);
-        end
+        % plot channel 3-4 Phase diagram 
+        subplot(4,5,10);
+        histogram(vec_no_nan34f*180/pi,-180:DPh:180, 'Normalization', 'probability');
+        hold on
+        plot([-90 -90 0 90 90],[0 0.25 NaN 0 0.25],'LineWidth',2,'LineStyle',':');
+        hold off
+        title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, %s%s, (%02d, fltr)',...
+            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),...
+            AntDirChar(antOrder(4)+1),AntDirChar(antOrder(3)+1),dBthr));
+        ylim([0, 0.25]);
+        xlim([-180, 180]);
+        xticks([-180 -135 -90 -45 0 45 90 135 180]);
+        grid on;
 
+        % plot channel 4-1 Phase diagram 
+        subplot(4,5,20);
+        histogram(vec_no_nan41f*180/pi,-180:DPh:180, 'Normalization', 'probability');
+        hold on
+        plot([-90 -90 0 90 90],[0 0.25 NaN 0 0.25],'LineWidth',2,'LineStyle',':');
+        hold off
+        title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, %s%s, (%02d, fltr)',...
+            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),...
+            AntDirChar(antOrder(1)+1),AntDirChar(antOrder(4)+1),dBthr));
+        ylim([0, 0.25]);
+        xlim([-180, 180]);
+        xticks([-180 -135 -90 -45 0 45 90 135 180]);
+        grid on;
 
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        % Plot original polarization ionogram
-        if lPion
-            % Clear window hFig1 content
-            clf(hFig6);
-            figure(6);
-            % set(0, 'CurrentFigure', hFig6);
-
-            % Apply 'PionCmap' colormap
-            colormap(hFig6, PionCmap);
-
-            % plot channel 12
-            subplot(2,3,1);
-            pcolor(F./1e6,h,dPh12*180/pi);
-            shading flat;
-            set(gca, 'XScale', 'log');
-            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filtered, Ch1-2(%s%s), Thr = %02d dB',...
-                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDirChar(antOrder(2)+1),AntDirChar(antOrder(1)+1),dBthr));
-            ylabel('Virtual height, km');
-            xlabel('Sounding frequency, MHz');
-            xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
-            cb = colorbar('vert');
-            title(cb,'POL');
-
-            % plot channel 23
-            subplot(2,3,4);
-            pcolor(F./1e6,h,dPh23*180/pi);
-            shading flat;
-            set(gca, 'XScale', 'log');
-            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filtered, Ch2-3(%s%s), Thr = %d dB',...
-                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDirChar(antOrder(3)+1),AntDirChar(antOrder(2)+1),dBthr));
-            ylabel('Virtual height, km');
-            xlabel('Sounding frequency, MHz');
-            xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
-            cb = colorbar('vert');
-            title(cb,'POL');
-
-            % plot channel 34
-            subplot(2,3,2);
-            pcolor(F./1e6,h,dPh34*180/pi);
-            shading flat;
-            set(gca, 'XScale', 'log');
-            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filtered, Ch3-4(%s%s), Thr = %d dB',...
-                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDirChar(antOrder(4)+1),AntDirChar(antOrder(3)+1),dBthr));
-            ylabel('Virtual height, km');
-            xlabel('Sounding frequency, MHz');
-            xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
-            cb = colorbar('vert');
-            title(cb,'POL');
-
-            % plot channel 41
-            subplot(2,3,5);
-            pcolor(F./1e6,h,dPh41*180/pi);
-            shading flat;
-            set(gca, 'XScale', 'log');
-            title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, filtered, Ch4-1(%s%s), Thr = %d dB',...
-                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDirChar(antOrder(1)+1),AntDirChar(antOrder(4)+1),dBthr));
-            ylabel('Virtual height, km');
-            xlabel('Sounding frequency, MHz');
-            xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
-            cb = colorbar('vert');
-            title(cb,'POL');
-
-           % Export the figure to PNG
-           %  exportgraphics(hFig6, outFullPathIonP, 'Resolution', 300);
-           print(hFig6, outFullPathIonP, '-dpng', '-r150');
-           fprintf('Saved image: %s\n', outFileNameIonP);
-        end
+        % Export the figure with to PNG
+        set(hFig, 'PaperPositionMode', 'auto');
+        print(hFig, outFullPathIonA, '-dpng', '-r150');
+        fprintf('Saved image: %s (%05d of %05d)\n', outFileNameIonA, i, NmatF);
     
 end
 
+% Successful data processing
 disp('All files have been successfully processed and saved.');
 
+% Calculate and show running time
 toc;
