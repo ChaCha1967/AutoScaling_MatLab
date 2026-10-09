@@ -65,8 +65,8 @@ title(cb11, 'dB');
 title11 = title(ax11, 'Initializing...'); % Save the title handle
 
 hold(ax11, 'on');
-line1V = plot(ax11, NaN, NaN, 'k', 'LineWidth', 1);   % Save ScaleV line handle
-line1R = plot(ax11, NaN, NaN, 'k--', 'LineWidth', 1); % Save ScaleR line handle
+line11V = plot(ax11, NaN, NaN, 'k', 'LineWidth', 1);   % Save ScaleV line handle
+line11R = plot(ax11, NaN, NaN, 'k--', 'LineWidth', 1); % Save ScaleR line handle
 hold(ax11, 'off');
 
 % ---------------------------------------------------------
@@ -85,8 +85,8 @@ title(cb12, 'dB');
 title12 = title(ax12, 'Initializing...'); % Save the title handle
 
 hold(ax12, 'on');
-line1V = plot(ax12, NaN, NaN, 'k', 'LineWidth', 1);   % Save ScaleV line handle
-line1R = plot(ax12, NaN, NaN, 'k--', 'LineWidth', 1); % Save ScaleR line handle
+line12V = plot(ax12, NaN, NaN, 'k', 'LineWidth', 1);   % Save ScaleV line handle
+line12R = plot(ax12, NaN, NaN, 'k--', 'LineWidth', 1); % Save ScaleR line handle
 hold(ax12, 'off');
 
 % ---------------------------------------------------------
@@ -105,8 +105,8 @@ title(cb13, 'dB');
 title13 = title(ax13, 'Initializing...'); % Save the title handle
 
 hold(ax13, 'on');
-line1V = plot(ax13, NaN, NaN, 'k', 'LineWidth', 1);   % Save ScaleV line handle
-line1R = plot(ax13, NaN, NaN, 'k--', 'LineWidth', 1); % Save ScaleR line handle
+line13V = plot(ax13, NaN, NaN, 'k', 'LineWidth', 1);   % Save ScaleV line handle
+line13R = plot(ax13, NaN, NaN, 'k--', 'LineWidth', 1); % Save ScaleR line handle
 hold(ax13, 'off');
 
 % ---------------------------------------------------------
@@ -125,8 +125,8 @@ title(cb14, 'dB');
 title14 = title(ax14, 'Initializing...'); % Save the title handle
 
 hold(ax14, 'on');
-line1V = plot(ax14, NaN, NaN, 'k', 'LineWidth', 1);   % Save ScaleV line handle
-line1R = plot(ax14, NaN, NaN, 'k--', 'LineWidth', 1); % Save ScaleR line handle
+line14V = plot(ax14, NaN, NaN, 'k', 'LineWidth', 1);   % Save ScaleV line handle
+line14R = plot(ax14, NaN, NaN, 'k--', 'LineWidth', 1); % Save ScaleR line handle
 hold(ax14, 'off');
 
 % ---------------------------------------------------------
@@ -161,8 +161,8 @@ title(cb21, 'dB');
 title21 = title(ax21, 'Initializing...'); % Save the title handle
 
 hold(ax21, 'on');
-line1V = plot(ax21, NaN, NaN, 'k', 'LineWidth', 1);   % Save ScaleV line handle
-line1R = plot(ax21, NaN, NaN, 'k--', 'LineWidth', 1); % Save ScaleR line handle
+line21V = plot(ax21, NaN, NaN, 'k', 'LineWidth', 1);   % Save ScaleV line handle
+line21R = plot(ax21, NaN, NaN, 'k--', 'LineWidth', 1); % Save ScaleR line handle
 hold(ax21, 'off');
 
 % ---------------------------------------------------------
@@ -181,8 +181,8 @@ title(cb22, 'dB');
 title22 = title(ax22, 'Initializing...'); % Save the title handle
 
 hold(ax22, 'on');
-line1V = plot(ax22, NaN, NaN, 'k', 'LineWidth', 1);   % Save ScaleV line handle
-line1R = plot(ax22, NaN, NaN, 'k--', 'LineWidth', 1); % Save ScaleR line handle
+line22V = plot(ax22, NaN, NaN, 'k', 'LineWidth', 1);   % Save ScaleV line handle
+line22R = plot(ax22, NaN, NaN, 'k--', 'LineWidth', 1); % Save ScaleR line handle
 hold(ax22, 'off');
 
 % ---------------------------------------------------------
@@ -201,8 +201,8 @@ title(cb23, 'dB');
 title23 = title(ax23, 'Initializing...'); % Save the title handle
 
 hold(ax23, 'on');
-line1V = plot(ax23, NaN, NaN, 'k', 'LineWidth', 1);   % Save ScaleV line handle
-line1R = plot(ax23, NaN, NaN, 'k--', 'LineWidth', 1); % Save ScaleR line handle
+line23V = plot(ax23, NaN, NaN, 'k', 'LineWidth', 1);   % Save ScaleV line handle
+line23R = plot(ax23, NaN, NaN, 'k--', 'LineWidth', 1); % Save ScaleR line handle
 hold(ax23, 'off');
 
 % ---------------------------------------------------------
@@ -221,24 +221,24 @@ title(cb24, 'dB');
 title24 = title(ax24, 'Initializing...'); % Save the title handle
 
 hold(ax24, 'on');
-line1V = plot(ax24, NaN, NaN, 'k', 'LineWidth', 1);   % Save ScaleV line handle
-line1R = plot(ax24, NaN, NaN, 'k--', 'LineWidth', 1); % Save ScaleR line handle
+line24V = plot(ax24, NaN, NaN, 'k', 'LineWidth', 1);   % Save ScaleV line handle
+line24R = plot(ax24, NaN, NaN, 'k--', 'LineWidth', 1); % Save ScaleR line handle
 hold(ax24, 'off');
 
 % ---------------------------------------------------------
 % PRE-BUILD SUBPLOT 10: Filtered Phase distribution 2-3
 % ---------------------------------------------------------
-ax15 = subplot(4, 5, 10);
+ax25 = subplot(4, 5, 10);
 % Save the histogram handle
-hist15 = histogram(ax15, [], -180:DPh:180, 'Normalization', 'probability'); 
-hold(ax15, 'on');
-plot(ax15, [-90 -90 0 90 90], [0 0.25 NaN 0 0.25], 'LineWidth', 2, 'LineStyle', ':');
-hold(ax15, 'off');
-ylim(ax15, [0, 0.25]);
-xlim(ax15, [-180, 180]);
-xticks(ax15, [-180 -135 -90 -45 0 45 90 135 180]);
-grid(ax15, 'on');
-title25 = title(ax15, 'Initializing...'); % Save the title handle
+hist25 = histogram(ax25, [], -180:DPh:180, 'Normalization', 'probability'); 
+hold(ax25, 'on');
+plot(ax25, [-90 -90 0 90 90], [0 0.25 NaN 0 0.25], 'LineWidth', 2, 'LineStyle', ':');
+hold(ax25, 'off');
+ylim(ax25, [0, 0.25]);
+xlim(ax25, [-180, 180]);
+xticks(ax25, [-180 -135 -90 -45 0 45 90 135 180]);
+grid(ax25, 'on');
+title25 = title(ax25, 'Initializing...'); % Save the title handle
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % ---------------------------------------------------------
@@ -247,18 +247,18 @@ title25 = title(ax15, 'Initializing...'); % Save the title handle
 ax31 = subplot(4, 5, 11);
 img31 = pcolor(ax31, dummy_X, dummy_Y, dummy_C); % Save the surface handle
 shading(ax31, 'flat');
-colormap(ax31, jet);
+colormap(ax31, PionCmap);
 set(ax31, 'XScale', 'log');
 xticks(ax31, [1 2 3 4 5 6 7 8 9 10 12 15 19]);
 ylabel(ax31, 'Virtual height, km');
 xlabel(ax31, 'Sounding frequency, MHz');
 cb31 = colorbar(ax31, 'vert');
-title(cb31, 'dB');
+title(cb31, 'POL');
 title31 = title(ax31, 'Initializing...'); % Save the title handle
 
 hold(ax31, 'on');
-line1V = plot(ax31, NaN, NaN, 'k', 'LineWidth', 1);   % Save ScaleV line handle
-line1R = plot(ax31, NaN, NaN, 'k--', 'LineWidth', 1); % Save ScaleR line handle
+line31V = plot(ax31, NaN, NaN, 'k', 'LineWidth', 1);   % Save ScaleV line handle
+line31R = plot(ax31, NaN, NaN, 'k--', 'LineWidth', 1); % Save ScaleR line handle
 hold(ax31, 'off');
 
 % ---------------------------------------------------------
@@ -267,18 +267,18 @@ hold(ax31, 'off');
 ax32 = subplot(4, 5, 12);
 img32 = pcolor(ax32, dummy_X, dummy_Y, dummy_C); % Save the surface handle
 shading(ax32, 'flat');
-colormap(ax32, jet);
+colormap(ax32, PionCmap);
 set(ax32, 'XScale', 'log');
 xticks(ax32, [1 2 3 4 5 6 7 8 9 10 12 15 19]);
 ylabel(ax32, 'Virtual height, km');
 xlabel(ax32, 'Sounding frequency, MHz');
 cb32 = colorbar(ax32, 'vert');
-title(cb32, 'dB');
+title(cb32, 'POL');
 title32 = title(ax32, 'Initializing...'); % Save the title handle
 
 hold(ax32, 'on');
-line1V = plot(ax32, NaN, NaN, 'k', 'LineWidth', 1);   % Save ScaleV line handle
-line1R = plot(ax32, NaN, NaN, 'k--', 'LineWidth', 1); % Save ScaleR line handle
+line32V = plot(ax32, NaN, NaN, 'k', 'LineWidth', 1);   % Save ScaleV line handle
+line32R = plot(ax32, NaN, NaN, 'k--', 'LineWidth', 1); % Save ScaleR line handle
 hold(ax32, 'off');
 
 % ---------------------------------------------------------
@@ -286,18 +286,18 @@ hold(ax32, 'off');
 ax33 = subplot(4, 5, 13);
 img33 = pcolor(ax33, dummy_X, dummy_Y, dummy_C); % Save the surface handle
 shading(ax33, 'flat');
-colormap(ax33, jet);
+colormap(ax33, PionCmap);
 set(ax33, 'XScale', 'log');
 xticks(ax33, [1 2 3 4 5 6 7 8 9 10 12 15 19]);
 ylabel(ax33, 'Virtual height, km');
 xlabel(ax33, 'Sounding frequency, MHz');
 cb33 = colorbar(ax33, 'vert');
-title(cb33, 'dB');
+title(cb33, 'POL');
 title33 = title(ax33, 'Initializing...'); % Save the title handle
 
 hold(ax33, 'on');
-line1V = plot(ax33, NaN, NaN, 'k', 'LineWidth', 1);   % Save ScaleV line handle
-line1R = plot(ax33, NaN, NaN, 'k--', 'LineWidth', 1); % Save ScaleR line handle
+line33V = plot(ax33, NaN, NaN, 'k', 'LineWidth', 1);   % Save ScaleV line handle
+line33R = plot(ax33, NaN, NaN, 'k--', 'LineWidth', 1); % Save ScaleR line handle
 hold(ax33, 'off');
 
 % ---------------------------------------------------------
@@ -306,18 +306,18 @@ hold(ax33, 'off');
 ax34 = subplot(4, 5, 14);
 img34 = pcolor(ax34, dummy_X, dummy_Y, dummy_C); % Save the surface handle
 shading(ax34, 'flat');
-colormap(ax34, jet);
+colormap(ax34, PionCmap);
 set(ax34, 'XScale', 'log');
 xticks(ax34, [1 2 3 4 5 6 7 8 9 10 12 15 19]);
 ylabel(ax34, 'Virtual height, km');
 xlabel(ax34, 'Sounding frequency, MHz');
 cb34 = colorbar(ax34, 'vert');
-title(cb34, 'dB');
+title(cb34, 'POL');
 title34 = title(ax34, 'Initializing...'); % Save the title handle
 
 hold(ax34, 'on');
-line1V = plot(ax34, NaN, NaN, 'k', 'LineWidth', 1);   % Save ScaleV line handle
-line1R = plot(ax34, NaN, NaN, 'k--', 'LineWidth', 1); % Save ScaleR line handle
+line34V = plot(ax34, NaN, NaN, 'k', 'LineWidth', 1);   % Save ScaleV line handle
+line34R = plot(ax34, NaN, NaN, 'k--', 'LineWidth', 1); % Save ScaleR line handle
 hold(ax34, 'off');
 
 % ---------------------------------------------------------
@@ -342,18 +342,18 @@ title35 = title(ax35, 'Initializing...'); % Save the title handle
 ax41 = subplot(4, 5, 16);
 img41 = pcolor(ax41, dummy_X, dummy_Y, dummy_C); % Save the surface handle
 shading(ax41, 'flat');
-colormap(ax41, jet);
+colormap(ax41, PionCmap);
 set(ax41, 'XScale', 'log');
 xticks(ax41, [1 2 3 4 5 6 7 8 9 10 12 15 19]);
 ylabel(ax41, 'Virtual height, km');
 xlabel(ax41, 'Sounding frequency, MHz');
 cb41 = colorbar(ax41, 'vert');
-title(cb41, 'dB');
+title(cb41, 'POL');
 title41 = title(ax41, 'Initializing...'); % Save the title handle
 
 hold(ax41, 'on');
-line1V = plot(ax41, NaN, NaN, 'k', 'LineWidth', 1);   % Save ScaleV line handle
-line1R = plot(ax41, NaN, NaN, 'k--', 'LineWidth', 1); % Save ScaleR line handle
+line41V = plot(ax41, NaN, NaN, 'k', 'LineWidth', 1);   % Save ScaleV line handle
+line41R = plot(ax41, NaN, NaN, 'k--', 'LineWidth', 1); % Save ScaleR line handle
 hold(ax41, 'off');
 
 % ---------------------------------------------------------
@@ -362,18 +362,18 @@ hold(ax41, 'off');
 ax42 = subplot(4, 5, 17);
 img42 = pcolor(ax42, dummy_X, dummy_Y, dummy_C); % Save the surface handle
 shading(ax42, 'flat');
-colormap(ax42, jet);
+colormap(ax42, PionCmap);
 set(ax42, 'XScale', 'log');
 xticks(ax42, [1 2 3 4 5 6 7 8 9 10 12 15 19]);
 ylabel(ax42, 'Virtual height, km');
 xlabel(ax42, 'Sounding frequency, MHz');
 cb42 = colorbar(ax42, 'vert');
-title(cb42, 'dB');
+title(cb42, 'POL');
 title42 = title(ax42, 'Initializing...'); % Save the title handle
 
 hold(ax42, 'on');
-line1V = plot(ax42, NaN, NaN, 'k', 'LineWidth', 1);   % Save ScaleV line handle
-line1R = plot(ax42, NaN, NaN, 'k--', 'LineWidth', 1); % Save ScaleR line handle
+line42V = plot(ax42, NaN, NaN, 'k', 'LineWidth', 1);   % Save ScaleV line handle
+line42R = plot(ax42, NaN, NaN, 'k--', 'LineWidth', 1); % Save ScaleR line handle
 hold(ax42, 'off');
 
 % ---------------------------------------------------------
@@ -382,18 +382,18 @@ hold(ax42, 'off');
 ax43 = subplot(4, 5, 18);
 img43 = pcolor(ax43, dummy_X, dummy_Y, dummy_C); % Save the surface handle
 shading(ax43, 'flat');
-colormap(ax43, jet);
+colormap(ax43, PionCmap);
 set(ax43, 'XScale', 'log');
 xticks(ax43, [1 2 3 4 5 6 7 8 9 10 12 15 19]);
 ylabel(ax43, 'Virtual height, km');
 xlabel(ax43, 'Sounding frequency, MHz');
 cb43 = colorbar(ax43, 'vert');
-title(cb43, 'dB');
+title(cb43, 'POL');
 title43 = title(ax43, 'Initializing...'); % Save the title handle
 
 hold(ax43, 'on');
-line1V = plot(ax43, NaN, NaN, 'k', 'LineWidth', 1);   % Save ScaleV line handle
-line1R = plot(ax43, NaN, NaN, 'k--', 'LineWidth', 1); % Save ScaleR line handle
+line43V = plot(ax43, NaN, NaN, 'k', 'LineWidth', 1);   % Save ScaleV line handle
+line43R = plot(ax43, NaN, NaN, 'k--', 'LineWidth', 1); % Save ScaleR line handle
 hold(ax43, 'off');
 
 % ---------------------------------------------------------
@@ -402,18 +402,18 @@ hold(ax43, 'off');
 ax44 = subplot(4, 5, 19);
 img44 = pcolor(ax44, dummy_X, dummy_Y, dummy_C); % Save the surface handle
 shading(ax44, 'flat');
-colormap(ax44, jet);
+colormap(ax44, PionCmap);
 set(ax44, 'XScale', 'log');
 xticks(ax44, [1 2 3 4 5 6 7 8 9 10 12 15 19]);
 ylabel(ax44, 'Virtual height, km');
 xlabel(ax44, 'Sounding frequency, MHz');
 cb44 = colorbar(ax44, 'vert');
-title(cb44, 'dB');
+title(cb44, 'POL');
 title44 = title(ax44, 'Initializing...'); % Save the title handle
 
 hold(ax44, 'on');
-line1V = plot(ax44, NaN, NaN, 'k', 'LineWidth', 1);   % Save ScaleV line handle
-line1R = plot(ax44, NaN, NaN, 'k--', 'LineWidth', 1); % Save ScaleR line handle
+line44V = plot(ax44, NaN, NaN, 'k', 'LineWidth', 1);   % Save ScaleV line handle
+line44R = plot(ax44, NaN, NaN, 'k--', 'LineWidth', 1); % Save ScaleR line handle
 hold(ax44, 'off');
 
 % ---------------------------------------------------------
@@ -650,399 +650,331 @@ for i = 1:length(fileList)
         % PROCESSING FINISHED
         % PLOT DATA BEGIN
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        freq_MHz = F ./ 1e6;
+        % Pre-allocate data on first run of loop 
+        if i==1
+            Z_zeros = zeros(size(ion1)); 
+            freq_MHz = F ./ 1e6;
+
+            % Force the axes limits to match the new real data boundaries
+            FrLim = [min(freq_MHz) max(freq_MHz)];
+            hLim = [min(h) max(h)];
+            set(ax11, 'XLim', FrLim,'YLim', hLim);
+            set(ax12, 'XLim', FrLim,'YLim', hLim);
+            set(ax13, 'XLim', FrLim,'YLim', hLim);
+            set(ax14, 'XLim', FrLim,'YLim', hLim);
+            set(ax21, 'XLim', FrLim,'YLim', hLim);
+            set(ax22, 'XLim', FrLim,'YLim', hLim);
+            set(ax23, 'XLim', FrLim,'YLim', hLim);
+            set(ax24, 'XLim', FrLim,'YLim', hLim);
+            set(ax31, 'XLim', FrLim,'YLim', hLim);
+            set(ax32, 'XLim', FrLim,'YLim', hLim);
+            set(ax33, 'XLim', FrLim,'YLim', hLim);
+            set(ax34, 'XLim', FrLim,'YLim', hLim);
+            set(ax41, 'XLim', FrLim,'YLim', hLim);
+            set(ax42, 'XLim', FrLim,'YLim', hLim);
+            set(ax43, 'XLim', FrLim,'YLim', hLim);
+            set(ax44, 'XLim', FrLim,'YLim', hLim);
+        end
 
         % % Clear the current content of the figure
         % clf(hFig);
         % % Set hFig as the active figure for drawing without forcing it to pop up
         % set(0, 'CurrentFigure', hFig);
 
-        % ---------------------------------------------------------
-        % UPDATE SUBPLOT 1
-        % ---------------------------------------------------------
-        % Update the pcolor matrix and its axis limits
-        set(img11, 'XData', freq_MHz, 'YData', h, 'CData', ion1);
-
-        % Update the scaling lines
-        set(line1V, 'XData', ScaleV(:,1), 'YData', ScaleV(:,2));
-        set(line1R, 'XData', ScaleR(:,1), 'YData', ScaleR(:,2));
-
-        % Update the specific title string
-        title11.String = sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s (%02ddB, orig)',...
-            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(1)+1),dBthr);        
- 
         % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         % Plot original ionograms
 
-        % % plot channel 1
-        % subplot(4,5,1);
-        % pcolor(F./1e6,h,ion1);
-        % shading flat;
-        % colormap(gca, jet);
-        % hold on;
-        % plot(ScaleV(:,1),ScaleV(:,2), 'k', 'LineWidth', 1);
-        % plot(ScaleR(:,1),ScaleR(:,2), 'k--', 'LineWidth', 1);
-        % hold off;
-        % set(gca, 'XScale', 'log');
-        % title(sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s (%02ddB, orig)',...
-        %       DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(1)+1),dBthr));
-        % ylabel('Virtual height, km');
-        % xlabel('Sounding frequency, MHz');
-        % xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
-        % cb = colorbar('vert');
-        % title(cb,'dB');
+        % =========================================================
+        % UPDATE DATA IN EXISTING UI OBJECTS
+        % =========================================================
+        % ---------------------------------------------------------
+        % UPDATE SUBPLOT 1 (Channel 1, original)
+        % ---------------------------------------------------------
+        % Update the pcolor surface with new X, Y, Z, and Color data
+        set(img11, 'XData', freq_MHz, ...
+            'YData', h, ...
+            'ZData', Z_zeros, ...
+            'CData', ion1);
+        % Update scaling lines (Virtual and Real heights)
+        set(line11V, 'XData', ScaleV(:,1), 'YData', ScaleV(:,2));
+        set(line11R, 'XData', ScaleR(:,1), 'YData', ScaleR(:,2));
+        % Update the specific title string
+        title11.String = sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s (%02ddB, orig)',...
+            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(1)+1),dBthr);
 
-        % plot channel 2
-        subplot(4,5,2);
-        pcolor(F./1e6,h,ion2);
-        shading flat;
-        hold on;
-        plot(ScaleV(:,1),ScaleV(:,2), 'k', 'LineWidth', 1);
-        plot(ScaleR(:,1),ScaleR(:,2), 'k--', 'LineWidth', 1);
-        hold off;
-        colormap(gca, jet);
-        set(gca, 'XScale', 'log');
-        title(sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s (%02ddB, orig)',...
-            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(2)+1),dBthr));
-        ylabel('Virtual height, km');
-        xlabel('Sounding frequency, MHz');
-        xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
-        cb = colorbar('vert');
-        title(cb,'dB');
+        % ---------------------------------------------------------
+        % UPDATE SUBPLOT 2 (Channel 2, original)
+        % ---------------------------------------------------------
+        % Update the pcolor surface with new X, Y, Z, and Color data
+        set(img12, 'XData', freq_MHz, ...
+            'YData', h, ...
+            'ZData', Z_zeros, ...
+            'CData', ion2);
+        % Update scaling lines (Virtual and Real heights)
+        set(line12V, 'XData', ScaleV(:,1), 'YData', ScaleV(:,2));
+        set(line12R, 'XData', ScaleR(:,1), 'YData', ScaleR(:,2));
+        % Update the specific title string
+        title12.String = sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s (%02ddB, orig)',...
+            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(2)+1),dBthr);
 
-        % plot channel 3
-        subplot(4,5,3);
-        pcolor(F./1e6,h,ion3);
-        shading flat;
-        colormap(gca, jet);
-        hold on;
-        plot(ScaleV(:,1),ScaleV(:,2), 'k', 'LineWidth', 1);
-        plot(ScaleR(:,1),ScaleR(:,2), 'k--', 'LineWidth', 1);
-        hold off;
-        set(gca, 'XScale', 'log');
-        title(sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s (%02ddB, orig)',...
-            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(3)+1),dBthr));
-        ylabel('Virtual height, km');
-        xlabel('Sounding frequency, MHz');
-        xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
-        cb = colorbar('vert');
-        title(cb,'dB');
+        % ---------------------------------------------------------
+        % UPDATE SUBPLOT 3 (Channel 3, original)
+        % ---------------------------------------------------------
+        % Update the pcolor surface with new X, Y, Z, and Color data
+        set(img13, 'XData', freq_MHz, ...
+            'YData', h, ...
+            'ZData', Z_zeros, ...
+            'CData', ion3);
+        % Update scaling lines (Virtual and Real heights)
+        set(line13V, 'XData', ScaleV(:,1), 'YData', ScaleV(:,2));
+        set(line13R, 'XData', ScaleR(:,1), 'YData', ScaleR(:,2));
+        % Update the specific title string
+        title13.String = sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s (%02ddB, orig)',...
+            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(3)+1),dBthr);
 
-        % plot channel 4
-        subplot(4,5,4);
-        pcolor(F./1e6,h,ion4);
-        shading flat;
-        colormap(gca, jet);
-        hold on;
-        plot(ScaleV(:,1),ScaleV(:,2), 'k', 'LineWidth', 1);
-        plot(ScaleR(:,1),ScaleR(:,2), 'k--', 'LineWidth', 1);
-        hold off;
-        set(gca, 'XScale', 'log');
-        title(sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s (%02ddB, orig)',...
-            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(4)+1),dBthr));
-        ylabel('Virtual height, km');
-        xlabel('Sounding frequency, MHz');
-        xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
-        cb = colorbar('vert');
-        title(cb,'dB');
+        % ---------------------------------------------------------
+        % UPDATE SUBPLOT 4 (Channel 4, original)
+        % ---------------------------------------------------------
+        % Update the pcolor surface with new X, Y, Z, and Color data
+        set(img14, 'XData', freq_MHz, ...
+            'YData', h, ...
+            'ZData', Z_zeros, ...
+            'CData', ion4);
+        % Update scaling lines (Virtual and Real heights)
+        set(line14V, 'XData', ScaleV(:,1), 'YData', ScaleV(:,2));
+        set(line14R, 'XData', ScaleR(:,1), 'YData', ScaleR(:,2));
+        % Update the specific title string
+        title14.String = sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s (%02ddB, orig)',...
+            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(4)+1),dBthr);
 
-        % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        % Plot filtered ionograms
+        % ---------------------------------------------------------
+        % UPDATE SUBPLOT 6 (Channel 1, filtered)
+        % ---------------------------------------------------------
+        % Update the pcolor surface with new X, Y, Z, and Color data
+        set(img21, 'XData', freq_MHz, ...
+            'YData', h, ...
+            'ZData', Z_zeros, ...
+            'CData', ion1_clean);
+        % Update scaling lines (Virtual and Real heights)
+        set(line21V, 'XData', ScaleV(:,1), 'YData', ScaleV(:,2));
+        set(line21R, 'XData', ScaleR(:,1), 'YData', ScaleR(:,2));
+        % Update the specific title string
+        title21.String = sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s (%02ddB, fltr)',...
+            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(1)+1),dBthr);
 
-        % plot channel 1
-        subplot(4,5,6);
-        pcolor(F./1e6,h,ion1_clean);
-        shading flat;
-        colormap(gca, jet);
-        hold on;
-        plot(ScaleV(:,1),ScaleV(:,2), 'k', 'LineWidth', 1);
-        plot(ScaleR(:,1),ScaleR(:,2), 'k--', 'LineWidth', 1);
-        hold off;
-        set(gca, 'XScale', 'log');
-        title(sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s (%02ddB, fltr)',...
-            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(1)+1),dBthr));
-        ylabel('Virtual height, km');
-        xlabel('Sounding frequency, MHz');
-        xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
-        cb = colorbar('vert');
-        title(cb,'dB');
+        % ---------------------------------------------------------
+        % UPDATE SUBPLOT 7 (Channel 2, filtered)
+        % ---------------------------------------------------------
+        % Update the pcolor surface with new X, Y, Z, and Color data
+        set(img22, 'XData', freq_MHz, ...
+            'YData', h, ...
+            'ZData', Z_zeros, ...
+            'CData', ion2_clean);
+        % Update scaling lines (Virtual and Real heights)
+        set(line22V, 'XData', ScaleV(:,1), 'YData', ScaleV(:,2));
+        set(line22R, 'XData', ScaleR(:,1), 'YData', ScaleR(:,2));
+        % Update the specific title string
+        title22.String = sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s (%02ddB, fltr)',...
+            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(2)+1),dBthr);
 
-        % plot channel 2
-        subplot(4,5,7);
-        pcolor(F./1e6,h,ion2_clean);
-        shading flat;
-        colormap(gca, jet);
-        hold on;
-        plot(ScaleV(:,1),ScaleV(:,2), 'k', 'LineWidth', 1);
-        plot(ScaleR(:,1),ScaleR(:,2), 'k--', 'LineWidth', 1);
-        hold off;
-        set(gca, 'XScale', 'log');
-        title(sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s (%02ddB, fltr)',...
-            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(2)+1),dBthr));
-        ylabel('Virtual height, km');
-        xlabel('Sounding frequency, MHz');
-        xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
-        cb = colorbar('vert');
-        title(cb,'dB');
+        % ---------------------------------------------------------
+        % UPDATE SUBPLOT 8 (Channel 3, original)
+        % ---------------------------------------------------------
+        % Update the pcolor surface with new X, Y, Z, and Color data
+        set(img23, 'XData', freq_MHz, ...
+            'YData', h, ...
+            'ZData', Z_zeros, ...
+            'CData', ion3_clean);
+        % Update scaling lines (Virtual and Real heights)
+        set(line23V, 'XData', ScaleV(:,1), 'YData', ScaleV(:,2));
+        set(line23R, 'XData', ScaleR(:,1), 'YData', ScaleR(:,2));
+        % Update the specific title string
+        title23.String = sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s (%02ddB, fltr)',...
+            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(3)+1),dBthr);
 
-        % plot channel 3
-        subplot(4,5,8);
-        pcolor(F./1e6,h,ion3_clean);
-        shading flat;
-        colormap(gca, jet);
-        hold on;
-        plot(ScaleV(:,1),ScaleV(:,2), 'k', 'LineWidth', 1);
-        plot(ScaleR(:,1),ScaleR(:,2), 'k--', 'LineWidth', 1);
-        hold off;
-        set(gca, 'XScale', 'log');
-        title(sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s (%02ddB, fltr)',...
-            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(3)+1),dBthr));
-        ylabel('Virtual height, km');
-        xlabel('Sounding frequency, MHz');
-        xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
-        cb = colorbar('vert');
-        title(cb,'dB');
+        % ---------------------------------------------------------
+        % UPDATE SUBPLOT 9 (Channel 4, filtered)
+        % ---------------------------------------------------------
+        % Update the pcolor surface with new X, Y, Z, and Color data
+        set(img24, 'XData', freq_MHz, ...
+            'YData', h, ...
+            'ZData', Z_zeros, ...
+            'CData', ion4_clean);
+        % Update scaling lines (Virtual and Real heights)
+        set(line24V, 'XData', ScaleV(:,1), 'YData', ScaleV(:,2));
+        set(line24R, 'XData', ScaleR(:,1), 'YData', ScaleR(:,2));
+        % Update the specific title string
+        title24.String = sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s (%02ddB, fltr)',...
+            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(4)+1),dBthr);
 
-        % plot channel 4
-        subplot(4,5,9);
-        pcolor(F./1e6,h,ion4_clean);
-        shading flat;
-        colormap(gca, jet);
-        hold on;
-        plot(ScaleV(:,1),ScaleV(:,2), 'k', 'LineWidth', 1);
-        plot(ScaleR(:,1),ScaleR(:,2), 'k--', 'LineWidth', 1);
-        hold off;
-        set(gca, 'XScale', 'log');
-        title(sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s (%02ddB, fltr)',...
-            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(4)+1),dBthr));
-        ylabel('Virtual height, km');
-        xlabel('Sounding frequency, MHz');
-        xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
-        cb = colorbar('vert');
-        title(cb,'dB');
+        % ---------------------------------------------------------
+        % UPDATE SUBPLOT 11 (Channel 1-2, original)
+        % ---------------------------------------------------------
+        % Update the pcolor surface with new X, Y, Z, and Color data
+        set(img31, 'XData', freq_MHz, ...
+            'YData', h, ...
+            'ZData', Z_zeros, ...
+            'CData', dPh12*180/pi);
+        % Update scaling lines (Virtual and Real heights)
+        set(line31V, 'XData', ScaleV(:,1), 'YData', ScaleV(:,2));
+        set(line31R, 'XData', ScaleR(:,1), 'YData', ScaleR(:,2));
+        % Update the specific title string
+        title31.String = sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s%s (%02ddB, pol orig)',...
+        DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDirChar(antOrder(2)+1),AntDirChar(antOrder(1)+1),dBthr);
 
-        % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        % Plot original polarization ionograms
- 
-        % plot channel 12
-        subplot(4,5,11);
-        pcolor(F./1e6,h,dPh12*180/pi);
-        shading flat;
-        colormap(gca, PionCmap);
-        hold on;
-        plot(ScaleV(:,1),ScaleV(:,2), 'k', 'LineWidth', 1);
-        plot(ScaleR(:,1),ScaleR(:,2), 'k--', 'LineWidth', 1);
-        hold off;
-        set(gca, 'XScale', 'log');
-        title(sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s%s (%02ddB, pol orig)',...
-            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDirChar(antOrder(2)+1),AntDirChar(antOrder(1)+1),dBthr));
-        ylabel('Virtual height, km');
-        xlabel('Sounding frequency, MHz');
-        xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
-        cb = colorbar('vert');
-        title(cb,'POL');
+        % ---------------------------------------------------------
+        % UPDATE SUBPLOT 12 (Channel 3-4, original)
+        % ---------------------------------------------------------
+        % Update the pcolor surface with new X, Y, Z, and Color data
+        set(img32, 'XData', freq_MHz, ...
+            'YData', h, ...
+            'ZData', Z_zeros, ...
+            'CData', dPh34*180/pi);
+        % Update scaling lines (Virtual and Real heights)
+        set(line32V, 'XData', ScaleV(:,1), 'YData', ScaleV(:,2));
+        set(line32R, 'XData', ScaleR(:,1), 'YData', ScaleR(:,2));
+        % Update the specific title string
+        title32.String = sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s%s (%02ddB, pol orig)',...
+            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDirChar(antOrder(4)+1),AntDirChar(antOrder(3)+1),dBthr);
 
-        % plot channel 23
-        subplot(4,5,13);
-        pcolor(F./1e6,h,dPh23*180/pi);
-        shading flat;
-        colormap(gca, PionCmap);
-        hold on;
-        plot(ScaleV(:,1),ScaleV(:,2), 'k', 'LineWidth', 1);
-        plot(ScaleR(:,1),ScaleR(:,2), 'k--', 'LineWidth', 1);
-        hold off;
-        set(gca, 'XScale', 'log');
-        title(sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s%s (%02ddB, pol orig)',...
-            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDirChar(antOrder(3)+1),AntDirChar(antOrder(2)+1),dBthr));
-        ylabel('Virtual height, km');
-        xlabel('Sounding frequency, MHz');
-        xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
-        cb = colorbar('vert');
-        title(cb,'POL');
+        % ---------------------------------------------------------
+        % UPDATE SUBPLOT 13 (Channel 2-3, original)
+        % ---------------------------------------------------------
+        % Update the pcolor surface with new X, Y, Z, and Color data
+        set(img33, 'XData', freq_MHz, ...
+            'YData', h, ...
+            'ZData', Z_zeros, ...
+            'CData', dPh23*180/pi);
+        % Update scaling lines (Virtual and Real heights)
+        set(line33V, 'XData', ScaleV(:,1), 'YData', ScaleV(:,2));
+        set(line33R, 'XData', ScaleR(:,1), 'YData', ScaleR(:,2));
+        % Update the specific title string
+        title33.String = sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s%s (%02ddB, pol orig)',...
+            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDirChar(antOrder(3)+1),AntDirChar(antOrder(2)+1),dBthr);
 
-        % plot channel 34
-        subplot(4,5,12);
-        pcolor(F./1e6,h,dPh34*180/pi);
-        shading flat;
-        colormap(gca, PionCmap);
-        hold on;
-        plot(ScaleV(:,1),ScaleV(:,2), 'k', 'LineWidth', 1);
-        plot(ScaleR(:,1),ScaleR(:,2), 'k--', 'LineWidth', 1);
-        hold off;
-        set(gca, 'XScale', 'log');
-        title(sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s%s (%02ddB, pol orig)',...
-            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDirChar(antOrder(4)+1),AntDirChar(antOrder(3)+1),dBthr));
-        ylabel('Virtual height, km');
-        xlabel('Sounding frequency, MHz');
-        xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
-        cb = colorbar('vert');
-        title(cb,'POL');
+        % ---------------------------------------------------------
+        % UPDATE SUBPLOT 14 (Channel 4-1, original)
+        % ---------------------------------------------------------
+        % Update the pcolor surface with new X, Y, Z, and Color data
+        set(img34, 'XData', freq_MHz, ...
+            'YData', h, ...
+            'ZData', Z_zeros, ...
+            'CData', dPh41*180/pi);
+        % Update scaling lines (Virtual and Real heights)
+        set(line34V, 'XData', ScaleV(:,1), 'YData', ScaleV(:,2));
+        set(line34R, 'XData', ScaleR(:,1), 'YData', ScaleR(:,2));
+        % Update the specific title string
+        title34.String = sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s%s (%02ddB, pol orig)',...
+            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDirChar(antOrder(1)+1),AntDirChar(antOrder(4)+1),dBthr);
 
-        % plot channel 41
-        subplot(4,5,14);
-        pcolor(F./1e6,h,dPh41*180/pi);
-        shading flat;
-        colormap(gca, PionCmap);
-        hold on;
-        plot(ScaleV(:,1),ScaleV(:,2), 'k', 'LineWidth', 1);
-        plot(ScaleR(:,1),ScaleR(:,2), 'k--', 'LineWidth', 1);
-        hold off;
-        set(gca, 'XScale', 'log');
-        title(sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s%s (%02ddB, pol orig)',...
-            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDirChar(antOrder(1)+1),AntDirChar(antOrder(4)+1),dBthr));
-        ylabel('Virtual height, km');
-        xlabel('Sounding frequency, MHz');
-        xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
-        cb = colorbar('vert');
-        title(cb,'POL');
+        % ---------------------------------------------------------
+        % UPDATE SUBPLOT 16 (Channel 1-2, filtered)
+        % ---------------------------------------------------------
+        % Update the pcolor surface with new X, Y, Z, and Color data
+        set(img41, 'XData', freq_MHz, ...
+            'YData', h, ...
+            'ZData', Z_zeros, ...
+            'CData', dPh12f*180/pi);
+        % Update scaling lines (Virtual and Real heights)
+        set(line41V, 'XData', ScaleV(:,1), 'YData', ScaleV(:,2));
+        set(line41R, 'XData', ScaleR(:,1), 'YData', ScaleR(:,2));
+        % Update the specific title string
+        title41.String = sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s%s (%02ddB, pol fltr)',...
+            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDirChar(antOrder(2)+1),AntDirChar(antOrder(1)+1),dBthr);
 
-        % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        % Plot filtered polarization ionograms
+        % ---------------------------------------------------------
+        % UPDATE SUBPLOT 17 (Channel 3-4, filtered)
+        % ---------------------------------------------------------
+        % Update the pcolor surface with new X, Y, Z, and Color data
+        set(img42, 'XData', freq_MHz, ...
+            'YData', h, ...
+            'ZData', Z_zeros, ...
+            'CData', dPh34f*180/pi);
+        % Update scaling lines (Virtual and Real heights)
+        set(line42V, 'XData', ScaleV(:,1), 'YData', ScaleV(:,2));
+        set(line42R, 'XData', ScaleR(:,1), 'YData', ScaleR(:,2));
+        % Update the specific title string
+        title42.String = sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s%s (%02ddB, pol fltr)',...
+            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDirChar(antOrder(4)+1),AntDirChar(antOrder(3)+1),dBthr);
 
-        % plot channel 12
-        subplot(4,5,16);
-        pcolor(F./1e6,h,dPh12f*180/pi);
-        shading flat;
-        colormap(gca, PionCmap);
-        hold on;
-        plot(ScaleV(:,1),ScaleV(:,2), 'k', 'LineWidth', 1);
-        plot(ScaleR(:,1),ScaleR(:,2), 'k--', 'LineWidth', 1);
-        hold off;
-        set(gca, 'XScale', 'log');
-        title(sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s%s (%02ddB, pol fltr)',...
-            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDirChar(antOrder(2)+1),AntDirChar(antOrder(1)+1),dBthr));
-        ylabel('Virtual height, km');
-        xlabel('Sounding frequency, MHz');
-        xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
-        cb = colorbar('vert');
-        title(cb,'POL');
+        % ---------------------------------------------------------
+        % UPDATE SUBPLOT 18 (Channel 2-3, filtered)
+        % ---------------------------------------------------------
+        % Update the pcolor surface with new X, Y, Z, and Color data
+        set(img43, 'XData', freq_MHz, ...
+            'YData', h, ...
+            'ZData', Z_zeros, ...
+            'CData', dPh23f*180/pi);
+        % Update scaling lines (Virtual and Real heights)
+        set(line43V, 'XData', ScaleV(:,1), 'YData', ScaleV(:,2));
+        set(line43R, 'XData', ScaleR(:,1), 'YData', ScaleR(:,2));
+        % Update the specific title string
+        title43.String = sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s%s (%02ddB, pol fltr)',...
+            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDirChar(antOrder(3)+1),AntDirChar(antOrder(2)+1),dBthr);
 
-        % plot channel 23
-        subplot(4,5,18);
-        pcolor(F./1e6,h,dPh23f*180/pi);
-        shading flat;
-        colormap(gca, PionCmap);
-        hold on;
-        plot(ScaleV(:,1),ScaleV(:,2), 'k', 'LineWidth', 1);
-        plot(ScaleR(:,1),ScaleR(:,2), 'k--', 'LineWidth', 1);
-        hold off;
-        set(gca, 'XScale', 'log');
-        title(sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s%s (%02ddB, pol fltr)',...
-            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDirChar(antOrder(3)+1),AntDirChar(antOrder(2)+1),dBthr));
-        ylabel('Virtual height, km');
-        xlabel('Sounding frequency, MHz');
-        xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
-        cb = colorbar('vert');
-        title(cb,'POL');
+        % ---------------------------------------------------------
+        % UPDATE SUBPLOT 19 (Channel 4-1, filtered)
+        % ---------------------------------------------------------
+        % Update the pcolor surface with new X, Y, Z, and Color data
+        set(img44, 'XData', freq_MHz, ...
+            'YData', h, ...
+            'ZData', Z_zeros, ...
+            'CData', dPh41f*180/pi);
+        % Update scaling lines (Virtual and Real heights)
+        set(line44V, 'XData', ScaleV(:,1), 'YData', ScaleV(:,2));
+        set(line44R, 'XData', ScaleR(:,1), 'YData', ScaleR(:,2));
+        % Update the specific title string
+        title44.String = sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s%s (%02ddB, pol fltr)',...
+            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDirChar(antOrder(1)+1),AntDirChar(antOrder(4)+1),dBthr);
 
-        % plot channel 34
-        subplot(4,5,17);
-        pcolor(F./1e6,h,dPh34f*180/pi);
-        shading flat;
-        colormap(gca, PionCmap);
-        hold on;
-        plot(ScaleV(:,1),ScaleV(:,2), 'k', 'LineWidth', 1);
-        plot(ScaleR(:,1),ScaleR(:,2), 'k--', 'LineWidth', 1);
-        hold off;
-        set(gca, 'XScale', 'log');
-        title(sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s%s (%02ddB, pol fltr)',...
-            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDirChar(antOrder(4)+1),AntDirChar(antOrder(3)+1),dBthr));
-        ylabel('Virtual height, km');
-        xlabel('Sounding frequency, MHz');
-        xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
-        cb = colorbar('vert');
-        title(cb,'POL');
-
-        % plot channel 41
-        subplot(4,5,19);
-        pcolor(F./1e6,h,dPh41f*180/pi);
-        shading flat;
-        colormap(gca, PionCmap);
-        hold on;
-        plot(ScaleV(:,1),ScaleV(:,2), 'k', 'LineWidth', 1);
-        plot(ScaleR(:,1),ScaleR(:,2), 'k--', 'LineWidth', 1);
-        hold off;
-        set(gca, 'XScale', 'log');
-        title(sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s%s (%02ddB, pol fltr)',...
-            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDirChar(antOrder(1)+1),AntDirChar(antOrder(4)+1),dBthr));
-        ylabel('Virtual height, km');
-        xlabel('Sounding frequency, MHz');
-        xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
-        cb = colorbar('vert');
-        title(cb,'POL');
-
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        % Plotting filtered Phase distributions
-
-        % plot channel 1-2 Phase diagram 
-        subplot(4,5,5);
-        histogram(vec_no_nan12f*180/pi,-180:DPh:180, 'Normalization', 'probability');
-        hold on
-        plot([-90 -90 0 90 90],[0 0.25 NaN 0 0.25],'LineWidth',2,'LineStyle',':');
-        hold off
-        title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, %s%s, (%02d, fltr)',...
-               DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),...
-               AntDirChar(antOrder(2)+1),AntDirChar(antOrder(1)+1),dBthr));
-        ylim([0, 0.25]);
-        xlim([-180, 180]);
-        xticks([-180 -135 -90 -45 0 45 90 135 180]);
-        grid on;
-
-        % plot channel 2-3 Phase diagram 
-        subplot(4,5,15);
-        histogram(vec_no_nan23f*180/pi,-180:DPh:180, 'Normalization', 'probability');
-        hold on
-        plot([-90 -90 0 90 90],[0 0.25 NaN 0 0.25],'LineWidth',2,'LineStyle',':');
-        hold off
-        title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, %s%s, (%02d, fltr)',...
+        % ---------------------------------------------------------
+        % UPDATE SUBPLOT 5 (Histogram filtered) Channel 1-2
+        % ---------------------------------------------------------
+        % Overwrite histogram data array
+        hist15.Data = vec_no_nan12f*180/pi;
+        % Update the specific title string
+        title15.String = sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, %s%s, (%02d, fltr)',...
             DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),...
-            AntDirChar(antOrder(3)+1),AntDirChar(antOrder(2)+1),dBthr));
-        ylim([0, 0.25]);
-        xlim([-180, 180]);
-        xticks([-180 -135 -90 -45 0 45 90 135 180]);
-        grid on;
+            AntDirChar(antOrder(2)+1),AntDirChar(antOrder(1)+1),dBthr);
 
-        % plot channel 3-4 Phase diagram 
-        subplot(4,5,10);
-        histogram(vec_no_nan34f*180/pi,-180:DPh:180, 'Normalization', 'probability');
-        hold on
-        plot([-90 -90 0 90 90],[0 0.25 NaN 0 0.25],'LineWidth',2,'LineStyle',':');
-        hold off
-        title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, %s%s, (%02d, fltr)',...
+        % ---------------------------------------------------------
+        % UPDATE SUBPLOT 10 (Histogram filtered) Channel 3-4
+        % ---------------------------------------------------------
+        % Overwrite histogram data array
+        hist25.Data = vec_no_nan34f*180/pi;
+        % Update the specific title string
+        title25.String = sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, %s%s, (%02d, fltr)',...
             DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),...
-            AntDirChar(antOrder(4)+1),AntDirChar(antOrder(3)+1),dBthr));
-        ylim([0, 0.25]);
-        xlim([-180, 180]);
-        xticks([-180 -135 -90 -45 0 45 90 135 180]);
-        grid on;
+            AntDirChar(antOrder(4)+1),AntDirChar(antOrder(3)+1),dBthr);
 
-        % plot channel 4-1 Phase diagram 
-        subplot(4,5,20);
-        histogram(vec_no_nan41f*180/pi,-180:DPh:180, 'Normalization', 'probability');
-        hold on
-        plot([-90 -90 0 90 90],[0 0.25 NaN 0 0.25],'LineWidth',2,'LineStyle',':');
-        hold off
-        title(sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, %s%s, (%02d, fltr)',...
+        % ---------------------------------------------------------
+        % UPDATE SUBPLOT 15 (Histogram filtered) Channel 2-3
+        % ---------------------------------------------------------
+        % Overwrite histogram data array
+        hist35.Data = vec_no_nan23f*180/pi;
+        % Update the specific title string
+        title35.String = sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, %s%s, (%02d, fltr)',...
             DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),...
-            AntDirChar(antOrder(1)+1),AntDirChar(antOrder(4)+1),dBthr));
-        ylim([0, 0.25]);
-        xlim([-180, 180]);
-        xticks([-180 -135 -90 -45 0 45 90 135 180]);
-        grid on;
+            AntDirChar(antOrder(3)+1),AntDirChar(antOrder(2)+1),dBthr);
 
-        % Export the figure with to PNG
-        % Out PNG using rendering
-        set(hFig, 'PaperPositionMode', 'auto');
-        print(hFig, outFullPathIonA, '-dpng', '-r150');
+        % ---------------------------------------------------------
+        % UPDATE SUBPLOT 5 (Histogram filtered) Channel 4-1
+        % ---------------------------------------------------------
+        % Overwrite histogram data array
+        hist45.Data = vec_no_nan41f*180/pi;
+        % Update the specific title string
+        title45.String = sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, %s%s, (%02d, fltr)',...
+            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),...
+            AntDirChar(antOrder(1)+1),AntDirChar(antOrder(4)+1),dBthr);
 
-        % % Out PNG as a screenshot
-        % % Force all graphics rendering to complete before taking the snapshot
-        % drawnow; 
-        % % Capture the pixels directly from the figure window buffer
-        % frame = getframe(hFig);
-        % % Save the captured pixel matrix to a PNG file without re-rendering
-        % imwrite(frame.cdata, outFullPathIonA);    
 
+        % Out PNG as a screenshot
+        % Force all graphics rendering to complete before taking the snapshot
+        drawnow; 
+        % Capture the pixels directly from the figure window buffer
+        frame = getframe(hFig);
+        % Save the captured pixel matrix to a PNG file without re-rendering
+        imwrite(frame.cdata, outFullPathIonA);    
         fprintf('Saved image: %s (%05d of %05d)\n', outFileNameIonA, i, NmatF);
 
 end
