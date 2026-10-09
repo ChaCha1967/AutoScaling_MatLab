@@ -1,13 +1,9 @@
-% Start calculating running time
+% % Start calculating running time
 tic;
 
-% What figures plot 
-% lFion = 1; % filtered ionogram
-% lFdis = 1; % filtered distribution
-% lion = 1; % original ionogram
-% ldis = 1; % original distribution
-% lPFion = 1; % filtered polarization ionogram
-% lPion = 1; % original polarization ionogram
+% Scaling file exists and
+lScaleV = 0; % flag for virtual heighths profile
+lScaleR = 0; % flag for real heighths profile
 
 % Set Phase step in histogram
 DPh = 20;
@@ -45,14 +41,44 @@ clf(hFig);
 % Loop through each file sequentially
 for i = 1:length(fileList)
 
-    % Get the current file name and construct the full path
+    % Get the current ion file name and construct the full path
     currentFileName = fileList(i).name;
     currentFullPath = fullfile(selectedFolder, currentFileName);
-    fprintf('Loading and processing: %s\n', currentFileName);
+    % Making name of the correspondent scale mat file
+    currentScaleFileName = currentFileName;
+    currentScaleFileName(12:14) = 'pol';
+    currentScaleFullPath = fullfile(selectedFolder, currentScaleFileName);
+    % Verify that the corresponding scale mat file exists
+    if isfile(currentScaleFullPath) % load and test data from polarization scale mat file 
+        fprintf('Loading and processing ion: %s and scale: %s data\n', currentFileName, currentScaleFileName);
+        % load data 
+        load(currentScaleFullPath);
+        % configure & set virtual scaled profile
+        if isfield(records, 'InputData') && ~isempty(records.InputData) % data exists
+            ScaleV = records.InputData;
+            lScaleV = 1;
+        else % data not exists
+            ScaleV = zeros(1,2)*NaN;
+            lScaleV = 0;
+        end
+        % configure & set virtual scaled profile
+        if isfield(records, 'RealHeights') && ~isempty(records.RealHeights) % data exists
+            ScaleR = records.RealHeights;
+            lScaleR = 1;
+        else % data not exists
+            ScaleR = zeros(1,2)*NaN;
+            lScaleR = 0;
+        end
+    else % set scale data to NaN and scale flags to 0
+        ScaleV = zeros(1,2)*NaN;
+        lScaleV = 0;
+        ScaleR = zeros(1,2)*NaN;
+        lScaleR = 0;
+    end
  
     % Extract the base file name to construct output image filenames
     [~, baseName, ~] = fileparts(currentFileName);
-    % Load variables from the file directly into memory (only ONCE)
+    % Load variables from the ion file directly into memory
     load(currentFullPath);
 
     % Construct the output PNG file name and full path for all ion plots
@@ -261,6 +287,10 @@ for i = 1:length(fileList)
         pcolor(F./1e6,h,ion1);
         shading flat;
         colormap(gca, jet);
+        hold on;
+        plot(ScaleV(:,1),ScaleV(:,2), 'k', 'LineWidth', 1);
+        plot(ScaleR(:,1),ScaleR(:,2), 'k--', 'LineWidth', 1);
+        hold off;
         set(gca, 'XScale', 'log');
         title(sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s (%02ddB, orig)',...
               DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(1)+1),dBthr));
@@ -274,6 +304,10 @@ for i = 1:length(fileList)
         subplot(4,5,2);
         pcolor(F./1e6,h,ion2);
         shading flat;
+        hold on;
+        plot(ScaleV(:,1),ScaleV(:,2), 'k', 'LineWidth', 1);
+        plot(ScaleR(:,1),ScaleR(:,2), 'k--', 'LineWidth', 1);
+        hold off;
         colormap(gca, jet);
         set(gca, 'XScale', 'log');
         title(sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s (%02ddB, orig)',...
@@ -289,6 +323,10 @@ for i = 1:length(fileList)
         pcolor(F./1e6,h,ion3);
         shading flat;
         colormap(gca, jet);
+        hold on;
+        plot(ScaleV(:,1),ScaleV(:,2), 'k', 'LineWidth', 1);
+        plot(ScaleR(:,1),ScaleR(:,2), 'k--', 'LineWidth', 1);
+        hold off;
         set(gca, 'XScale', 'log');
         title(sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s (%02ddB, orig)',...
             DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(3)+1),dBthr));
@@ -303,6 +341,10 @@ for i = 1:length(fileList)
         pcolor(F./1e6,h,ion4);
         shading flat;
         colormap(gca, jet);
+        hold on;
+        plot(ScaleV(:,1),ScaleV(:,2), 'k', 'LineWidth', 1);
+        plot(ScaleR(:,1),ScaleR(:,2), 'k--', 'LineWidth', 1);
+        hold off;
         set(gca, 'XScale', 'log');
         title(sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s (%02ddB, orig)',...
             DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(4)+1),dBthr));
@@ -320,6 +362,10 @@ for i = 1:length(fileList)
         pcolor(F./1e6,h,ion1_clean);
         shading flat;
         colormap(gca, jet);
+        hold on;
+        plot(ScaleV(:,1),ScaleV(:,2), 'k', 'LineWidth', 1);
+        plot(ScaleR(:,1),ScaleR(:,2), 'k--', 'LineWidth', 1);
+        hold off;
         set(gca, 'XScale', 'log');
         title(sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s (%02ddB, fltr)',...
             DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(1)+1),dBthr));
@@ -334,6 +380,10 @@ for i = 1:length(fileList)
         pcolor(F./1e6,h,ion2_clean);
         shading flat;
         colormap(gca, jet);
+        hold on;
+        plot(ScaleV(:,1),ScaleV(:,2), 'k', 'LineWidth', 1);
+        plot(ScaleR(:,1),ScaleR(:,2), 'k--', 'LineWidth', 1);
+        hold off;
         set(gca, 'XScale', 'log');
         title(sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s (%02ddB, fltr)',...
             DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(2)+1),dBthr));
@@ -348,6 +398,10 @@ for i = 1:length(fileList)
         pcolor(F./1e6,h,ion3_clean);
         shading flat;
         colormap(gca, jet);
+        hold on;
+        plot(ScaleV(:,1),ScaleV(:,2), 'k', 'LineWidth', 1);
+        plot(ScaleR(:,1),ScaleR(:,2), 'k--', 'LineWidth', 1);
+        hold off;
         set(gca, 'XScale', 'log');
         title(sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s (%02ddB, fltr)',...
             DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(3)+1),dBthr));
@@ -362,6 +416,10 @@ for i = 1:length(fileList)
         pcolor(F./1e6,h,ion4_clean);
         shading flat;
         colormap(gca, jet);
+        hold on;
+        plot(ScaleV(:,1),ScaleV(:,2), 'k', 'LineWidth', 1);
+        plot(ScaleR(:,1),ScaleR(:,2), 'k--', 'LineWidth', 1);
+        hold off;
         set(gca, 'XScale', 'log');
         title(sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s (%02ddB, fltr)',...
             DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(4)+1),dBthr));
@@ -379,6 +437,10 @@ for i = 1:length(fileList)
         pcolor(F./1e6,h,dPh12*180/pi);
         shading flat;
         colormap(gca, PionCmap);
+        hold on;
+        plot(ScaleV(:,1),ScaleV(:,2), 'k', 'LineWidth', 1);
+        plot(ScaleR(:,1),ScaleR(:,2), 'k--', 'LineWidth', 1);
+        hold off;
         set(gca, 'XScale', 'log');
         title(sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s%s (%02ddB, pol orig)',...
             DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDirChar(antOrder(2)+1),AntDirChar(antOrder(1)+1),dBthr));
@@ -393,6 +455,10 @@ for i = 1:length(fileList)
         pcolor(F./1e6,h,dPh23*180/pi);
         shading flat;
         colormap(gca, PionCmap);
+        hold on;
+        plot(ScaleV(:,1),ScaleV(:,2), 'k', 'LineWidth', 1);
+        plot(ScaleR(:,1),ScaleR(:,2), 'k--', 'LineWidth', 1);
+        hold off;
         set(gca, 'XScale', 'log');
         title(sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s%s (%02ddB, pol orig)',...
             DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDirChar(antOrder(3)+1),AntDirChar(antOrder(2)+1),dBthr));
@@ -407,6 +473,10 @@ for i = 1:length(fileList)
         pcolor(F./1e6,h,dPh34*180/pi);
         shading flat;
         colormap(gca, PionCmap);
+        hold on;
+        plot(ScaleV(:,1),ScaleV(:,2), 'k', 'LineWidth', 1);
+        plot(ScaleR(:,1),ScaleR(:,2), 'k--', 'LineWidth', 1);
+        hold off;
         set(gca, 'XScale', 'log');
         title(sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s%s (%02ddB, pol orig)',...
             DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDirChar(antOrder(4)+1),AntDirChar(antOrder(3)+1),dBthr));
@@ -421,6 +491,10 @@ for i = 1:length(fileList)
         pcolor(F./1e6,h,dPh41*180/pi);
         shading flat;
         colormap(gca, PionCmap);
+        hold on;
+        plot(ScaleV(:,1),ScaleV(:,2), 'k', 'LineWidth', 1);
+        plot(ScaleR(:,1),ScaleR(:,2), 'k--', 'LineWidth', 1);
+        hold off;
         set(gca, 'XScale', 'log');
         title(sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s%s (%02ddB, pol orig)',...
             DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDirChar(antOrder(1)+1),AntDirChar(antOrder(4)+1),dBthr));
@@ -438,6 +512,10 @@ for i = 1:length(fileList)
         pcolor(F./1e6,h,dPh12f*180/pi);
         shading flat;
         colormap(gca, PionCmap);
+        hold on;
+        plot(ScaleV(:,1),ScaleV(:,2), 'k', 'LineWidth', 1);
+        plot(ScaleR(:,1),ScaleR(:,2), 'k--', 'LineWidth', 1);
+        hold off;
         set(gca, 'XScale', 'log');
         title(sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s%s (%02ddB, pol fltr)',...
             DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDirChar(antOrder(2)+1),AntDirChar(antOrder(1)+1),dBthr));
@@ -452,6 +530,10 @@ for i = 1:length(fileList)
         pcolor(F./1e6,h,dPh23f*180/pi);
         shading flat;
         colormap(gca, PionCmap);
+        hold on;
+        plot(ScaleV(:,1),ScaleV(:,2), 'k', 'LineWidth', 1);
+        plot(ScaleR(:,1),ScaleR(:,2), 'k--', 'LineWidth', 1);
+        hold off;
         set(gca, 'XScale', 'log');
         title(sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s%s (%02ddB, pol fltr)',...
             DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDirChar(antOrder(3)+1),AntDirChar(antOrder(2)+1),dBthr));
@@ -466,6 +548,10 @@ for i = 1:length(fileList)
         pcolor(F./1e6,h,dPh34f*180/pi);
         shading flat;
         colormap(gca, PionCmap);
+        hold on;
+        plot(ScaleV(:,1),ScaleV(:,2), 'k', 'LineWidth', 1);
+        plot(ScaleR(:,1),ScaleR(:,2), 'k--', 'LineWidth', 1);
+        hold off;
         set(gca, 'XScale', 'log');
         title(sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s%s (%02ddB, pol fltr)',...
             DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDirChar(antOrder(4)+1),AntDirChar(antOrder(3)+1),dBthr));
@@ -480,6 +566,10 @@ for i = 1:length(fileList)
         pcolor(F./1e6,h,dPh41f*180/pi);
         shading flat;
         colormap(gca, PionCmap);
+        hold on;
+        plot(ScaleV(:,1),ScaleV(:,2), 'k', 'LineWidth', 1);
+        plot(ScaleR(:,1),ScaleR(:,2), 'k--', 'LineWidth', 1);
+        hold off;
         set(gca, 'XScale', 'log');
         title(sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s%s (%02ddB, pol fltr)',...
             DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDirChar(antOrder(1)+1),AntDirChar(antOrder(4)+1),dBthr));
@@ -549,10 +639,20 @@ for i = 1:length(fileList)
         grid on;
 
         % Export the figure with to PNG
+        % Out PNG using rendering
         set(hFig, 'PaperPositionMode', 'auto');
         print(hFig, outFullPathIonA, '-dpng', '-r150');
+
+        % % Out PNG as a screenshot
+        % % Force all graphics rendering to complete before taking the snapshot
+        % drawnow; 
+        % % Capture the pixels directly from the figure window buffer
+        % frame = getframe(hFig);
+        % % Save the captured pixel matrix to a PNG file without re-rendering
+        % imwrite(frame.cdata, outFullPathIonA);    
+
         fprintf('Saved image: %s (%05d of %05d)\n', outFileNameIonA, i, NmatF);
-    
+
 end
 
 % Successful data processing
