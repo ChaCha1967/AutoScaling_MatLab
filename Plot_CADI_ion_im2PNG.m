@@ -431,7 +431,6 @@ xticks(ax45, [-180 -135 -90 -45 0 45 90 135 180]);
 grid(ax45, 'on');
 title45 = title(ax45, 'Initializing...'); % Save the title handle
 
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % DUMMY FIG CREATION FINISH
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -651,32 +650,47 @@ for i = 1:length(fileList)
         % PROCESSING FINISHED
         % PLOT DATA BEGIN
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        freq_MHz = F ./ 1e6;
 
-        % Clear the current content of the figure
-        clf(hFig);
-        % Set hFig as the active figure for drawing without forcing it to pop up
-        set(0, 'CurrentFigure', hFig);
+        % % Clear the current content of the figure
+        % clf(hFig);
+        % % Set hFig as the active figure for drawing without forcing it to pop up
+        % set(0, 'CurrentFigure', hFig);
+
+        % ---------------------------------------------------------
+        % UPDATE SUBPLOT 1
+        % ---------------------------------------------------------
+        % Update the pcolor matrix and its axis limits
+        set(img11, 'XData', freq_MHz, 'YData', h, 'CData', ion1);
+
+        % Update the scaling lines
+        set(line1V, 'XData', ScaleV(:,1), 'YData', ScaleV(:,2));
+        set(line1R, 'XData', ScaleR(:,1), 'YData', ScaleR(:,2));
+
+        % Update the specific title string
+        title11.String = sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s (%02ddB, orig)',...
+            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(1)+1),dBthr);        
  
         % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         % Plot original ionograms
 
-        % plot channel 1
-        subplot(4,5,1);
-        pcolor(F./1e6,h,ion1);
-        shading flat;
-        colormap(gca, jet);
-        hold on;
-        plot(ScaleV(:,1),ScaleV(:,2), 'k', 'LineWidth', 1);
-        plot(ScaleR(:,1),ScaleR(:,2), 'k--', 'LineWidth', 1);
-        hold off;
-        set(gca, 'XScale', 'log');
-        title(sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s (%02ddB, orig)',...
-              DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(1)+1),dBthr));
-        ylabel('Virtual height, km');
-        xlabel('Sounding frequency, MHz');
-        xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
-        cb = colorbar('vert');
-        title(cb,'dB');
+        % % plot channel 1
+        % subplot(4,5,1);
+        % pcolor(F./1e6,h,ion1);
+        % shading flat;
+        % colormap(gca, jet);
+        % hold on;
+        % plot(ScaleV(:,1),ScaleV(:,2), 'k', 'LineWidth', 1);
+        % plot(ScaleR(:,1),ScaleR(:,2), 'k--', 'LineWidth', 1);
+        % hold off;
+        % set(gca, 'XScale', 'log');
+        % title(sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s (%02ddB, orig)',...
+        %       DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(1)+1),dBthr));
+        % ylabel('Virtual height, km');
+        % xlabel('Sounding frequency, MHz');
+        % xticks([1 2 3 4 5 6 7 8 9 10 12 15 19]);
+        % cb = colorbar('vert');
+        % title(cb,'dB');
 
         % plot channel 2
         subplot(4,5,2);
@@ -811,7 +825,7 @@ for i = 1:length(fileList)
         % Plot original polarization ionograms
  
         % plot channel 12
-        subplot(4,5,12);
+        subplot(4,5,11);
         pcolor(F./1e6,h,dPh12*180/pi);
         shading flat;
         colormap(gca, PionCmap);
