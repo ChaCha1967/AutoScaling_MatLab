@@ -1,6 +1,12 @@
 % % Start calculating running time
 tic;
 
+% Flag for drawing and saving PNG (1 - enabled, 0 - disabled)
+plot_flag = 1;
+% Flag for add ion_dB & ion_pol to *_ion.mat file
+% (1 - enabled, 0 - disabled)
+save_mtrx_flag = 1;
+
 % Scaling file exists and
 lScaleV = 0; % flag for virtual heighths profile
 lScaleR = 0; % flag for real heighths profile
@@ -657,337 +663,370 @@ for i = 1:length(fileList)
         dPh41(dPh41 == 0) = NaN;
         dPh13(dPh13 == 0) = NaN;
         dPh24(dPh24 == 0) = NaN;
+        
+        % make and add to *_ion.mat mtxr with add ion_dB & ion_pol data
+        if save_mtrx_flag == 1
+
+            % Create ion_dat matrix on first run of loop
+            if i==1 
+                ion_dat = zeros(13,size(ionoIQ,2),size(ionoIQ,3)); 
+            end
+            
+            % make matrix for ionograms to be processed
+            ion_dat(1,:,:) = ion1;
+            ion_dat(2,:,:) = ion2;
+            ion_dat(3,:,:) = ion3;
+            ion_dat(4,:,:) = ion4;
+            ion_dat(5,:,:) = ion1_clean;
+            ion_dat(6,:,:) = ion2_clean;
+            ion_dat(7,:,:) = ion3_clean;
+            ion_dat(8,:,:) = ion4_clean;
+            ion_dat(9,:,:) = dPh23;
+            ion_dat(10,:,:) = dPh41;
+            ion_dat(11,:,:) = dPh23f;
+            ion_dat(12,:,:) = dPh41f;
+            ion_dat(13,:,:) = mask;
+            
+            % append ion-dat to *_ion.mat file
+            save(currentFullPath,'ion_dat','-append');
+
+        end
 
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         % PROCESSING FINISHED
         % PLOT DATA BEGIN
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        % Pre-allocate data on first run of loop 
-        if i==1
-            Z_zeros = zeros(size(ion1)); 
-            freq_MHz = F ./ 1e6;
-
-            % Force the axes limits to match the new real data boundaries
-            FrLim = [min(freq_MHz) max(freq_MHz)];
-            hLim = [min(h) max(h)];
-            set(ax11, 'XLim', FrLim,'YLim', hLim);
-            set(ax12, 'XLim', FrLim,'YLim', hLim);
-            set(ax13, 'XLim', FrLim,'YLim', hLim);
-            set(ax14, 'XLim', FrLim,'YLim', hLim);
-            set(ax21, 'XLim', FrLim,'YLim', hLim);
-            set(ax22, 'XLim', FrLim,'YLim', hLim);
-            set(ax23, 'XLim', FrLim,'YLim', hLim);
-            set(ax24, 'XLim', FrLim,'YLim', hLim);
-            set(ax31, 'XLim', FrLim,'YLim', hLim);
-            set(ax32, 'XLim', FrLim,'YLim', hLim);
-            set(ax33, 'XLim', FrLim,'YLim', hLim);
-            set(ax34, 'XLim', FrLim,'YLim', hLim);
-            set(ax41, 'XLim', FrLim,'YLim', hLim);
-            set(ax42, 'XLim', FrLim,'YLim', hLim);
-            set(ax43, 'XLim', FrLim,'YLim', hLim);
-            set(ax44, 'XLim', FrLim,'YLim', hLim);
-        end
-
-        % % Clear the current content of the figure
-        % clf(hFig);
-        % % Set hFig as the active figure for drawing without forcing it to pop up
-        % set(0, 'CurrentFigure', hFig);
-
-        % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        % Plot original ionograms
-
-        % =========================================================
-        % UPDATE DATA IN EXISTING UI OBJECTS
-        % =========================================================
-        % ---------------------------------------------------------
-        % UPDATE SUBPLOT 1 (Channel 1, original)
-        % ---------------------------------------------------------
-        % Update the pcolor surface with new X, Y, Z, and Color data
-        set(img11, 'XData', freq_MHz, ...
-            'YData', h, ...
-            'ZData', Z_zeros, ...
-            'CData', ion1);
-        % Update scaling lines (Virtual and Real heights)
-        set(line11V, 'XData', ScaleV(:,1), 'YData', ScaleV(:,2));
-        set(line11R, 'XData', ScaleR(:,1), 'YData', ScaleR(:,2));
-        % Update the specific title string
-        title11.String = sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s (%02ddB, orig)',...
-            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(1)+1),dBthr);
-
-        % ---------------------------------------------------------
-        % UPDATE SUBPLOT 2 (Channel 2, original)
-        % ---------------------------------------------------------
-        % Update the pcolor surface with new X, Y, Z, and Color data
-        set(img12, 'XData', freq_MHz, ...
-            'YData', h, ...
-            'ZData', Z_zeros, ...
-            'CData', ion2);
-        % Update scaling lines (Virtual and Real heights)
-        set(line12V, 'XData', ScaleV(:,1), 'YData', ScaleV(:,2));
-        set(line12R, 'XData', ScaleR(:,1), 'YData', ScaleR(:,2));
-        % Update the specific title string
-        title12.String = sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s (%02ddB, orig)',...
-            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(2)+1),dBthr);
-
-        % ---------------------------------------------------------
-        % UPDATE SUBPLOT 3 (Channel 3, original)
-        % ---------------------------------------------------------
-        % Update the pcolor surface with new X, Y, Z, and Color data
-        set(img13, 'XData', freq_MHz, ...
-            'YData', h, ...
-            'ZData', Z_zeros, ...
-            'CData', ion3);
-        % Update scaling lines (Virtual and Real heights)
-        set(line13V, 'XData', ScaleV(:,1), 'YData', ScaleV(:,2));
-        set(line13R, 'XData', ScaleR(:,1), 'YData', ScaleR(:,2));
-        % Update the specific title string
-        title13.String = sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s (%02ddB, orig)',...
-            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(3)+1),dBthr);
-
-        % ---------------------------------------------------------
-        % UPDATE SUBPLOT 4 (Channel 4, original)
-        % ---------------------------------------------------------
-        % Update the pcolor surface with new X, Y, Z, and Color data
-        set(img14, 'XData', freq_MHz, ...
-            'YData', h, ...
-            'ZData', Z_zeros, ...
-            'CData', ion4);
-        % Update scaling lines (Virtual and Real heights)
-        set(line14V, 'XData', ScaleV(:,1), 'YData', ScaleV(:,2));
-        set(line14R, 'XData', ScaleR(:,1), 'YData', ScaleR(:,2));
-        % Update the specific title string
-        title14.String = sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s (%02ddB, orig)',...
-            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(4)+1),dBthr);
-
-        % ---------------------------------------------------------
-        % UPDATE SUBPLOT 6 (Channel 1, filtered)
-        % ---------------------------------------------------------
-        % Update the pcolor surface with new X, Y, Z, and Color data
-        set(img21, 'XData', freq_MHz, ...
-            'YData', h, ...
-            'ZData', Z_zeros, ...
-            'CData', ion1_clean);
-        % Update scaling lines (Virtual and Real heights)
-        set(line21V, 'XData', ScaleV(:,1), 'YData', ScaleV(:,2));
-        set(line21R, 'XData', ScaleR(:,1), 'YData', ScaleR(:,2));
-        % Update the specific title string
-        title21.String = sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s (%02ddB, fltr)',...
-            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(1)+1),dBthr);
-
-        % ---------------------------------------------------------
-        % UPDATE SUBPLOT 7 (Channel 2, filtered)
-        % ---------------------------------------------------------
-        % Update the pcolor surface with new X, Y, Z, and Color data
-        set(img22, 'XData', freq_MHz, ...
-            'YData', h, ...
-            'ZData', Z_zeros, ...
-            'CData', ion2_clean);
-        % Update scaling lines (Virtual and Real heights)
-        set(line22V, 'XData', ScaleV(:,1), 'YData', ScaleV(:,2));
-        set(line22R, 'XData', ScaleR(:,1), 'YData', ScaleR(:,2));
-        % Update the specific title string
-        title22.String = sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s (%02ddB, fltr)',...
-            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(2)+1),dBthr);
-
-        % ---------------------------------------------------------
-        % UPDATE SUBPLOT 8 (Channel 3, original)
-        % ---------------------------------------------------------
-        % Update the pcolor surface with new X, Y, Z, and Color data
-        set(img23, 'XData', freq_MHz, ...
-            'YData', h, ...
-            'ZData', Z_zeros, ...
-            'CData', ion3_clean);
-        % Update scaling lines (Virtual and Real heights)
-        set(line23V, 'XData', ScaleV(:,1), 'YData', ScaleV(:,2));
-        set(line23R, 'XData', ScaleR(:,1), 'YData', ScaleR(:,2));
-        % Update the specific title string
-        title23.String = sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s (%02ddB, fltr)',...
-            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(3)+1),dBthr);
-
-        % ---------------------------------------------------------
-        % UPDATE SUBPLOT 9 (Channel 4, filtered)
-        % ---------------------------------------------------------
-        % Update the pcolor surface with new X, Y, Z, and Color data
-        set(img24, 'XData', freq_MHz, ...
-            'YData', h, ...
-            'ZData', Z_zeros, ...
-            'CData', ion4_clean);
-        % Update scaling lines (Virtual and Real heights)
-        set(line24V, 'XData', ScaleV(:,1), 'YData', ScaleV(:,2));
-        set(line24R, 'XData', ScaleR(:,1), 'YData', ScaleR(:,2));
-        % Update the specific title string
-        title24.String = sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s (%02ddB, fltr)',...
-            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(4)+1),dBthr);
-
-        % ---------------------------------------------------------
-        % UPDATE SUBPLOT 11 (Channel 1-2, original)
-        % ---------------------------------------------------------
-        % Update the pcolor surface with new X, Y, Z, and Color data
-        set(img31, 'XData', freq_MHz, ...
-            'YData', h, ...
-            'ZData', Z_zeros, ...
-            'CData', dPh12*180/pi);
-        % Update scaling lines (Virtual and Real heights)
-        set(line31V, 'XData', ScaleV(:,1), 'YData', ScaleV(:,2));
-        set(line31R, 'XData', ScaleR(:,1), 'YData', ScaleR(:,2));
-        % Update the specific title string
-        title31.String = sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s%s (%02ddB, pol orig)',...
-        DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDirChar(antOrder(2)+1),AntDirChar(antOrder(1)+1),dBthr);
-
-        % ---------------------------------------------------------
-        % UPDATE SUBPLOT 12 (Channel 3-4, original)
-        % ---------------------------------------------------------
-        % Update the pcolor surface with new X, Y, Z, and Color data
-        set(img32, 'XData', freq_MHz, ...
-            'YData', h, ...
-            'ZData', Z_zeros, ...
-            'CData', dPh34*180/pi);
-        % Update scaling lines (Virtual and Real heights)
-        set(line32V, 'XData', ScaleV(:,1), 'YData', ScaleV(:,2));
-        set(line32R, 'XData', ScaleR(:,1), 'YData', ScaleR(:,2));
-        % Update the specific title string
-        title32.String = sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s%s (%02ddB, pol orig)',...
-            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDirChar(antOrder(4)+1),AntDirChar(antOrder(3)+1),dBthr);
-
-        % ---------------------------------------------------------
-        % UPDATE SUBPLOT 13 (Channel 2-3, original)
-        % ---------------------------------------------------------
-        % Update the pcolor surface with new X, Y, Z, and Color data
-        set(img33, 'XData', freq_MHz, ...
-            'YData', h, ...
-            'ZData', Z_zeros, ...
-            'CData', dPh23*180/pi);
-        % Update scaling lines (Virtual and Real heights)
-        set(line33V, 'XData', ScaleV(:,1), 'YData', ScaleV(:,2));
-        set(line33R, 'XData', ScaleR(:,1), 'YData', ScaleR(:,2));
-        % Update the specific title string
-        title33.String = sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s%s (%02ddB, pol orig)',...
-            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDirChar(antOrder(3)+1),AntDirChar(antOrder(2)+1),dBthr);
-
-        % ---------------------------------------------------------
-        % UPDATE SUBPLOT 14 (Channel 4-1, original)
-        % ---------------------------------------------------------
-        % Update the pcolor surface with new X, Y, Z, and Color data
-        set(img34, 'XData', freq_MHz, ...
-            'YData', h, ...
-            'ZData', Z_zeros, ...
-            'CData', dPh41*180/pi);
-        % Update scaling lines (Virtual and Real heights)
-        set(line34V, 'XData', ScaleV(:,1), 'YData', ScaleV(:,2));
-        set(line34R, 'XData', ScaleR(:,1), 'YData', ScaleR(:,2));
-        % Update the specific title string
-        title34.String = sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s%s (%02ddB, pol orig)',...
-            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDirChar(antOrder(1)+1),AntDirChar(antOrder(4)+1),dBthr);
-
-        % ---------------------------------------------------------
-        % UPDATE SUBPLOT 16 (Channel 1-2, filtered)
-        % ---------------------------------------------------------
-        % Update the pcolor surface with new X, Y, Z, and Color data
-        set(img41, 'XData', freq_MHz, ...
-            'YData', h, ...
-            'ZData', Z_zeros, ...
-            'CData', dPh12f*180/pi);
-        % Update scaling lines (Virtual and Real heights)
-        set(line41V, 'XData', ScaleV(:,1), 'YData', ScaleV(:,2));
-        set(line41R, 'XData', ScaleR(:,1), 'YData', ScaleR(:,2));
-        % Update the specific title string
-        title41.String = sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s%s (%02ddB, pol fltr)',...
+        % Execute UI update and PNG saving ONLY if plot_flag is 1
+        if plot_flag == 1            
+            
+            % Pre-allocate data on first run of loop 
+            if i==1
+                Z_zeros = zeros(size(ion1)); 
+                freq_MHz = F ./ 1e6;
+    
+                % Force the axes limits to match the new real data boundaries
+                FrLim = [min(freq_MHz) max(freq_MHz)];
+                hLim = [min(h) max(h)];
+                set(ax11, 'XLim', FrLim,'YLim', hLim);
+                set(ax12, 'XLim', FrLim,'YLim', hLim);
+                set(ax13, 'XLim', FrLim,'YLim', hLim);
+                set(ax14, 'XLim', FrLim,'YLim', hLim);
+                set(ax21, 'XLim', FrLim,'YLim', hLim);
+                set(ax22, 'XLim', FrLim,'YLim', hLim);
+                set(ax23, 'XLim', FrLim,'YLim', hLim);
+                set(ax24, 'XLim', FrLim,'YLim', hLim);
+                set(ax31, 'XLim', FrLim,'YLim', hLim);
+                set(ax32, 'XLim', FrLim,'YLim', hLim);
+                set(ax33, 'XLim', FrLim,'YLim', hLim);
+                set(ax34, 'XLim', FrLim,'YLim', hLim);
+                set(ax41, 'XLim', FrLim,'YLim', hLim);
+                set(ax42, 'XLim', FrLim,'YLim', hLim);
+                set(ax43, 'XLim', FrLim,'YLim', hLim);
+                set(ax44, 'XLim', FrLim,'YLim', hLim);
+            end
+    
+            % % Clear the current content of the figure
+            % clf(hFig);
+            % % Set hFig as the active figure for drawing without forcing it to pop up
+            % set(0, 'CurrentFigure', hFig);
+    
+            % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            % Plot original ionograms
+    
+            % =========================================================
+            % UPDATE DATA IN EXISTING UI OBJECTS
+            % =========================================================
+            % ---------------------------------------------------------
+            % UPDATE SUBPLOT 1 (Channel 1, original)
+            % ---------------------------------------------------------
+            % Update the pcolor surface with new X, Y, Z, and Color data
+            set(img11, 'XData', freq_MHz, ...
+                'YData', h, ...
+                'ZData', Z_zeros, ...
+                'CData', ion1);
+            % Update scaling lines (Virtual and Real heights)
+            set(line11V, 'XData', ScaleV(:,1), 'YData', ScaleV(:,2));
+            set(line11R, 'XData', ScaleR(:,1), 'YData', ScaleR(:,2));
+            % Update the specific title string
+            title11.String = sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s (%02ddB, orig)',...
+                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(1)+1),dBthr);
+    
+            % ---------------------------------------------------------
+            % UPDATE SUBPLOT 2 (Channel 2, original)
+            % ---------------------------------------------------------
+            % Update the pcolor surface with new X, Y, Z, and Color data
+            set(img12, 'XData', freq_MHz, ...
+                'YData', h, ...
+                'ZData', Z_zeros, ...
+                'CData', ion2);
+            % Update scaling lines (Virtual and Real heights)
+            set(line12V, 'XData', ScaleV(:,1), 'YData', ScaleV(:,2));
+            set(line12R, 'XData', ScaleR(:,1), 'YData', ScaleR(:,2));
+            % Update the specific title string
+            title12.String = sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s (%02ddB, orig)',...
+                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(2)+1),dBthr);
+    
+            % ---------------------------------------------------------
+            % UPDATE SUBPLOT 3 (Channel 3, original)
+            % ---------------------------------------------------------
+            % Update the pcolor surface with new X, Y, Z, and Color data
+            set(img13, 'XData', freq_MHz, ...
+                'YData', h, ...
+                'ZData', Z_zeros, ...
+                'CData', ion3);
+            % Update scaling lines (Virtual and Real heights)
+            set(line13V, 'XData', ScaleV(:,1), 'YData', ScaleV(:,2));
+            set(line13R, 'XData', ScaleR(:,1), 'YData', ScaleR(:,2));
+            % Update the specific title string
+            title13.String = sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s (%02ddB, orig)',...
+                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(3)+1),dBthr);
+    
+            % ---------------------------------------------------------
+            % UPDATE SUBPLOT 4 (Channel 4, original)
+            % ---------------------------------------------------------
+            % Update the pcolor surface with new X, Y, Z, and Color data
+            set(img14, 'XData', freq_MHz, ...
+                'YData', h, ...
+                'ZData', Z_zeros, ...
+                'CData', ion4);
+            % Update scaling lines (Virtual and Real heights)
+            set(line14V, 'XData', ScaleV(:,1), 'YData', ScaleV(:,2));
+            set(line14R, 'XData', ScaleR(:,1), 'YData', ScaleR(:,2));
+            % Update the specific title string
+            title14.String = sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s (%02ddB, orig)',...
+                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(4)+1),dBthr);
+    
+            % ---------------------------------------------------------
+            % UPDATE SUBPLOT 6 (Channel 1, filtered)
+            % ---------------------------------------------------------
+            % Update the pcolor surface with new X, Y, Z, and Color data
+            set(img21, 'XData', freq_MHz, ...
+                'YData', h, ...
+                'ZData', Z_zeros, ...
+                'CData', ion1_clean);
+            % Update scaling lines (Virtual and Real heights)
+            set(line21V, 'XData', ScaleV(:,1), 'YData', ScaleV(:,2));
+            set(line21R, 'XData', ScaleR(:,1), 'YData', ScaleR(:,2));
+            % Update the specific title string
+            title21.String = sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s (%02ddB, fltr)',...
+                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(1)+1),dBthr);
+    
+            % ---------------------------------------------------------
+            % UPDATE SUBPLOT 7 (Channel 2, filtered)
+            % ---------------------------------------------------------
+            % Update the pcolor surface with new X, Y, Z, and Color data
+            set(img22, 'XData', freq_MHz, ...
+                'YData', h, ...
+                'ZData', Z_zeros, ...
+                'CData', ion2_clean);
+            % Update scaling lines (Virtual and Real heights)
+            set(line22V, 'XData', ScaleV(:,1), 'YData', ScaleV(:,2));
+            set(line22R, 'XData', ScaleR(:,1), 'YData', ScaleR(:,2));
+            % Update the specific title string
+            title22.String = sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s (%02ddB, fltr)',...
+                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(2)+1),dBthr);
+    
+            % ---------------------------------------------------------
+            % UPDATE SUBPLOT 8 (Channel 3, original)
+            % ---------------------------------------------------------
+            % Update the pcolor surface with new X, Y, Z, and Color data
+            set(img23, 'XData', freq_MHz, ...
+                'YData', h, ...
+                'ZData', Z_zeros, ...
+                'CData', ion3_clean);
+            % Update scaling lines (Virtual and Real heights)
+            set(line23V, 'XData', ScaleV(:,1), 'YData', ScaleV(:,2));
+            set(line23R, 'XData', ScaleR(:,1), 'YData', ScaleR(:,2));
+            % Update the specific title string
+            title23.String = sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s (%02ddB, fltr)',...
+                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(3)+1),dBthr);
+    
+            % ---------------------------------------------------------
+            % UPDATE SUBPLOT 9 (Channel 4, filtered)
+            % ---------------------------------------------------------
+            % Update the pcolor surface with new X, Y, Z, and Color data
+            set(img24, 'XData', freq_MHz, ...
+                'YData', h, ...
+                'ZData', Z_zeros, ...
+                'CData', ion4_clean);
+            % Update scaling lines (Virtual and Real heights)
+            set(line24V, 'XData', ScaleV(:,1), 'YData', ScaleV(:,2));
+            set(line24R, 'XData', ScaleR(:,1), 'YData', ScaleR(:,2));
+            % Update the specific title string
+            title24.String = sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s (%02ddB, fltr)',...
+                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDir(antOrder(4)+1),dBthr);
+    
+            % ---------------------------------------------------------
+            % UPDATE SUBPLOT 11 (Channel 1-2, original)
+            % ---------------------------------------------------------
+            % Update the pcolor surface with new X, Y, Z, and Color data
+            set(img31, 'XData', freq_MHz, ...
+                'YData', h, ...
+                'ZData', Z_zeros, ...
+                'CData', dPh12*180/pi);
+            % Update scaling lines (Virtual and Real heights)
+            set(line31V, 'XData', ScaleV(:,1), 'YData', ScaleV(:,2));
+            set(line31R, 'XData', ScaleR(:,1), 'YData', ScaleR(:,2));
+            % Update the specific title string
+            title31.String = sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s%s (%02ddB, pol orig)',...
             DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDirChar(antOrder(2)+1),AntDirChar(antOrder(1)+1),dBthr);
+    
+            % ---------------------------------------------------------
+            % UPDATE SUBPLOT 12 (Channel 3-4, original)
+            % ---------------------------------------------------------
+            % Update the pcolor surface with new X, Y, Z, and Color data
+            set(img32, 'XData', freq_MHz, ...
+                'YData', h, ...
+                'ZData', Z_zeros, ...
+                'CData', dPh34*180/pi);
+            % Update scaling lines (Virtual and Real heights)
+            set(line32V, 'XData', ScaleV(:,1), 'YData', ScaleV(:,2));
+            set(line32R, 'XData', ScaleR(:,1), 'YData', ScaleR(:,2));
+            % Update the specific title string
+            title32.String = sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s%s (%02ddB, pol orig)',...
+                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDirChar(antOrder(4)+1),AntDirChar(antOrder(3)+1),dBthr);
+    
+            % ---------------------------------------------------------
+            % UPDATE SUBPLOT 13 (Channel 2-3, original)
+            % ---------------------------------------------------------
+            % Update the pcolor surface with new X, Y, Z, and Color data
+            set(img33, 'XData', freq_MHz, ...
+                'YData', h, ...
+                'ZData', Z_zeros, ...
+                'CData', dPh23*180/pi);
+            % Update scaling lines (Virtual and Real heights)
+            set(line33V, 'XData', ScaleV(:,1), 'YData', ScaleV(:,2));
+            set(line33R, 'XData', ScaleR(:,1), 'YData', ScaleR(:,2));
+            % Update the specific title string
+            title33.String = sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s%s (%02ddB, pol orig)',...
+                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDirChar(antOrder(3)+1),AntDirChar(antOrder(2)+1),dBthr);
+    
+            % ---------------------------------------------------------
+            % UPDATE SUBPLOT 14 (Channel 4-1, original)
+            % ---------------------------------------------------------
+            % Update the pcolor surface with new X, Y, Z, and Color data
+            set(img34, 'XData', freq_MHz, ...
+                'YData', h, ...
+                'ZData', Z_zeros, ...
+                'CData', dPh41*180/pi);
+            % Update scaling lines (Virtual and Real heights)
+            set(line34V, 'XData', ScaleV(:,1), 'YData', ScaleV(:,2));
+            set(line34R, 'XData', ScaleR(:,1), 'YData', ScaleR(:,2));
+            % Update the specific title string
+            title34.String = sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s%s (%02ddB, pol orig)',...
+                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDirChar(antOrder(1)+1),AntDirChar(antOrder(4)+1),dBthr);
+    
+            % ---------------------------------------------------------
+            % UPDATE SUBPLOT 16 (Channel 1-2, filtered)
+            % ---------------------------------------------------------
+            % Update the pcolor surface with new X, Y, Z, and Color data
+            set(img41, 'XData', freq_MHz, ...
+                'YData', h, ...
+                'ZData', Z_zeros, ...
+                'CData', dPh12f*180/pi);
+            % Update scaling lines (Virtual and Real heights)
+            set(line41V, 'XData', ScaleV(:,1), 'YData', ScaleV(:,2));
+            set(line41R, 'XData', ScaleR(:,1), 'YData', ScaleR(:,2));
+            % Update the specific title string
+            title41.String = sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s%s (%02ddB, pol fltr)',...
+                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDirChar(antOrder(2)+1),AntDirChar(antOrder(1)+1),dBthr);
+    
+            % ---------------------------------------------------------
+            % UPDATE SUBPLOT 17 (Channel 3-4, filtered)
+            % ---------------------------------------------------------
+            % Update the pcolor surface with new X, Y, Z, and Color data
+            set(img42, 'XData', freq_MHz, ...
+                'YData', h, ...
+                'ZData', Z_zeros, ...
+                'CData', dPh34f*180/pi);
+            % Update scaling lines (Virtual and Real heights)
+            set(line42V, 'XData', ScaleV(:,1), 'YData', ScaleV(:,2));
+            set(line42R, 'XData', ScaleR(:,1), 'YData', ScaleR(:,2));
+            % Update the specific title string
+            title42.String = sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s%s (%02ddB, pol fltr)',...
+                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDirChar(antOrder(4)+1),AntDirChar(antOrder(3)+1),dBthr);
+    
+            % ---------------------------------------------------------
+            % UPDATE SUBPLOT 18 (Channel 2-3, filtered)
+            % ---------------------------------------------------------
+            % Update the pcolor surface with new X, Y, Z, and Color data
+            set(img43, 'XData', freq_MHz, ...
+                'YData', h, ...
+                'ZData', Z_zeros, ...
+                'CData', dPh23f*180/pi);
+            % Update scaling lines (Virtual and Real heights)
+            set(line43V, 'XData', ScaleV(:,1), 'YData', ScaleV(:,2));
+            set(line43R, 'XData', ScaleR(:,1), 'YData', ScaleR(:,2));
+            % Update the specific title string
+            title43.String = sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s%s (%02ddB, pol fltr)',...
+                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDirChar(antOrder(3)+1),AntDirChar(antOrder(2)+1),dBthr);
+    
+            % ---------------------------------------------------------
+            % UPDATE SUBPLOT 19 (Channel 4-1, filtered)
+            % ---------------------------------------------------------
+            % Update the pcolor surface with new X, Y, Z, and Color data
+            set(img44, 'XData', freq_MHz, ...
+                'YData', h, ...
+                'ZData', Z_zeros, ...
+                'CData', dPh41f*180/pi);
+            % Update scaling lines (Virtual and Real heights)
+            set(line44V, 'XData', ScaleV(:,1), 'YData', ScaleV(:,2));
+            set(line44R, 'XData', ScaleR(:,1), 'YData', ScaleR(:,2));
+            % Update the specific title string
+            title44.String = sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s%s (%02ddB, pol fltr)',...
+                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDirChar(antOrder(1)+1),AntDirChar(antOrder(4)+1),dBthr);
+    
+            % ---------------------------------------------------------
+            % UPDATE SUBPLOT 5 (Histogram filtered) Channel 1-2
+            % ---------------------------------------------------------
+            % Overwrite histogram data array
+            hist15.Data = vec_no_nan12f*180/pi;
+            % Update the specific title string
+            title15.String = sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, %s%s, (%02d, fltr)',...
+                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),...
+                AntDirChar(antOrder(2)+1),AntDirChar(antOrder(1)+1),dBthr);
+    
+            % ---------------------------------------------------------
+            % UPDATE SUBPLOT 10 (Histogram filtered) Channel 3-4
+            % ---------------------------------------------------------
+            % Overwrite histogram data array
+            hist25.Data = vec_no_nan34f*180/pi;
+            % Update the specific title string
+            title25.String = sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, %s%s, (%02d, fltr)',...
+                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),...
+                AntDirChar(antOrder(4)+1),AntDirChar(antOrder(3)+1),dBthr);
+    
+            % ---------------------------------------------------------
+            % UPDATE SUBPLOT 15 (Histogram filtered) Channel 2-3
+            % ---------------------------------------------------------
+            % Overwrite histogram data array
+            hist35.Data = vec_no_nan23f*180/pi;
+            % Update the specific title string
+            title35.String = sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, %s%s, (%02d, fltr)',...
+                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),...
+                AntDirChar(antOrder(3)+1),AntDirChar(antOrder(2)+1),dBthr);
+    
+            % ---------------------------------------------------------
+            % UPDATE SUBPLOT 20 (Histogram filtered) Channel 4-1
+            % ---------------------------------------------------------
+            % Overwrite histogram data array
+            hist45.Data = vec_no_nan41f*180/pi;
+            % Update the specific title string
+            title45.String = sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, %s%s, (%02d, fltr)',...
+                DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),...
+                AntDirChar(antOrder(1)+1),AntDirChar(antOrder(4)+1),dBthr);
+    
+    
+            % Out PNG as a screenshot
+            % Force all graphics rendering to complete before taking the snapshot
+            drawnow; 
+            % Capture the pixels directly from the figure window buffer
+            frame = getframe(hFig);
+            % Save the captured pixel matrix to a PNG file without re-rendering
+            imwrite(frame.cdata, outFullPathIonA);    
+            fprintf('Saved image: %s (%05d of %05d)\n', outFileNameIonA, i, NmatF);
 
-        % ---------------------------------------------------------
-        % UPDATE SUBPLOT 17 (Channel 3-4, filtered)
-        % ---------------------------------------------------------
-        % Update the pcolor surface with new X, Y, Z, and Color data
-        set(img42, 'XData', freq_MHz, ...
-            'YData', h, ...
-            'ZData', Z_zeros, ...
-            'CData', dPh34f*180/pi);
-        % Update scaling lines (Virtual and Real heights)
-        set(line42V, 'XData', ScaleV(:,1), 'YData', ScaleV(:,2));
-        set(line42R, 'XData', ScaleR(:,1), 'YData', ScaleR(:,2));
-        % Update the specific title string
-        title42.String = sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s%s (%02ddB, pol fltr)',...
-            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDirChar(antOrder(4)+1),AntDirChar(antOrder(3)+1),dBthr);
-
-        % ---------------------------------------------------------
-        % UPDATE SUBPLOT 18 (Channel 2-3, filtered)
-        % ---------------------------------------------------------
-        % Update the pcolor surface with new X, Y, Z, and Color data
-        set(img43, 'XData', freq_MHz, ...
-            'YData', h, ...
-            'ZData', Z_zeros, ...
-            'CData', dPh23f*180/pi);
-        % Update scaling lines (Virtual and Real heights)
-        set(line43V, 'XData', ScaleV(:,1), 'YData', ScaleV(:,2));
-        set(line43R, 'XData', ScaleR(:,1), 'YData', ScaleR(:,2));
-        % Update the specific title string
-        title43.String = sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s%s (%02ddB, pol fltr)',...
-            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDirChar(antOrder(3)+1),AntDirChar(antOrder(2)+1),dBthr);
-
-        % ---------------------------------------------------------
-        % UPDATE SUBPLOT 19 (Channel 4-1, filtered)
-        % ---------------------------------------------------------
-        % Update the pcolor surface with new X, Y, Z, and Color data
-        set(img44, 'XData', freq_MHz, ...
-            'YData', h, ...
-            'ZData', Z_zeros, ...
-            'CData', dPh41f*180/pi);
-        % Update scaling lines (Virtual and Real heights)
-        set(line44V, 'XData', ScaleV(:,1), 'YData', ScaleV(:,2));
-        set(line44R, 'XData', ScaleR(:,1), 'YData', ScaleR(:,2));
-        % Update the specific title string
-        title44.String = sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s%s (%02ddB, pol fltr)',...
-            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),AntDirChar(antOrder(1)+1),AntDirChar(antOrder(4)+1),dBthr);
-
-        % ---------------------------------------------------------
-        % UPDATE SUBPLOT 5 (Histogram filtered) Channel 1-2
-        % ---------------------------------------------------------
-        % Overwrite histogram data array
-        hist15.Data = vec_no_nan12f*180/pi;
-        % Update the specific title string
-        title15.String = sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, %s%s, (%02d, fltr)',...
-            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),...
-            AntDirChar(antOrder(2)+1),AntDirChar(antOrder(1)+1),dBthr);
-
-        % ---------------------------------------------------------
-        % UPDATE SUBPLOT 10 (Histogram filtered) Channel 3-4
-        % ---------------------------------------------------------
-        % Overwrite histogram data array
-        hist25.Data = vec_no_nan34f*180/pi;
-        % Update the specific title string
-        title25.String = sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, %s%s, (%02d, fltr)',...
-            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),...
-            AntDirChar(antOrder(4)+1),AntDirChar(antOrder(3)+1),dBthr);
-
-        % ---------------------------------------------------------
-        % UPDATE SUBPLOT 15 (Histogram filtered) Channel 2-3
-        % ---------------------------------------------------------
-        % Overwrite histogram data array
-        hist35.Data = vec_no_nan23f*180/pi;
-        % Update the specific title string
-        title35.String = sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, %s%s, (%02d, fltr)',...
-            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),...
-            AntDirChar(antOrder(3)+1),AntDirChar(antOrder(2)+1),dBthr);
-
-        % ---------------------------------------------------------
-        % UPDATE SUBPLOT 5 (Histogram filtered) Channel 4-1
-        % ---------------------------------------------------------
-        % Overwrite histogram data array
-        hist45.Data = vec_no_nan41f*180/pi;
-        % Update the specific title string
-        title45.String = sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, %s%s, (%02d, fltr)',...
-            DT(1),DT(2),DT(3),DT(4),DT(5),DT(6),...
-            AntDirChar(antOrder(1)+1),AntDirChar(antOrder(4)+1),dBthr);
-
-
-        % Out PNG as a screenshot
-        % Force all graphics rendering to complete before taking the snapshot
-        drawnow; 
-        % Capture the pixels directly from the figure window buffer
-        frame = getframe(hFig);
-        % Save the captured pixel matrix to a PNG file without re-rendering
-        imwrite(frame.cdata, outFullPathIonA);    
-        fprintf('Saved image: %s (%05d of %05d)\n', outFileNameIonA, i, NmatF);
+        end
 
 end
 

@@ -1,7 +1,8 @@
-function run_parse_polan_synced(filepath, fscale, hm, fm)
+function run_parse_polan_synced(filepath, fscale, hm, fm, plot_flag)
     % run_parse_polan_synced
-    % Batch processes all .pol files in the given directory tree,
-    % extracting data to .mat, saving plots, and generating log files.
+    % Batch processes all .pol files in the given directory tree.
+    % Extracts data to .mat.
+    % If plot_flag == 1, also generates and saves PNG plots.
     
     % Validate input limits
     if length(hm) ~= 2 || length(fm) ~= 2
@@ -88,80 +89,89 @@ function run_parse_polan_synced(filepath, fscale, hm, fm)
                 fprintf(fid_err, '%s\n', mat_filename);
             end
             
-            % Create figure in hidden mode for fast batch processing
-            fig = figure('Name', 'Ionogram Profile', 'Color', 'w', 'Visible', 'off');
-            
-            % Plot Virtual Heights
-            if ~isempty(data(idx).InputData)
-                plot(data(idx).InputData(:,1), data(idx).InputData(:,2), 'b.-', ...
-                    'MarkerSize', 12, 'LineWidth', 1.5, 'DisplayName', 'Virtual heights h''');
-                hold on;
-            end
-            
-            % Plot True Heights
-            if ~isempty(data(idx).RealHeights)
-                plot(data(idx).RealHeights(:,1), data(idx).RealHeights(:,2), 'r.-', ...
-                    'MarkerSize', 12, 'LineWidth', 1.5, 'DisplayName', 'True heights h');
-            end
-            
-            % Check if Peak data actually contains numerical values
-            has_peak = ~isempty(data(idx).Peak) && ~isempty(data(idx).Peak.foF2);
-
-            % Highlight the F2 Peak
-            if has_peak
-                scatter(data(idx).Peak.foF2, data(idx).Peak.hmF2, 250, 'k', 'filled', 'p', ...
-                    'DisplayName', 'F2 Peak');
-            end
-            
-            % Generate Title
-            dt = data(idx).DT;
-            if has_peak
-                title_str = sprintf('STATION: %s | %04d/%02d/%02d %02d:%02d (%s) foF2 = %.4f MHz; hmF2 = %.1f km', ...
-                    upper(data(idx).Station), dt(1), dt(2), dt(3), dt(4), dt(5), ...
-                    upper(fscale), data(idx).Peak.foF2, data(idx).Peak.hmF2);
-            else
-                title_str = sprintf('STATION: %s | %04d/%02d/%02d %02d:%02d (%s)', ...
-                    upper(data(idx).Station), dt(1), dt(2), dt(3), dt(4), dt(5), upper(fscale));
-            end
-
-            if has_errors
-                title_str = [title_str, ' [FOUND ERRORS]'];
-            end
-            title(title_str, 'FontSize', 12, 'FontWeight', 'bold');
-            
-            % Apply scales
-            if strcmpi(fscale, 'lin')
-                set(gca, 'XScale', 'linear');
-            else
-                set(gca, 'XScale', 'log');
-                xticks([0.5, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
-                xticklabels({'0.5', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'});
-            end
-
-            set(gca, 'YDir', 'normal'); 
-            xlabel('Frequency (MHz)', 'FontSize', 12);
-            ylabel('Height (km)', 'FontSize', 12);
-            legend('Location', 'best', 'FontSize', 11);
-            grid on;
-            
-            % --- SAVE 1: Auto-scaled boundaries ---
-            autoscale_filename = fullfile(folder, sprintf('%s%s_autoscale%s.png', base_name_pol, err_suffix, scale_suffix));
-            saveas(fig, autoscale_filename);
-            
-            % --- SAVE 2: Fixed boundaries ---
-            xlim([fmin fmax]);
-            ylim([hmin hmax]);
-            fixed_filename = fullfile(folder, sprintf('%s%s%s.png', base_name_pol, err_suffix, scale_suffix));
-            saveas(fig, fixed_filename);
-            
-            % Log the generated files to the main log
+            % Log the MAT file processing to the main log
             fprintf(fid_log, 'Processed: %s\n', filename);
             fprintf(fid_log, '  -> MAT: %s\n', mat_filename);
-            fprintf(fid_log, '  -> PNG (Auto): %s\n', autoscale_filename);
-            fprintf(fid_log, '  -> PNG (Fixed): %s\n\n', fixed_filename);
             
-            % Close figure to prevent memory leak during batch processing
-            close(fig);
+            % Execute plotting and PNG saving ONLY if plot_flag is set to 1
+            if plot_flag == 1
+                
+                % Create figure in hidden mode for fast batch processing
+                fig = figure('Name', 'Ionogram Profile', 'Color', 'w', 'Visible', 'off');
+                
+                % Plot Virtual Heights
+                if ~isempty(data(idx).InputData)
+                    plot(data(idx).InputData(:,1), data(idx).InputData(:,2), 'b.-', ...
+                        'MarkerSize', 12, 'LineWidth', 1.5, 'DisplayName', 'Virtual heights h''');
+                    hold on;
+                end
+                
+                % Plot True Heights
+                if ~isempty(data(idx).RealHeights)
+                    plot(data(idx).RealHeights(:,1), data(idx).RealHeights(:,2), 'r.-', ...
+                        'MarkerSize', 12, 'LineWidth', 1.5, 'DisplayName', 'True heights h');
+                end
+                
+                % Check if Peak data actually contains numerical values
+                has_peak = ~isempty(data(idx).Peak) && ~isempty(data(idx).Peak.foF2);
+
+                % Highlight the F2 Peak
+                if has_peak
+                    scatter(data(idx).Peak.foF2, data(idx).Peak.hmF2, 250, 'k', 'filled', 'p', ...
+                        'DisplayName', 'F2 Peak');
+                end
+                
+                % Generate Title
+                dt = data(idx).DT;
+                if has_peak
+                    title_str = sprintf('STATION: %s | %04d/%02d/%02d %02d:%02d (%s) foF2 = %.4f MHz; hmF2 = %.1f km', ...
+                        upper(data(idx).Station), dt(1), dt(2), dt(3), dt(4), dt(5), ...
+                        upper(fscale), data(idx).Peak.foF2, data(idx).Peak.hmF2);
+                else
+                    title_str = sprintf('STATION: %s | %04d/%02d/%02d %02d:%02d (%s)', ...
+                        upper(data(idx).Station), dt(1), dt(2), dt(3), dt(4), dt(5), upper(fscale));
+                end
+
+                if has_errors
+                    title_str = [title_str, ' [FOUND ERRORS]'];
+                end
+                title(title_str, 'FontSize', 12, 'FontWeight', 'bold');
+                
+                % Apply scales
+                if strcmpi(fscale, 'lin')
+                    set(gca, 'XScale', 'linear');
+                else
+                    set(gca, 'XScale', 'log');
+                    xticks([0.5, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+                    xticklabels({'0.5', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'});
+                end
+
+                set(gca, 'YDir', 'normal'); 
+                xlabel('Frequency (MHz)', 'FontSize', 12);
+                ylabel('Height (km)', 'FontSize', 12);
+                legend('Location', 'best', 'FontSize', 11);
+                grid on;
+                
+                % --- SAVE 1: Auto-scaled boundaries ---
+                autoscale_filename = fullfile(folder, sprintf('%s%s_autoscale%s.png', base_name_pol, err_suffix, scale_suffix));
+                saveas(fig, autoscale_filename);
+                
+                % --- SAVE 2: Fixed boundaries ---
+                xlim([fmin fmax]);
+                ylim([hmin hmax]);
+                fixed_filename = fullfile(folder, sprintf('%s%s%s.png', base_name_pol, err_suffix, scale_suffix));
+                saveas(fig, fixed_filename);
+                
+                % Log the generated PNG files
+                fprintf(fid_log, '  -> PNG (Auto): %s\n', autoscale_filename);
+                fprintf(fid_log, '  -> PNG (Fixed): %s\n', fixed_filename);
+                
+                % Close figure to prevent memory leak
+                close(fig);
+            end
+            
+            % Add an empty line in the log after each file for readability
+            fprintf(fid_log, '\n');
             
         catch ME
             fprintf('  Critical Error processing %s: %s\n', filename, ME.message);
