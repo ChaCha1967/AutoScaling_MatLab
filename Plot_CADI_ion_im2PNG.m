@@ -445,6 +445,16 @@ for i = 1:length(fileList)
     currentScaleFileName = currentFileName;
     currentScaleFileName(12:14) = 'pol';
     currentScaleFullPath = fullfile(selectedFolder, currentScaleFileName);
+    
+ 
+    % Extract the base file name to construct output image filenames
+    [~, baseName, ~] = fileparts(currentFileName);
+    % Load variables from the ion file directly into memory
+    load(currentFullPath);
+
+    % Construct the output base PNG file name without extension
+    outFileNameIonA = [baseName, '_a'];
+
     % Verify that the corresponding scale mat file exists
     if isfile(currentScaleFullPath) % load and test data from polarization scale mat file 
         fprintf('Loading and processing ion: %s and scale: %s data\n', currentFileName, currentScaleFileName);
@@ -454,6 +464,9 @@ for i = 1:length(fileList)
         if isfield(records, 'InputData') && ~isempty(records.InputData) % data exists
             ScaleV = records.InputData;
             lScaleV = 1;
+            % Add to output base PNG file name 'v' indicating that virtual
+            % heights profile exists
+            outFileNameIonA = [outFileNameIonA, 'sv'];
         else % data not exists
             ScaleV = zeros(1,2)*NaN;
             lScaleV = 0;
@@ -462,6 +475,9 @@ for i = 1:length(fileList)
         if isfield(records, 'RealHeights') && ~isempty(records.RealHeights) % data exists
             ScaleR = records.RealHeights;
             lScaleR = 1;
+            % Add to output base PNG file name 'r' indicating that virtual
+            % heights profile exists
+            outFileNameIonA = [outFileNameIonA, 'r'];
         else % data not exists
             ScaleR = zeros(1,2)*NaN;
             lScaleR = 0;
@@ -472,14 +488,10 @@ for i = 1:length(fileList)
         ScaleR = zeros(1,2)*NaN;
         lScaleR = 0;
     end
- 
-    % Extract the base file name to construct output image filenames
-    [~, baseName, ~] = fileparts(currentFileName);
-    % Load variables from the ion file directly into memory
-    load(currentFullPath);
 
-    % Construct the output PNG file name and full path for all ion plots
-    outFileNameIonA = [baseName, 'a.png'];
+    % Construct the output PNG file name with extension
+    outFileNameIonA = [outFileNameIonA, '.png'];
+    % Construct full path with PNG file name for common ion plot
     outFullPathIonA = fullfile(selectedFolder, outFileNameIonA);
 
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

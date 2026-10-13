@@ -50,7 +50,12 @@ sHour = sprintf('%02d',Hour);
 sM = 'ABCDEFGHIJKL'; % char of month
 DataFolderLocal = [sDataPathBase,sStation,'\',sYear,'\']; % local folder
 FileName = [sYear(4) sM(str2num(sMonth)) sDate sHour '00.' sFileType];
-ionoFileName = [sStation sprintf('%01d',Year-2000) sM(str2num(sMonth)) sDate sHour '00_ion.mat'];
+% Convert year to 1 digit
+Year1dig = Year-2000;
+if Year1dig>9
+    Year1dig = Year1dig-10;
+end
+ionoFileName = [sStation sprintf('%01d',Year1dig) sM(str2num(sMonth)) sDate sHour '00_ion.mat'];
 
 % % Open ftp
 % s = ftp(ftp_string,'ftp','alex.koloskov@unb.ca');
@@ -420,7 +425,7 @@ while ftell(fileID)<SizeFileInBytes && hnum==255 % continue
         % Save individual iono
         ionoFileName(9:10) = sprintf('%02d',DT(5));
         save([DataFolderLocal ionoFileName],'headerStruct','siteStruct','ionoIQ','DT','GainNoise');
-        fprintf('Iono file: %s calculated and saved \n',ionoFileName);
+        %%%%%%%%%%%%%%%%%%fprintf('Iono file: %s calculated and saved \n',ionoFileName);
 
         % 3. Stop saving timer and accumulate time
         total_saving_time = total_saving_time + toc(save_timer);
