@@ -17,9 +17,12 @@ DPh = 20;
 % Calculate polarization ionogram custom colormap
 PionCmap = CustomColormap;
 
+% Set site struct
+siteStruct = CADI_site_mtrx('RB');
+
 % Prompt the user to select the directory
 %selectedFolder = uigetdir(pwd, 'Select the folder containing *_ion.mat files');
-selectedFolder = 'N:\cadi_ionotest';
+selectedFolder = 'N:\data_new\RB\2011';
 
 % Check if the user canceled the dialog
 if selectedFolder == 0
@@ -457,6 +460,8 @@ for i = 1:length(fileList)
     [~, baseName, ~] = fileparts(currentFileName);
     % Load variables from the ion file directly into memory
     load(currentFullPath);
+    % Set site struct
+    siteStruct = CADI_site_mtrx('RB');
 
     % Construct the output base PNG file name without extension
     outFileNameIonA = [baseName, '_a'];
@@ -688,7 +693,7 @@ for i = 1:length(fileList)
             ion_dat(13,:,:) = mask;
             
             % append ion-dat to *_ion.mat file
-            save(currentFullPath,'ion_dat','-append');
+            save(currentFullPath,'ion_dat','siteStruct','-append');
 
         end
 

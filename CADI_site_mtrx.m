@@ -62,6 +62,34 @@ phasecorrectionEW = 0.0;
 switch sStation
   
     % Case Hall Beach
+    case 'CA'
+        code = 'CAM';
+        name = 'Cambridge Bay';
+        gdlon = -105.11*pi/180; % 2-digit "geographic" from handout
+        gdlat = 69.10*pi/180;   %
+        magdip = 85.126;      % 
+        gyrofreq = 1.63129;    %     
+        polarity = [1, -1, 1, -1]; %
+        separation = [21.0, 21.0]; %
+        azimuth = 0.0*pi/180; %
+        phasecorrectionNS = -20.7*pi/180; % 0 deg
+        phasecorrectionEW = -35.5*pi/180; % 0 deg
+
+    case 'EU'
+        code = 'EUR';
+        name = 'Eureka';
+        gdlon = -85.92*pi/180; % 2-digit "geographic" from handout
+        gdlat = 79.99*pi/180;   %
+        magdip = 87.427;      % 
+        gyrofreq = 1.5828;    %     
+        polarity = [-1, 1, -1, 1]; %
+        separation = [40.0, 40.0]; %
+        azimuth = 0.0*pi/180; %
+        phasecorrectionNS = 40*pi/180; 
+        phasecorrectionEW = 90*pi/180; 
+    
+    
+    % Case Hall Beach
     case 'HA'
         code = 'HAL';
         name = 'Hall B';
@@ -75,20 +103,45 @@ switch sStation
         phasecorrectionNS = 0.0; % 0 deg
         phasecorrectionEW = 0.0; % 0 deg
 
-
-    % Temporarely set default parameters as Hall Beach
-    otherwise
-        code = 'HAL';
-        name = 'Hall B';
-        gdlon = -81.257*pi/180; % 2-digit "geographic" from handout
-        gdlat = 68.767*pi/180;   %
-        magdip = 71.3;      % hould be -ve??
-        gyrofreq = 1.17;    %     
+    case 'PO'
+        code = 'PON';
+        name = 'Pomd I';
+        gdlon = -77.955*pi/180; % 2-digit "geographic" from handout
+        gdlat = 72.693166*pi/180;   %
+        magdip = 85.294;      % hould be -ve??
+        gyrofreq = 1.5958517;    %     
         polarity = [1, -1, 1, -1]; %
         separation = [21.0, 21.0]; %
         azimuth = 0.0*pi/180; %
         phasecorrectionNS = 0.0; % 0 deg
         phasecorrectionEW = 0.0; % 0 deg
+
+    case 'RB'
+        code = 'R_B';
+        name = 'Resolute Bay';
+        gdlon = 264.997469*pi/180; % 2-digit "geographic" from handout
+        gdlat = 74.746627*pi/180;   %
+        magdip = 87.151;      % hould be -ve??
+        gyrofreq = 1.6060129;    %     
+        polarity = [1, -1, 1, -1]; %
+        separation = [60.0, 60.0]; %
+        azimuth = 24.0*pi/180; %
+        phasecorrectionNS = -0.42; % -24 deg
+        phasecorrectionEW = 0.42; % 24 deg
+
+    % Temporarely set default parameters as Hall Beach
+    otherwise
+        code = 'R_B';
+        name = 'Resolute Bay';
+        gdlon = 264.997469*pi/180; % 2-digit "geographic" from handout
+        gdlat = 74.746627*pi/180;   %
+        magdip = 87.151;      % hould be -ve??
+        gyrofreq = 1.6060129;    %     
+        polarity = [1, -1, 1, -1]; %
+        separation = [60.0, 60.0]; %
+        azimuth = 24.0*pi/180; %
+        phasecorrectionNS = -0.42; % -24 deg
+        phasecorrectionEW = 0.42; % 24 deg
 
 end
 
