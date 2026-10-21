@@ -32,7 +32,7 @@ function success = cadi_visualize_from_mat(out_filepath)
     else
         error('Invalid out_filepath specified: %s', out_filepath);
     end
-qik
+
     num_files = numel(mat_files);
     if num_files == 0
         fprintf('No valid dataset .mat files found in: %s\n', out_filepath);
