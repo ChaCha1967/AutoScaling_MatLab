@@ -1,6 +1,6 @@
 % Batch processing script to scan nested directories, process CADI pairs,
 % and mirror the folder structure inside the target dataset directory 
-% saving tensors as .mat and masks as PNG images with periodic progress reporting.
+% saving all sample data into a single unified .mat file per pair.
 
 % Define root directory containing raw CADI data subfolders
 PathDat = 'N:\cadi_synced_mat_source'; % <-- Update this path to your root folder
@@ -33,8 +33,8 @@ for i = 1:num_files
         continue; 
     end
 
-    % Process the pair using the core conversion function
-    [X_tensor, Y_mask, ~, is_valid] = process_cadi_pair(ion_filepath, pol_filepath);
+    % Process the pair using the updated core conversion function
+    [X_tensor, Y_mask, f_grid, h_grid, roi_bbox, is_valid] = process_cadi_pair(ion_filepath, pol_filepath);
 
     if is_valid
         [~, base_name, ~] = fileparts(ion_files(i).name);
@@ -51,15 +51,11 @@ for i = 1:num_files
             mkdir(target_subfolder);
         end
 
-        % Define output file paths (_tns3.mat for tensor, _lbl.png for mask)
-        tns_out_path = fullfile(target_subfolder, [sample_id, '_tns3.mat']);
-        lbl_out_path = fullfile(target_subfolder, [sample_id, '_lbl.png']);
+        % Define unified output file path (.mat)
+        sample_out_path = fullfile(target_subfolder, [sample_id, '.mat']);
 
-        % Save tensor as floating-point .mat (-v6 disables compression for speed)
-        save(tns_out_path, 'X_tensor', '-v6');
-
-        % Save binary mask as PNG
-        imwrite(Y_mask, lbl_out_path);
+        % Save all sample components into a single unified .mat file (-v6 for speed)
+        save(sample_out_path, 'X_tensor', 'Y_mask', 'f_grid', 'h_grid', 'roi_bbox', '-v6');
 
         success_count = success_count + 1;
     end
@@ -71,5 +67,5 @@ for i = 1:num_files
     end
 end
 
-fprintf('Batch dataset generation completed successfully! Saved %d valid pairs into: %s\n', ...
+fprintf('Batch dataset generation completed successfully! Saved %d unified mat files into: %s\n', ...
     success_count, out_dataset_dir);
