@@ -1,1 +1,1 @@
-[trainedNet, trainInfo, splitData] = cadi_train_unet('N:\cadi_synced_mat_out');
+[trainedNet, trainInfo, splitData] = cadi_train_unet('N:\cadi_synced_out');
