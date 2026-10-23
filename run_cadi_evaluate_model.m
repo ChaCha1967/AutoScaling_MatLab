@@ -1,0 +1,1 @@
+evalResults = cadi_evaluate_model('N:/cadi_synced_out/cadi_unet_6ch_combined.mat');
