@@ -195,7 +195,8 @@ function net = build_cadi_unet(input_size)
 % and a single-channel sigmoid probability output [192x96x1].
 
     % Generate base U-Net graph (EncoderDepth = 4 -> bottleneck is 12x6)
-    lgraph = unetLayers(input_size, 2, 'EncoderDepth', 4);
+    % lgraph = unetLayers(input_size, 2, 'EncoderDepth', 4);
+    lgraph = layerGraph(unet(input_size, 2, 'EncoderDepth', 4));
 
     % 1. Disable internal input normalization since X_tensor is already scaled to [0, 1]
     in_layer = imageInputLayer(input_size, 'Normalization', 'none', 'Name', 'input_tensor');
