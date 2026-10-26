@@ -1702,7 +1702,15 @@ function [FV, HT, QQ, P] = sub_peak(FV, HT, QQ, P)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+        % Physical limits for ScaleHt in the F-region (in km)
+        min_allowed_SH = 30.0;
+        max_allowed_SH = 100.0;        
+        
         P.SH    = P.SH * sqrt(abs(PQ(2)));
+        
+        % No multipliers, no adaptive damping — pure original algorithm value of P.SH
+        % Just apply hard physical clamping to prevent mathematical collapse
+        P.SH = max(min(P.SH, max_allowed_SH), min_allowed_SH);
         
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -1715,6 +1723,52 @@ function [FV, HT, QQ, P] = sub_peak(FV, HT, QQ, P)
         %     % Prevent catastrophic scale height collapse by gently holding/damping it
         %     P.SH = P.SH * 0.95; 
         % end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+        % % Physical limits for ScaleHt in the F-region based on polar ionosphere physics (in km)
+        % min_allowed_SH = 25.0;
+        % max_allowed_SH = 90.0;
+        % 
+        % if PQ(2) > 0.0
+        %     % Apply gentle damping (alpha = 0.4) to avoid sharp hmF2 jumps
+        %     alpha = 0.4; 
+        %     correction_factor = 1.0 + alpha * (sqrt(PQ(2)) - 1.0);
+        %     P.SH = P.SH * correction_factor;
+        % else
+        %     % Smooth damping instead of a sharp drop when mathematical instability occurs
+        %     P.SH = P.SH * 0.99; 
+        % end
+        % 
+        % % Hard physical clamping within realistic polar ionosphere bounds
+        % P.SH = max(min(P.SH, max_allowed_SH), min_allowed_SH);
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+        % % Physical limits for ScaleHt in the F-region (in km)
+        % min_allowed_SH = 25.0;
+        % max_allowed_SH = 90.0;
+        % 
+        % if PQ(2) > 0.0
+        %     raw_factor = sqrt(PQ(2));
+        % 
+        %     % Option 1: Soft-clipping (tanh-based compression) to prevent extreme jumps 
+        %     % while keeping high responsiveness for moderate values
+        %     controlled_factor = 1.0 + 0.6 * tanh(raw_factor - 1.0);
+        % 
+        %     % Option 2: Tapering the correction near the peak to protect hmF2 accuracy
+        %     % (assuming K is current step index and K_total is total steps, or using frequency proximity)
+        %     % Let's apply a smooth limiter directly to the multiplier:
+        %     correction_factor = max(0.8, min(1.3, controlled_factor));
+        % 
+        %     P.SH = P.SH * correction_factor;
+        % else
+        %     % Gentle smoothing during mathematical instability
+        %     P.SH = P.SH * 0.98; 
+        % end
+        % 
+        % % Hard physical clamping within realistic polar ionosphere bounds
+        % P.SH = max(min(P.SH, max_allowed_SH), min_allowed_SH);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
