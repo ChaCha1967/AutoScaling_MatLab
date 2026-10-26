@@ -1702,20 +1702,19 @@ function [FV, HT, QQ, P] = sub_peak(FV, HT, QQ, P)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-        % P.SH    = P.SH * sqrt(abs(PQ(2)));
-
+        P.SH    = P.SH * sqrt(abs(PQ(2)));
         
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-        % If PQ(2) is positive, update ScaleHt standardly following Titheridge's algorithm.
-        % If PQ(2) is negative (indicating mathematical instability on real-world data),
-        % we prevent the scale height from collapsing and apply gentle damping instead.
-        if PQ(2) > 0.0
-            P.SH = P.SH * sqrt(PQ(2));
-        else
-            % Prevent catastrophic scale height collapse by gently holding/damping it
-            P.SH = P.SH * 0.95; 
-        end
+        % % If PQ(2) is positive, update ScaleHt standardly following Titheridge's algorithm.
+        % % If PQ(2) is negative (indicating mathematical instability on real-world data),
+        % % we prevent the scale height from collapsing and apply gentle damping instead.
+        % if PQ(2) > 0.0
+        %     P.SH = P.SH * sqrt(PQ(2));
+        % else
+        %     % Prevent catastrophic scale height collapse by gently holding/damping it
+        %     P.SH = P.SH * 0.95; 
+        % end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
