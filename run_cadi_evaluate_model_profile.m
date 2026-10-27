@@ -1,1 +1,1 @@
-evalResults = cadi_evaluate_model_profile('N:/cadi_synced_out/cadi_unet_6ch_combined.mat',0.5,15,'bottom');
+evalResults = cadi_evaluate_model_profile('N:/cadi_synced_out/cadi_unet_6ch_combined.mat',0.5,15,'center');
