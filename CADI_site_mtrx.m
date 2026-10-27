@@ -1,4 +1,7 @@
 % Set parameters for selected station
+% Returns a structure containing station-specific configuration parameters 
+% for CADI ionosonde sites, including geographic coordinates, geophysical 
+% constants, antenna polarities, spacings, azimuths, and phase corrections.
 
 % % % % INFO FROM IDL CADI_SITE.PRO
 % % % ; NAME:

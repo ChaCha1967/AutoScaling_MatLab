@@ -1,3 +1,10 @@
+% Batch processes CADI ionosphere data files (*_ion.mat) and files with
+% scaled and real-height (POLAN) ionospheric profiles (*.pol) provided by 
+% David and converted to (*_pol.mat), applies multi-antenna interference 
+% filtering and phase analysis, saves processed matrices back to files, 
+% and exports comprehensive 20-panel diagnostic ionogram plots with
+% profiles as high-resolution PNG images.
+
 % % Start calculating running time
 tic;
 

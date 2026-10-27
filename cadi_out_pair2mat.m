@@ -1,6 +1,7 @@
 function unprocessed_count = cadi_out_pair2mat(ion_filepath, pol_filepath, out_filepath, nCell_Y_mask, dirCell_Y_mask, use_filtered)
 % CADI_OUT_PAIR2MAT Batch processes CADI ionogram and polarization files, 
-% saving all required tensors, masks, grids, real profiles and peaks into unified .mat files.
+% saving all required tensors, masks, grids, real profiles and peaks into 
+% unified .mat files requited for net training purposes
 %
 % Inputs:
 %   ion_filepath   : Path to input *_ion.mat file or source directory

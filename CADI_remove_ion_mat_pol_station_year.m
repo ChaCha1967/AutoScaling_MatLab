@@ -1,3 +1,7 @@
+% Scans a directory to synchronize and clean up data archives by identifying 
+% and deleting orphaned/asynchronous .pol and minute .mat files that lack 
+% corresponding pairs, ensuring archive integrity.
+
 % Define the target folder to scan
 targetFolder = 'N:\cadi_synced\RB\2009';
 

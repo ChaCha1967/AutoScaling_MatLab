@@ -1,4 +1,5 @@
-% REMOVE_CADI_INTERFERENCE_V2 Removes solid and dashed vertical noise lines.
+% REMOVE_CADI_INTERFERENCE_V2 Removes solid and dashed vertical noise lines
+% (default function for ionogram filtering).
 
 function M_clean = remove_cadi_interference_v2(M_raw, spike_thresh_dB, min_extent, min_count, dBthr)
 %%%%%%%%%%%%%%%%% Input values 

@@ -1,10 +1,11 @@
 function success = cadi_visualize_from_mat(out_filepath, use_filtered)
-% CADI_VISUALIZE_FROM_MAT Batch visualizes unified CADI dataset .mat files across a
-% directory tree using pre-initialized graphics handles for maximum rendering speed,
-% saving output figures as .png files alongside the source .mat files.
+% CADI_VISUALIZE_FROM_MAT Batch visualizes unified CADI dataset *.mat files 
+% across a directory tree using pre-initialized graphics handles for 
+% maximum rendering speed, saving output figures as *.png files alongside 
+% the source *.mat files.
 %
 % Inputs:
-%   out_filepath : Path to the root folder containing processed .mat files (or a single .mat file)
+%   out_filepath : Path to the root folder containing processed *.mat files (or a single .mat file)
 %   use_filtered : Logical flag (true = visualize filtered ID.mat -> ID.png; 
 %                                false = visualize original noisy IDo.mat -> IDo.png)
 %

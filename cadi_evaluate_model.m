@@ -1,5 +1,6 @@
 function evalResults = cadi_evaluate_model(model_path, threshold, min_blob_size)
-% CADI_EVALUATE_MODEL Evaluates the trained U-Net model on the held-out 10% test split.
+% CADI_EVALUATE_MODEL Evaluates the trained U-Net model on the held-out 10% 
+% test split. (use trained *.mat file)
 %
 % Inputs:
 %   model_path    : Full path to the saved model .mat file

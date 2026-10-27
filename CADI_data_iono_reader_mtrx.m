@@ -1,7 +1,7 @@
 % CADI Data Reader              
 % extracting all ionograms existed in md2 file as a structure 
 % and in addition prepare matrices for selected ionograms 
-% contained in in md2 file file
+% contained in in md2 file file and save extracted data as *_ion.mat file
 
 
 % Input parameters

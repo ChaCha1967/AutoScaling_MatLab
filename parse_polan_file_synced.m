@@ -1,3 +1,7 @@
+% Parses text-based POLAN output files (.pol), extracts session headers, 
+% input virtual heights, peak characteristics (foF2, hmF2), real heights, 
+% and calculation coefficients, and saves the structured data into a .mat file.
+
 function records = parse_polan_file_synced(filepath, filename)
     % Construct the full path to the data file
     full_data_path = fullfile(filepath, filename);
