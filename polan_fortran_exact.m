@@ -1702,15 +1702,15 @@ function [FV, HT, QQ, P] = sub_peak(FV, HT, QQ, P)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-        % Physical limits for ScaleHt in the F-region (in km)
-        min_allowed_SH = 30.0;
-        max_allowed_SH = 100.0;        
+        % % Physical limits for ScaleHt in the F-region (in km)
+        % min_allowed_SH = 30.0;
+        % max_allowed_SH = 100.0;        
         
         P.SH    = P.SH * sqrt(abs(PQ(2)));
         
-        % No multipliers, no adaptive damping — pure original algorithm value of P.SH
-        % Just apply hard physical clamping to prevent mathematical collapse
-        P.SH = max(min(P.SH, max_allowed_SH), min_allowed_SH);
+        % % No multipliers, no adaptive damping — pure original algorithm value of P.SH
+        % % Just apply hard physical clamping to prevent mathematical collapse
+        % P.SH = max(min(P.SH, max_allowed_SH), min_allowed_SH);
         
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
