@@ -29,7 +29,7 @@ siteStruct = CADI_site_mtrx('RB');
 
 % Prompt the user to select the directory
 %selectedFolder = uigetdir(pwd, 'Select the folder containing *_ion.mat files');
-selectedFolder = 'N:\data_new\RB\2011';
+selectedFolder = 'N:\cadi_add\RB\2009';
 
 % Check if the user canceled the dialog
 if selectedFolder == 0

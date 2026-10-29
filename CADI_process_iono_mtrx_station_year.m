@@ -4,7 +4,7 @@
 % selected ionograms contained in in md2 file
 
 % Define the input parameters for the batch process
-sDataPathBase = 'N:\cadi_synced\'; % Base path ending with slash
+sDataPathBase = 'N:\cadi_add\'; % Base path ending with slash
 sStation = 'RB';                   % 2-character station code
 Year = 2009;                       % 4-digit year
 sFileType = 'md2';                 % File extension without dot

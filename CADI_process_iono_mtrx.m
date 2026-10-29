@@ -16,7 +16,7 @@ OutYN = 0;
 SNRthr = 10;
 dHeight = [90 510];
 
-% [headerStruct, recordsStruct] = CADI_data_reader(ssSite,Year,Month,Day,Hour,'md1'); % not save data to file
+% [headerStruct, recordsStruct] = CADI_data_reader(ssSite,Year,Month,Day,Hour,'md2'); % save data to file
 time_min = [0 5 10 15 20 25 30 35 40 45 50 55]; % which ionogram save in *.mat
 tic;
 [headerStruct, recordsStruct, siteStruct] = CADI_data_iono_reader_mtrx(sDataPathBase,sStation,Year,Month,Date,Hour,sFileType,OutYN,time_min);
