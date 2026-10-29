@@ -161,10 +161,19 @@ function statusReport = cadi_stage5_plot_20panel(outBaseDir, sStation, startDT, 
             ion3_clean   = squeeze(ion_dat(7, :, :));
             ion4_clean   = squeeze(ion_dat(8, :, :));
 
+            dPh12        = squeeze(ion_dat(14, :, :)); 
+            dPh34        = squeeze(ion_dat(15, :, :)); 
             dPh23        = squeeze(ion_dat(9, :, :)); 
             dPh41        = squeeze(ion_dat(10, :, :));
+            % dPh12 = dPh23;
+            % dPh34 = dPh41;
+
+            dPh12f       = squeeze(ion_dat(16, :, :));
+            dPh34f       = squeeze(ion_dat(17, :, :));
             dPh23f       = squeeze(ion_dat(11, :, :));
             dPh41f       = squeeze(ion_dat(12, :, :));
+            % dPh12f = dPh23f;
+            % dPh34f = dPh41f;
 
             % Set axes limits strictly across the 16 ionogram subplots (skipping histograms at 5, 10, 15, 20)
             ionogramAxesIndices = [1,2,3,4, 6,7,8,9, 11,12,13,14, 16,17,18,19];
@@ -186,27 +195,29 @@ function statusReport = cadi_stage5_plot_20panel(outBaseDir, sStation, startDT, 
             update_subplot_ion(imgHandles(8), lineVHandles(8), lineRHandles(8), titleHandles{9}, freq_MHz, h, Z_zeros, ion4_clean, ScaleV_unet, ScaleR_polan, DT, AntDir(antOrder(4)+1), 'fltr');
 
             % 3. Row 3: Polarization ionograms - Original (Subplots 11-14, imgHandles 9-12)
-            % update_subplot_pol(imgHandles(9),  lineVHandles(9),  lineRHandles(9),  titleHandles{11}, freq_MHz, h, Z_zeros, dPh23*180/pi, ScaleV_unet, ScaleR_polan, DT, AntDirChar(antOrder(2)+1), AntDirChar(antOrder(1)+1), 'pol orig');
-            % update_subplot_pol(imgHandles(10), lineVHandles(10), lineRHandles(10), titleHandles{12}, freq_MHz, h, Z_zeros, dPh41*180/pi, ScaleV_unet, ScaleR_polan, DT, AntDirChar(antOrder(4)+1), AntDirChar(antOrder(3)+1), 'pol orig');
+            update_subplot_pol(imgHandles(9),  lineVHandles(9),  lineRHandles(9),  titleHandles{11}, freq_MHz, h, Z_zeros, dPh12*180/pi, ScaleV_unet, ScaleR_polan, DT, AntDirChar(antOrder(2)+1), AntDirChar(antOrder(1)+1), 'pol orig');
+            update_subplot_pol(imgHandles(10), lineVHandles(10), lineRHandles(10), titleHandles{12}, freq_MHz, h, Z_zeros, dPh34*180/pi, ScaleV_unet, ScaleR_polan, DT, AntDirChar(antOrder(4)+1), AntDirChar(antOrder(3)+1), 'pol orig');
             update_subplot_pol(imgHandles(11), lineVHandles(11), lineRHandles(11), titleHandles{13}, freq_MHz, h, Z_zeros, dPh23*180/pi, ScaleV_unet, ScaleR_polan, DT, AntDirChar(antOrder(3)+1), AntDirChar(antOrder(2)+1), 'pol orig');
             update_subplot_pol(imgHandles(12), lineVHandles(12), lineRHandles(12), titleHandles{14}, freq_MHz, h, Z_zeros, dPh41*180/pi, ScaleV_unet, ScaleR_polan, DT, AntDirChar(antOrder(1)+1), AntDirChar(antOrder(4)+1), 'pol orig');
 
             % 4. Row 4: Polarization ionograms - Filtered (Subplots 16-19, imgHandles 13-16)
-            % update_subplot_pol(imgHandles(13), lineVHandles(13), lineRHandles(13), titleHandles{16}, freq_MHz, h, Z_zeros, dPh41f*180/pi, ScaleV_unet, ScaleR_polan, DT, AntDirChar(antOrder(2)+1), AntDirChar(antOrder(1)+1), 'pol fltr');
-            % update_subplot_pol(imgHandles(14), lineVHandles(14), lineRHandles(14), titleHandles{17}, freq_MHz, h, Z_zeros, dPh41f*180/pi, ScaleV_unet, ScaleR_polan, DT, AntDirChar(antOrder(4)+1), AntDirChar(antOrder(3)+1), 'pol fltr');
+            update_subplot_pol(imgHandles(13), lineVHandles(13), lineRHandles(13), titleHandles{16}, freq_MHz, h, Z_zeros, dPh12f*180/pi, ScaleV_unet, ScaleR_polan, DT, AntDirChar(antOrder(2)+1), AntDirChar(antOrder(1)+1), 'pol fltr');
+            update_subplot_pol(imgHandles(14), lineVHandles(14), lineRHandles(14), titleHandles{17}, freq_MHz, h, Z_zeros, dPh34f*180/pi, ScaleV_unet, ScaleR_polan, DT, AntDirChar(antOrder(4)+1), AntDirChar(antOrder(3)+1), 'pol fltr');
             update_subplot_pol(imgHandles(15), lineVHandles(15), lineRHandles(15), titleHandles{18}, freq_MHz, h, Z_zeros, dPh23f*180/pi, ScaleV_unet, ScaleR_polan, DT, AntDirChar(antOrder(3)+1), AntDirChar(antOrder(2)+1), 'pol fltr');
             update_subplot_pol(imgHandles(16), lineVHandles(16), lineRHandles(16), titleHandles{19}, freq_MHz, h, Z_zeros, dPh41f*180/pi, ScaleV_unet, ScaleR_polan, DT, AntDirChar(antOrder(1)+1), AntDirChar(antOrder(4)+1), 'pol fltr');
             
             % 5. Column 5 (Rows 1-4): Histograms (Subplots 5, 10, 15, 20)
-            % vec12f = dPh12f(~isnan(dPh12f)) * 180 / pi;
-            % vec34f = dPh34f(~isnan(dPh34f)) * 180 / pi;
+            vec12f = dPh12f(~isnan(dPh12f)) * 180 / pi;
+            vec34f = dPh34f(~isnan(dPh34f)) * 180 / pi;
             vec23f = dPh23f(~isnan(dPh23f)) * 180 / pi;
             vec41f = dPh41f(~isnan(dPh41f)) * 180 / pi;
+            % vec12f = vec23f;
+            % vec34f = vec41f;
 
-            % set(histHandles{1}, 'Data', vec12f); titleHandles{5}.String  = sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, %s%s, (fltr)', DT(1),DT(2),DT(3),DT(4),DT(5),DT(6), AntDirChar(antOrder(2)+1),AntDirChar(antOrder(1)+1));
-            % set(histHandles{2}, 'Data', vec34f); titleHandles{10}.String = sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, %s%s, (fltr)', DT(1),DT(2),DT(3),DT(4),DT(5),DT(6), AntDirChar(antOrder(4)+1),AntDirChar(antOrder(3)+1));
-            set(histHandles{3}, 'Data', vec41f); titleHandles{15}.String = sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, %s%s, (fltr)', DT(1),DT(2),DT(3),DT(4),DT(5),DT(6), AntDirChar(antOrder(3)+1),AntDirChar(antOrder(2)+1));
-            set(histHandles{4}, 'Data', vec23f); titleHandles{20}.String = sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, %s%s, (fltr)', DT(1),DT(2),DT(3),DT(4),DT(5),DT(6), AntDirChar(antOrder(1)+1),AntDirChar(antOrder(4)+1));
+            set(histHandles{1}, 'Data', vec12f); titleHandles{5}.String  = sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, %s%s, (fltr)', DT(1),DT(2),DT(3),DT(4),DT(5),DT(6), AntDirChar(antOrder(2)+1),AntDirChar(antOrder(1)+1));
+            set(histHandles{2}, 'Data', vec34f); titleHandles{10}.String = sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, %s%s, (fltr)', DT(1),DT(2),DT(3),DT(4),DT(5),DT(6), AntDirChar(antOrder(4)+1),AntDirChar(antOrder(3)+1));
+            set(histHandles{3}, 'Data', vec23f); titleHandles{15}.String = sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, %s%s, (fltr)', DT(1),DT(2),DT(3),DT(4),DT(5),DT(6), AntDirChar(antOrder(3)+1),AntDirChar(antOrder(2)+1));
+            set(histHandles{4}, 'Data', vec41f); titleHandles{20}.String = sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, %s%s, (fltr)', DT(1),DT(2),DT(3),DT(4),DT(5),DT(6), AntDirChar(antOrder(1)+1),AntDirChar(antOrder(4)+1));
 
             % Render and save to PNG
             drawnow;

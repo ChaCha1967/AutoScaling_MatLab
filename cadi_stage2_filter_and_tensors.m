@@ -171,7 +171,7 @@ function statusReport = cadi_stage2_filter_and_tensors(outBaseDir, sStation, sta
             ion2_clean = ion2_clean .* mask;
             ion3_clean = ion3_clean .* mask;
             ion4_clean = ion4_clean .* mask;
-            iona_clean = iona_clean .* mask; %#ok<NASGU>
+            iona_clean = iona_clean .* mask; 
 
             % Calculate original phase differences
             dPh12 = wrapToPi(Ph2 - Ph1);
@@ -187,16 +187,18 @@ function statusReport = cadi_stage2_filter_and_tensors(outBaseDir, sStation, sta
             Ph3f = Ph3 .* mask;
             Ph4f = Ph4 .* mask;
 
+            dPh12f = wrapToPi(Ph2f - Ph1f);
+            dPh34f = wrapToPi(Ph4f - Ph3f);
             dPh23f = wrapToPi(Ph3f - Ph2f);
             dPh41f = wrapToPi(Ph1f - Ph4f);
 
             % Replace exact zeros with NaN in original phase differences for white background
-            dPh12(dPh12 == 0) = NaN; %#ok<NASGU>
+            dPh12(dPh12 == 0) = NaN; 
             dPh23(dPh23 == 0) = NaN;
-            dPh34(dPh34 == 0) = NaN; %#ok<NASGU>
+            dPh34(dPh34 == 0) = NaN;
             dPh41(dPh41 == 0) = NaN;
-            dPh13(dPh13 == 0) = NaN; %#ok<NASGU>
-            dPh24(dPh24 == 0) = NaN; %#ok<NASGU>
+            dPh13(dPh13 == 0) = NaN;
+            dPh24(dPh24 == 0) = NaN;
 
             % Assemble the 13-layer ion_dat matrix
             [H_orig, W_orig] = size(ion1);
@@ -214,6 +216,11 @@ function statusReport = cadi_stage2_filter_and_tensors(outBaseDir, sStation, sta
             ion_dat(11, :, :) = dPh23f;
             ion_dat(12, :, :) = dPh41f;
             ion_dat(13, :, :) = mask;
+            % Assemble additional 14-17 (4-layes) to ion_dat
+            ion_dat(14, :, :)  = dPh12;
+            ion_dat(15, :, :) = dPh34;
+            ion_dat(16, :, :) = dPh12f;
+            ion_dat(17, :, :) = dPh34f;
 
             % Build standardized U-Net tensors (192x96x3 and 192x96x6) and padded grids
             f_grid_orig = F(:)' / 1e6; % [1 x W_orig] in MHz
