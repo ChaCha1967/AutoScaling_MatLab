@@ -155,31 +155,16 @@ function statusReport = cadi_stage5_plot_20panel(outBaseDir, sStation, startDT, 
             ion2         = squeeze(ion_dat(2, :, :));
             ion3         = squeeze(ion_dat(3, :, :));
             ion4         = squeeze(ion_dat(4, :, :));
+            
             ion1_clean   = squeeze(ion_dat(5, :, :));
             ion2_clean   = squeeze(ion_dat(6, :, :));
             ion3_clean   = squeeze(ion_dat(7, :, :));
             ion4_clean   = squeeze(ion_dat(8, :, :));
-            % dPh12        = squeeze(ion_dat(9, :, :)); % mapped from original dPh23 slot or similar
-            % dPh34        = squeeze(ion_dat(10, :, :));
-            % dPh23f       = squeeze(ion_dat(11, :, :));
-            % dPh41f       = squeeze(ion_dat(12, :, :));
 
             dPh23        = squeeze(ion_dat(9, :, :)); 
             dPh41        = squeeze(ion_dat(10, :, :));
             dPh23f       = squeeze(ion_dat(11, :, :));
             dPh41f       = squeeze(ion_dat(12, :, :));
-
-            
-            % % To maintain compatibility with variables used below
-            % dPh23        = dPh12; 
-            % dPh41        = dPh34;
-            % dPh12f       = dPh23f;
-            % dPh34f       = dPh41f;
-
-            % Set axes limits across all 16 ionogram subplots
-            % for axIdx = 1:16
-            %     set(axesHandles(axIdx), 'XLim', FrLim, 'YLim', hLim);
-            % end
 
             % Set axes limits strictly across the 16 ionogram subplots (skipping histograms at 5, 10, 15, 20)
             ionogramAxesIndices = [1,2,3,4, 6,7,8,9, 11,12,13,14, 16,17,18,19];
@@ -206,12 +191,6 @@ function statusReport = cadi_stage5_plot_20panel(outBaseDir, sStation, startDT, 
             update_subplot_pol(imgHandles(11), lineVHandles(11), lineRHandles(11), titleHandles{13}, freq_MHz, h, Z_zeros, dPh23*180/pi, ScaleV_unet, ScaleR_polan, DT, AntDirChar(antOrder(3)+1), AntDirChar(antOrder(2)+1), 'pol orig');
             update_subplot_pol(imgHandles(12), lineVHandles(12), lineRHandles(12), titleHandles{14}, freq_MHz, h, Z_zeros, dPh41*180/pi, ScaleV_unet, ScaleR_polan, DT, AntDirChar(antOrder(1)+1), AntDirChar(antOrder(4)+1), 'pol orig');
 
-            % % 4. Row 4: Polarization ionograms - Filtered (Subplots 16-19, imgHandles 13-16)
-            % update_subplot_pol(imgHandles(13), lineVHandles(13), lineRHandles(13), titleHandles{16}, freq_MHz, h, Z_zeros, dPh12f*180/pi, ScaleV_unet, ScaleR_polan, DT, AntDirChar(antOrder(2)+1), AntDirChar(antOrder(1)+1), 'pol fltr');
-            % update_subplot_pol(imgHandles(14), lineVHandles(14), lineRHandles(14), titleHandles{17}, freq_MHz, h, Z_zeros, dPh34f*180/pi, ScaleV_unet, ScaleR_polan, DT, AntDirChar(antOrder(4)+1), AntDirChar(antOrder(3)+1), 'pol fltr');
-            % update_subplot_pol(imgHandles(15), lineVHandles(15), lineRHandles(15), titleHandles{18}, freq_MHz, h, Z_zeros, dPh23f*180/pi, ScaleV_unet, ScaleR_polan, DT, AntDirChar(antOrder(3)+1), AntDirChar(antOrder(2)+1), 'pol fltr');
-            % update_subplot_pol(imgHandles(16), lineVHandles(16), lineRHandles(16), titleHandles{19}, freq_MHz, h, Z_zeros, dPh41f*180/pi, ScaleV_unet, ScaleR_polan, DT, AntDirChar(antOrder(1)+1), AntDirChar(antOrder(4)+1), 'pol fltr');
-            
             % 4. Row 4: Polarization ionograms - Filtered (Subplots 16-19, imgHandles 13-16)
             % update_subplot_pol(imgHandles(13), lineVHandles(13), lineRHandles(13), titleHandles{16}, freq_MHz, h, Z_zeros, dPh41f*180/pi, ScaleV_unet, ScaleR_polan, DT, AntDirChar(antOrder(2)+1), AntDirChar(antOrder(1)+1), 'pol fltr');
             % update_subplot_pol(imgHandles(14), lineVHandles(14), lineRHandles(14), titleHandles{17}, freq_MHz, h, Z_zeros, dPh41f*180/pi, ScaleV_unet, ScaleR_polan, DT, AntDirChar(antOrder(4)+1), AntDirChar(antOrder(3)+1), 'pol fltr');
@@ -277,8 +256,8 @@ function [axesArr, imgArr, lineVArr, lineRArr, titleArr, histArr] = prebuild_20p
     imgArr   = gobjects(16, 1);
     lineVArr = gobjects(16, 1);
     lineRArr = gobjects(16, 1);
-    titleArr = cell(20, 1); % Cell-массив для заголовков
-    histArr  = cell(4, 1);  % Cell-массив для гистограмм
+    titleArr = cell(20, 1); % Cell-array for titles
+    histArr  = cell(4, 1);  % Cell-array for histograms
 
     imgIdx = 1;
     histIdx = 1;
