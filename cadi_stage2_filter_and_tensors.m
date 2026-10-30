@@ -1,25 +1,8 @@
 function statusReport = cadi_stage2_filter_and_tensors(outBaseDir, sStation, startDT, endDT, opts)
 % CADI_STAGE2_FILTER_AND_TENSORS Stage 2 of the CADI pipeline: Scans minute 
 % *_ion.mat files within the specified datetime range, applies multi-antenna 
-% interference filtering, constructs the 13-layer ion_dat matrix, generates 
-% standardized U-Net input tensors (192x96x3 and 192x96x6) with padded 
-% frequency/height grids, and appends them to the *_ion.mat files.
-%
-% Inputs:
-%   outBaseDir : Base directory where *_ion.mat files are stored
-%   sStation   : 2-character station code (e.g., 'RB', 'CA', 'HA', 'EU', 'PO')
-%   startDT    : Start datetime vector [YYYY, MM, DD, hh, mm, ss]
-%   endDT      : End datetime vector [YYYY, MM, DD, hh, mm, ss]
-%   opts       : Structure with optional filtering and processing parameters:
-%                - spike_thresh_dB   (default: 2)
-%                - min_extent        (default: 35)
-%                - min_count         (default: 10)
-%                - dBthr             (default: 3)
-%                - required_antennas (default: 3)
-%                - overwrite         (default: true)
-%
-% Output:
-%   statusReport : Structure containing execution statistics and processed file list
+% interference filtering, constructs the 17-layer ion_dat matrix, generates 
+% standardized U-Net input tensors, and appends them to the files.
 
     if nargin < 6 || isempty(opts), opts = struct(); end
     if ~isfield(opts, 'spike_thresh_dB'),   opts.spike_thresh_dB = 2;    end
@@ -35,7 +18,6 @@ function statusReport = cadi_stage2_filter_and_tensors(outBaseDir, sStation, sta
     yearsToScan = unique(startDT(1):endDT(1));
     monthLetters = 'ABCDEFGHIJKL';
 
-    % Collect candidate *_ion.mat files across all years in the range
     candidateFiles = [];
     for yIdx = 1:numel(yearsToScan)
         sYear = sprintf('%04d', yearsToScan(yIdx));
@@ -59,14 +41,11 @@ function statusReport = cadi_stage2_filter_and_tensors(outBaseDir, sStation, sta
         opts.spike_thresh_dB, opts.min_extent, opts.min_count, opts.dBthr, opts.required_antennas);
     fprintf('Found %d total *_ion.mat files in station directory.\n', numel(candidateFiles));
 
-    % Filter files by 10-character base name (minute files only) and datetime range
     validFileList = {};
     for i = 1:numel(candidateFiles)
         fname = candidateFiles(i).name;
         baseName = erase(fname, '_ion.mat');
 
-        % Skip hourly summary files (baseName length == 8, e.g., 'RB9F0820')
-        % Only process individual minute sessions (baseName length == 10, e.g., 'RB9F082005')
         if length(baseName) ~= 10
             continue;
         end
@@ -90,7 +69,6 @@ function statusReport = cadi_stage2_filter_and_tensors(outBaseDir, sStation, sta
     numValid = numel(validFileList);
     fprintf('Selected %d minute sessions matching the requested time range.\n', numValid);
 
-    % Station configuration structure
     siteStruct = CADI_site_mtrx(sStation);
 
     processedCount = 0;
@@ -104,7 +82,6 @@ function statusReport = cadi_stage2_filter_and_tensors(outBaseDir, sStation, sta
         [~, fnameOnly, ext] = fileparts(currentFullPath);
 
         try
-            % Check if already processed when overwrite is disabled
             if ~opts.overwrite
                 fileVars = whos('-file', currentFullPath);
                 varNames = {fileVars.name};
@@ -114,7 +91,6 @@ function statusReport = cadi_stage2_filter_and_tensors(outBaseDir, sStation, sta
                 end
             end
 
-            % Load raw variables extracted in Stage 1
             raw = load(currentFullPath, 'ionoIQ', 'headerStruct', 'DT');
             if ~isfield(raw, 'ionoIQ') || ~isfield(raw, 'headerStruct')
                 fprintf('  Warning: Missing ionoIQ or headerStruct in %s%s. Skipping.\n', fnameOnly, ext);
@@ -125,34 +101,29 @@ function statusReport = cadi_stage2_filter_and_tensors(outBaseDir, sStation, sta
             ionoIQ       = raw.ionoIQ;
             headerStruct = raw.headerStruct;
 
-            % Extract frequency, height, and antenna polarity mapping
             F        = double(headerStruct.datablock.FreqS);
             h        = double(headerStruct.datablock.heights);
             antOrder = headerStruct.datablock.antOrder;
             antPol   = siteStruct.polarity;
             Ch2Pol   = antPol(antOrder + 1);
 
-            % Calculate raw ionogram matrices in dB
             ion1 = squeeze(20 * log10(abs(ionoIQ(1, :, :))));
             ion2 = squeeze(20 * log10(abs(ionoIQ(2, :, :))));
             ion3 = squeeze(20 * log10(abs(ionoIQ(3, :, :))));
             ion4 = squeeze(20 * log10(abs(ionoIQ(4, :, :))));
             iona = squeeze(20 * log10(mean(abs(ionoIQ(:, :, :)), 1)));
 
-            % Calculate phase angles in radians taking into account individual antenna polarity
             Ph1 = squeeze(angle(ionoIQ(1, :, :))) * Ch2Pol(1);
             Ph2 = squeeze(angle(ionoIQ(2, :, :))) * Ch2Pol(2);
             Ph3 = squeeze(angle(ionoIQ(3, :, :))) * Ch2Pol(3);
             Ph4 = squeeze(angle(ionoIQ(4, :, :))) * Ch2Pol(4);
 
-            % Apply vertical interference removal filter
             ion1_clean = remove_cadi_interference_v2(ion1, opts.spike_thresh_dB, opts.min_extent, opts.min_count, opts.dBthr);
             ion2_clean = remove_cadi_interference_v2(ion2, opts.spike_thresh_dB, opts.min_extent, opts.min_count, opts.dBthr);
             ion3_clean = remove_cadi_interference_v2(ion3, opts.spike_thresh_dB, opts.min_extent, opts.min_count, opts.dBthr);
             ion4_clean = remove_cadi_interference_v2(ion4, opts.spike_thresh_dB, opts.min_extent, opts.min_count, opts.dBthr);
             iona_clean = remove_cadi_interference_v2(iona, opts.spike_thresh_dB, opts.min_extent, opts.min_count, opts.dBthr);
 
-            % Removal of weak signals below dBthr in original matrices
             if opts.dBthr > 0
                 ion1(ion1 < opts.dBthr) = NaN;
                 ion2(ion2 < opts.dBthr) = NaN;
@@ -161,19 +132,16 @@ function statusReport = cadi_stage2_filter_and_tensors(outBaseDir, sStation, sta
                 iona(iona < opts.dBthr) = NaN;
             end
 
-            % Multi-antenna coincidence voting (M out of 4 antennas)
             votes = ~isnan(ion1_clean) + ~isnan(ion2_clean) + ~isnan(ion3_clean) + ~isnan(ion4_clean);
             mask  = double(votes >= opts.required_antennas);
             mask(mask == 0) = NaN;
 
-            % Apply multi-antenna mask to cleaned amplitude channels
             ion1_clean = ion1_clean .* mask;
             ion2_clean = ion2_clean .* mask;
             ion3_clean = ion3_clean .* mask;
             ion4_clean = ion4_clean .* mask;
             iona_clean = iona_clean .* mask; 
 
-            % Calculate original phase differences
             dPh12 = wrapToPi(Ph2 - Ph1);
             dPh23 = wrapToPi(Ph3 - Ph2);
             dPh34 = wrapToPi(Ph4 - Ph3);
@@ -181,7 +149,6 @@ function statusReport = cadi_stage2_filter_and_tensors(outBaseDir, sStation, sta
             dPh13 = wrapToPi(Ph3 - Ph1);
             dPh24 = wrapToPi(Ph4 - Ph2);
 
-            % Calculate filtered phases and phase differences
             Ph1f = Ph1 .* mask;
             Ph2f = Ph2 .* mask;
             Ph3f = Ph3 .* mask;
@@ -192,7 +159,6 @@ function statusReport = cadi_stage2_filter_and_tensors(outBaseDir, sStation, sta
             dPh23f = wrapToPi(Ph3f - Ph2f);
             dPh41f = wrapToPi(Ph1f - Ph4f);
 
-            % Replace exact zeros with NaN in original phase differences for white background
             dPh12(dPh12 == 0) = NaN; 
             dPh23(dPh23 == 0) = NaN;
             dPh34(dPh34 == 0) = NaN;
@@ -200,9 +166,8 @@ function statusReport = cadi_stage2_filter_and_tensors(outBaseDir, sStation, sta
             dPh13(dPh13 == 0) = NaN;
             dPh24(dPh24 == 0) = NaN;
 
-            % Assemble the 13-layer ion_dat matrix
             [H_orig, W_orig] = size(ion1);
-            ion_dat = zeros(13, H_orig, W_orig);
+            ion_dat = zeros(17, H_orig, W_orig);
             ion_dat(1, :, :)  = ion1;
             ion_dat(2, :, :)  = ion2;
             ion_dat(3, :, :)  = ion3;
@@ -216,21 +181,18 @@ function statusReport = cadi_stage2_filter_and_tensors(outBaseDir, sStation, sta
             ion_dat(11, :, :) = dPh23f;
             ion_dat(12, :, :) = dPh41f;
             ion_dat(13, :, :) = mask;
-            % Assemble additional 14-17 (4-layes) to ion_dat
-            ion_dat(14, :, :)  = dPh12;
+            ion_dat(14, :, :) = dPh12;
             ion_dat(15, :, :) = dPh34;
             ion_dat(16, :, :) = dPh12f;
             ion_dat(17, :, :) = dPh34f;
 
-            % Build standardized U-Net tensors (192x96x3 and 192x96x6) and padded grids
-            f_grid_orig = F(:)' / 1e6; % [1 x W_orig] in MHz
-            h_grid_orig = h(:);        % [H_orig x 1] in km
+            f_grid_orig = F(:)' / 1e6; 
+            h_grid_orig = h(:);        
 
             [X_tensor_filt, f_grid, h_grid] = build_cadi_3ch_tensor(ion_dat, f_grid_orig, h_grid_orig, true);
             [X_tensor_orig, ~, ~]           = build_cadi_3ch_tensor(ion_dat, f_grid_orig, h_grid_orig, false);
             X_tensor_6ch                    = cat(3, X_tensor_filt, X_tensor_orig);
 
-            % Append all computed matrices and tensors back to the *_ion.mat file
             save(currentFullPath, 'ion_dat', 'siteStruct', ...
                  'X_tensor_filt', 'X_tensor_orig', 'X_tensor_6ch', ...
                  'f_grid', 'h_grid', 'H_orig', 'W_orig', '-append');
@@ -265,13 +227,7 @@ function statusReport = cadi_stage2_filter_and_tensors(outBaseDir, sStation, sta
     fprintf('============================================================\n');
 end
 
-% =========================================================================
-% HELPER: BUILD STANDARDIZED 3-CHANNEL TENSOR (192 x 96 x 3)
-% =========================================================================
 function [X_tensor, f_grid_padded, h_grid_padded] = build_cadi_3ch_tensor(ion_dat, f_grid_orig, h_grid_orig, use_filtered)
-% BUILD_CADI_3CH_TENSOR Extracts amplitude and O/X polarization channels 
-% from ion_dat and pads them to 192x96x3 following process_cadi_pair logic.
-
     H_pad = 192;
     W_pad = 96;
     X_tensor = zeros(H_pad, W_pad, 3, 'single');
@@ -280,7 +236,6 @@ function [X_tensor, f_grid_padded, h_grid_padded] = build_cadi_3ch_tensor(ion_da
     f_grid_padded = zeros(1, W_pad);
     h_grid_padded = zeros(H_pad, 1);
 
-    % 1. Extend height grid from H_orig to H_pad (192) with 3.0 km step
     h_step = 3.0;
     if H_orig < H_pad
         h_grid_padded(1:H_orig) = h_grid_orig;
@@ -291,7 +246,6 @@ function [X_tensor, f_grid_padded, h_grid_padded] = build_cadi_3ch_tensor(ion_da
         h_grid_padded = h_grid_orig(1:H_pad);
     end
 
-    % 2. Extend frequency grid from W_orig to W_pad (96) using log-step extrapolation
     if W_orig < W_pad
         f_grid_padded(1:W_orig) = f_grid_orig;
         log_diffs = diff(log(f_grid_orig(end-5:end)));
@@ -303,7 +257,6 @@ function [X_tensor, f_grid_padded, h_grid_padded] = build_cadi_3ch_tensor(ion_da
         f_grid_padded = f_grid_orig(1:W_pad);
     end
 
-    % 3. Select slices based on filtered vs. original flag
     if logical(use_filtered)
         amp_slices = 5:8;
         ph_ne_idx  = 11;
@@ -314,7 +267,6 @@ function [X_tensor, f_grid_padded, h_grid_padded] = build_cadi_3ch_tensor(ion_da
         ph_sw_idx  = 10;
     end
 
-    % 4. Channel 1: Normalized mean amplitude in dB (suppressing ground clutter < 85 km)
     M_4ch = ion_dat(amp_slices, :, :);
     M_mean = squeeze(mean(M_4ch, 1, 'omitnan'));
     M_mean(isnan(M_mean)) = 0;
@@ -323,7 +275,6 @@ function [X_tensor, f_grid_padded, h_grid_padded] = build_cadi_3ch_tensor(ion_da
     max_dB = 50.0;
     Ch1_raw = min(max(M_mean, 0), max_dB) / max_dB;
 
-    % 5. Channels 2 & 3: O-mode and X-mode weighted polarization channels
     dPh23 = squeeze(ion_dat(ph_ne_idx, :, :));
     dPh41 = squeeze(ion_dat(ph_sw_idx, :, :));
 
@@ -335,7 +286,6 @@ function [X_tensor, f_grid_padded, h_grid_padded] = build_cadi_3ch_tensor(ion_da
     Ch2_raw = Ch1_raw .* (0.5 * (O_weight_23 + O_weight_41));
     Ch3_raw = Ch1_raw .* (0.5 * (X_weight_23 + X_weight_41));
 
-    % 6. Assemble into padded 192 x 96 x 3 single-precision tensor
     copy_H = min(H_orig, H_pad);
     copy_W = min(W_orig, W_pad);
 
