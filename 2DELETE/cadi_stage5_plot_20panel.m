@@ -1,20 +1,7 @@
 function statusReport = cadi_stage5_plot_20panel(outBaseDir, sStation, startDT, endDT, opts)
 % CADI_STAGE5_PLOT_20PANEL Stage 5 of the CADI pipeline: Generates and exports 
-% comprehensive 20-panel diagnostic ionogram plots with overlaid U-Net virtual 
-% profiles (ScaleV_unet) and POLAN real-height profiles (ScaleR_polan) as high-resolution PNGs.
-%
-% Inputs:
-%   outBaseDir : Base directory where processed *_ion.mat files are stored
-%   sStation   : 2-character station code (e.g., 'RB', 'CA', 'HA', 'EU', 'PO')
-%   startDT    : Start datetime vector [YYYY, MM, DD, hh, mm, ss]
-%   endDT      : End datetime vector [YYYY, MM, DD, hh, mm, ss]
-%   opts       : Structure with optional plotting parameters:
-%                - visible     : 'on' or 'off' window visibility (default: 'off' for fast batch)
-%                - overwrite   : Logical flag to regenerate existing PNGs (default: true)
-%                - suffix      : Output image filename suffix (default: '_ion_avr.png')
-%
-% Output:
-%   statusReport : Structure containing execution statistics and processed file list
+% comprehensive 20-panel diagnostic ionogram plots with overlaid thin black lines 
+% for U-Net virtual profiles and POLAN real-height profiles as high-resolution PNGs.
 
     if nargin < 5 || isempty(opts), opts = struct(); end
     if ~isfield(opts, 'visible'),   opts.visible   = 'off';  end 
@@ -27,7 +14,6 @@ function statusReport = cadi_stage5_plot_20panel(outBaseDir, sStation, startDT, 
     yearsToScan  = unique(startDT(1):endDT(1));
     monthLetters = 'ABCDEFGHIJKL';
 
-    % 1. Collect candidate *_ion.mat files across all years in the range
     candidateFiles = [];
     for yIdx = 1:numel(yearsToScan)
         sYear   = sprintf('%04d', yearsToScan(yIdx));
@@ -48,7 +34,6 @@ function statusReport = cadi_stage5_plot_20panel(outBaseDir, sStation, startDT, 
     fprintf('Time Range     : %s to %s\n', datestr(tStart), datestr(tEnd));
     fprintf('Figure Mode    : %s\n', opts.visible);
 
-    % 2. Filter minute session files matching the datetime window
     validFileList = {};
     skippedCount  = 0;
     missingStage4 = 0;
@@ -106,8 +91,7 @@ function statusReport = cadi_stage5_plot_20panel(outBaseDir, sStation, startDT, 
         return;
     end
 
-    % 3. Pre-build reusable Figure and Subplots
-    hFig = figure('Visible', opts.visible, 'Position', [50, 50, 1920, 1080], 'PaperPositionMode', 'auto');
+    hFig = figure('Visible', opts.visible, 'Position', [50, 50, 3300, 1350], 'PaperPositionMode', 'auto');
     clf(hFig);
 
     DPh = 20;
@@ -143,14 +127,12 @@ function statusReport = cadi_stage5_plot_20panel(outBaseDir, sStation, startDT, 
             h        = double(headerStruct.datablock.heights);
             antOrder = headerStruct.datablock.antOrder;
             antPol   = siteStruct.polarity;
-            Ch2Pol   = antPol(antOrder + 1);
 
             freq_MHz = F ./ 1e6;
             Z_zeros  = zeros(size(squeeze(ion_dat(1, :, :))));
             FrLim    = [min(freq_MHz), max(freq_MHz)];
             hLim     = [min(h), max(h)];
 
-            % Extract ionogram slices from ion_dat
             ion1         = squeeze(ion_dat(1, :, :));
             ion2         = squeeze(ion_dat(2, :, :));
             ion3         = squeeze(ion_dat(3, :, :));
@@ -171,38 +153,32 @@ function statusReport = cadi_stage5_plot_20panel(outBaseDir, sStation, startDT, 
             dPh23f       = squeeze(ion_dat(11, :, :));
             dPh41f       = squeeze(ion_dat(12, :, :));
 
-            % Set axes limits strictly across the 16 ionogram subplots (skipping histograms at 5, 10, 15, 20)
             ionogramAxesIndices = [1,2,3,4, 6,7,8,9, 11,12,13,14, 16,17,18,19];
             for k = 1:16
                 axIdx = ionogramAxesIndices(k);
                 set(axesHandles(axIdx), 'XLim', FrLim, 'YLim', hLim);
             end
 
-            % 1. Row 1: Original ionograms (Subplots 1-4, imgHandles 1-4)
             update_subplot_ion(imgHandles(1), lineVHandles(1), lineRHandles(1), titleHandles{1}, freq_MHz, h, Z_zeros, ion1, ScaleV_unet, ScaleR_polan, DT, AntDir(antOrder(1)+1), 'orig');
             update_subplot_ion(imgHandles(2), lineVHandles(2), lineRHandles(2), titleHandles{2}, freq_MHz, h, Z_zeros, ion2, ScaleV_unet, ScaleR_polan, DT, AntDir(antOrder(2)+1), 'orig');
             update_subplot_ion(imgHandles(3), lineVHandles(3), lineRHandles(3), titleHandles{3}, freq_MHz, h, Z_zeros, ion3, ScaleV_unet, ScaleR_polan, DT, AntDir(antOrder(3)+1), 'orig');
             update_subplot_ion(imgHandles(4), lineVHandles(4), lineRHandles(4), titleHandles{4}, freq_MHz, h, Z_zeros, ion4, ScaleV_unet, ScaleR_polan, DT, AntDir(antOrder(4)+1), 'orig');
 
-            % 2. Row 2: Filtered ionograms (Subplots 6-9, imgHandles 5-8)
             update_subplot_ion(imgHandles(5), lineVHandles(5), lineRHandles(5), titleHandles{6}, freq_MHz, h, Z_zeros, ion1_clean, ScaleV_unet, ScaleR_polan, DT, AntDir(antOrder(1)+1), 'fltr');
             update_subplot_ion(imgHandles(6), lineVHandles(6), lineRHandles(6), titleHandles{7}, freq_MHz, h, Z_zeros, ion2_clean, ScaleV_unet, ScaleR_polan, DT, AntDir(antOrder(2)+1), 'fltr');
             update_subplot_ion(imgHandles(7), lineVHandles(7), lineRHandles(7), titleHandles{8}, freq_MHz, h, Z_zeros, ion3_clean, ScaleV_unet, ScaleR_polan, DT, AntDir(antOrder(3)+1), 'fltr');
             update_subplot_ion(imgHandles(8), lineVHandles(8), lineRHandles(8), titleHandles{9}, freq_MHz, h, Z_zeros, ion4_clean, ScaleV_unet, ScaleR_polan, DT, AntDir(antOrder(4)+1), 'fltr');
 
-            % 3. Row 3: Polarization ionograms - Original (Subplots 11-14, imgHandles 9-12)
             update_subplot_pol(imgHandles(9),  lineVHandles(9),  lineRHandles(9),  titleHandles{11}, freq_MHz, h, Z_zeros, dPh12*180/pi, ScaleV_unet, ScaleR_polan, DT, AntDirChar(antOrder(2)+1), AntDirChar(antOrder(1)+1), 'pol orig');
             update_subplot_pol(imgHandles(10), lineVHandles(10), lineRHandles(10), titleHandles{12}, freq_MHz, h, Z_zeros, dPh34*180/pi, ScaleV_unet, ScaleR_polan, DT, AntDirChar(antOrder(4)+1), AntDirChar(antOrder(3)+1), 'pol orig');
             update_subplot_pol(imgHandles(11), lineVHandles(11), lineRHandles(11), titleHandles{13}, freq_MHz, h, Z_zeros, dPh23*180/pi, ScaleV_unet, ScaleR_polan, DT, AntDirChar(antOrder(3)+1), AntDirChar(antOrder(2)+1), 'pol orig');
             update_subplot_pol(imgHandles(12), lineVHandles(12), lineRHandles(12), titleHandles{14}, freq_MHz, h, Z_zeros, dPh41*180/pi, ScaleV_unet, ScaleR_polan, DT, AntDirChar(antOrder(1)+1), AntDirChar(antOrder(4)+1), 'pol orig');
 
-            % 4. Row 4: Polarization ionograms - Filtered (Subplots 16-19, imgHandles 13-16)
             update_subplot_pol(imgHandles(13), lineVHandles(13), lineRHandles(13), titleHandles{16}, freq_MHz, h, Z_zeros, dPh12f*180/pi, ScaleV_unet, ScaleR_polan, DT, AntDirChar(antOrder(2)+1), AntDirChar(antOrder(1)+1), 'pol fltr');
             update_subplot_pol(imgHandles(14), lineVHandles(14), lineRHandles(14), titleHandles{17}, freq_MHz, h, Z_zeros, dPh34f*180/pi, ScaleV_unet, ScaleR_polan, DT, AntDirChar(antOrder(4)+1), AntDirChar(antOrder(3)+1), 'pol fltr');
             update_subplot_pol(imgHandles(15), lineVHandles(15), lineRHandles(15), titleHandles{18}, freq_MHz, h, Z_zeros, dPh23f*180/pi, ScaleV_unet, ScaleR_polan, DT, AntDirChar(antOrder(3)+1), AntDirChar(antOrder(2)+1), 'pol fltr');
             update_subplot_pol(imgHandles(16), lineVHandles(16), lineRHandles(16), titleHandles{19}, freq_MHz, h, Z_zeros, dPh41f*180/pi, ScaleV_unet, ScaleR_polan, DT, AntDirChar(antOrder(1)+1), AntDirChar(antOrder(4)+1), 'pol fltr');
             
-            % 5. Column 5 (Rows 1-4): Histograms (Subplots 5, 10, 15, 20)
             vec12f = dPh12f(~isnan(dPh12f)) * 180 / pi;
             vec34f = dPh34f(~isnan(dPh34f)) * 180 / pi;
             vec23f = dPh23f(~isnan(dPh23f)) * 180 / pi;
@@ -213,12 +189,12 @@ function statusReport = cadi_stage5_plot_20panel(outBaseDir, sStation, startDT, 
             set(histHandles{3}, 'Data', vec23f); titleHandles{15}.String = sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, %s%s, (fltr)', DT(1),DT(2),DT(3),DT(4),DT(5),DT(6), AntDirChar(antOrder(3)+1),AntDirChar(antOrder(2)+1));
             set(histHandles{4}, 'Data', vec41f); titleHandles{20}.String = sprintf('%04d/%02d/%02d %02d:%02d:%02d UT, %s%s, (fltr)', DT(1),DT(2),DT(3),DT(4),DT(5),DT(6), AntDirChar(antOrder(1)+1),AntDirChar(antOrder(4)+1));
 
-            % Render and save to PNG
             drawnow;
             frame = getframe(hFig);
             outPngName = [fnameOnly(1:end-4), opts.suffix];
             outPngPath = fullfile(fFolder, outPngName);
             imwrite(frame.cdata, outPngPath);
+            % exportgraphics(hFig, outPngPath, 'Resolution', 100);
 
             processedCount = processedCount + 1;
             processedFiles{end+1} = outPngName; %#ok<AGROW>
@@ -253,16 +229,13 @@ function statusReport = cadi_stage5_plot_20panel(outBaseDir, sStation, startDT, 
     fprintf('============================================================\n');
 end
 
-% =========================================================================
-% HELPER: PRE-BUILD 20-PANEL SUBPLOTS & GRAPHIC HANDLES (USING CELL ARRAY)
-% =========================================================================
 function [axesArr, imgArr, lineVArr, lineRArr, titleArr, histArr] = prebuild_20panel_axes(hFig, dX, dY, dC, DPh, cmap)
     axesArr  = gobjects(20, 1);
     imgArr   = gobjects(16, 1);
     lineVArr = gobjects(16, 1);
     lineRArr = gobjects(16, 1);
-    titleArr = cell(20, 1); % Cell-array for titles
-    histArr  = cell(4, 1);  % Cell-array for histograms
+    titleArr = cell(20, 1);
+    histArr  = cell(4, 1);
 
     imgIdx = 1;
     histIdx = 1;
@@ -288,11 +261,7 @@ function [axesArr, imgArr, lineVArr, lineRArr, titleArr, histArr] = prebuild_20p
             colorbar(ax, 'vert');
 
             hold(ax, 'on');
-            % lV = plot(ax, NaN, NaN, 'co-', 'LineWidth', 1.8, 'MarkerSize', 4, 'MarkerFaceColor', 'c');
-            % lR = plot(ax, NaN, NaN, 'rs--', 'LineWidth', 1.2, 'MarkerSize', 3, 'MarkerFaceColor', 'r');
-            % U-Net virtual profile 
             lV = plot(ax, NaN, NaN, 'k-', 'LineWidth', 1.2, 'Marker', 'none');
-            % POLAN real profile 
             lR = plot(ax, NaN, NaN, 'k--', 'LineWidth', 1.5, 'Marker', 'none');
             hold(ax, 'off');
 
@@ -318,9 +287,6 @@ function [axesArr, imgArr, lineVArr, lineRArr, titleArr, histArr] = prebuild_20p
     end
 end
 
-% =========================================================================
-% HELPER: UPDATE IONOGRAM SUBPLOT
-% =========================================================================
 function update_subplot_ion(imgH, lineVH, lineRH, titleH, freqMHz, hGrid, Zeros, CData, ScaleV, ScaleR, DT, antName, modeStr)
     set(imgH, 'XData', freqMHz, 'YData', hGrid, 'ZData', Zeros, 'CData', CData);
 
@@ -339,9 +305,6 @@ function update_subplot_ion(imgH, lineVH, lineRH, titleH, freqMHz, hGrid, Zeros,
     titleH.String = sprintf('%04d/%02d/%02d %02d:%02d:%02dUT, %s (%s)', DT(1),DT(2),DT(3),DT(4),DT(5),DT(6), char(antName), modeStr);
 end
 
-% =========================================================================
-% HELPER: UPDATE POLARIZATION SUBPLOT
-% =========================================================================
 function update_subplot_pol(imgH, lineVH, lineRH, titleH, freqMHz, hGrid, Zeros, CData, ScaleV, ScaleR, DT, ant1, ant2, modeStr)
     set(imgH, 'XData', freqMHz, 'YData', hGrid, 'ZData', Zeros, 'CData', CData);
 

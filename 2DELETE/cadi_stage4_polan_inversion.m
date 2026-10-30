@@ -1,37 +1,16 @@
 function statusReport = cadi_stage4_polan_inversion(outBaseDir, sStation, startDT, endDT, opts)
 % CADI_STAGE4_POLAN_INVERSION Stage 4 of the CADI pipeline: Loads the U-Net 
-% extracted virtual height profile (ScaleV_unet) from *_ion.mat files within 
-% the specified datetime range, runs Titheridge's POLAN real-height inversion 
-% (polan_fortran_exact), and appends ScaleR_polan [f_MHz, h_km] and polanRes 
-% structure back to each *_ion.mat file.
-%
-% Inputs:
-%   outBaseDir : Base directory where processed *_ion.mat files are stored
-%   sStation   : 2-character station code (e.g., 'RB', 'CA', 'HA', 'EU', 'PO')
-%   startDT    : Start datetime vector [YYYY, MM, DD, hh, mm, ss]
-%   endDT      : End datetime vector [YYYY, MM, DD, hh, mm, ss]
-%   opts       : Structure with optional POLAN parameters:
-%                - fb        : Electron gyrofrequency (MHz). Default: from siteStruct
-%                - dip       : Magnetic dip angle (deg). Default: from siteStruct
-%                - start_val : Start height/extrapolation flag (default: 0.0)
-%                - amode     : Polynomial mode of analysis (default: 0.0 -> auto mode 6/16)
-%                - valley    : Valley flag (default: 10.0 = monotonic / no valley, 0.0 = standard valley)
-%                - list_flag : Debug print level for POLAN (default: -10 to suppress console spam)
-%                - min_pts   : Minimum virtual profile points required (default: 3)
-%                - overwrite : Logical flag to recompute existing POLAN results (default: true)
-%
-% Output:
-%   statusReport : Structure containing execution statistics and processed file list
+% extracted virtual height profile ScaleV_unet, runs Titheridge's POLAN real-height 
+% inversion, and appends ScaleR_polan and polanRes.
 
     if nargin < 5 || isempty(opts), opts = struct(); end
     if ~isfield(opts, 'start_val'), opts.start_val = 0.0;  end
     if ~isfield(opts, 'amode'),     opts.amode     = 0.0;  end
     if ~isfield(opts, 'valley'),    opts.valley    = 10.0; end
-    if ~isfield(opts, 'list_flag'), opts.list_flag = -10;  end % -10 suppresses per-session PEAK console print
+    if ~isfield(opts, 'list_flag'), opts.list_flag = -10;  end 
     if ~isfield(opts, 'min_pts'),   opts.min_pts   = 3;    end
     if ~isfield(opts, 'overwrite'), opts.overwrite = true; end
 
-    % Default station geophysical parameters from CADI_site_mtrx
     defaultSite = CADI_site_mtrx(sStation);
 
     tStart = datetime(startDT(1), startDT(2), startDT(3), startDT(4), startDT(5), startDT(6));
@@ -40,7 +19,6 @@ function statusReport = cadi_stage4_polan_inversion(outBaseDir, sStation, startD
     yearsToScan  = unique(startDT(1):endDT(1));
     monthLetters = 'ABCDEFGHIJKL';
 
-    % 1. Collect candidate *_ion.mat files across all years in the range
     candidateFiles = [];
     for yIdx = 1:numel(yearsToScan)
         sYear   = sprintf('%04d', yearsToScan(yIdx));
@@ -63,7 +41,6 @@ function statusReport = cadi_stage4_polan_inversion(outBaseDir, sStation, startD
     fprintf('POLAN Settings : Start=%.1f, Amode=%.1f, Valley=%.1f, MinPts=%d\n', ...
         opts.start_val, opts.amode, opts.valley, opts.min_pts);
 
-    % 2. Filter minute session files matching the datetime window
     validFileList = {};
     skippedCount  = 0;
     missingStage3 = 0;
@@ -72,7 +49,6 @@ function statusReport = cadi_stage4_polan_inversion(outBaseDir, sStation, startD
         fname    = candidateFiles(i).name;
         baseName = erase(fname, '_ion.mat');
 
-        % Process only 10-character minute files (skip 8-character hourly files)
         if length(baseName) ~= 10
             continue;
         end
@@ -93,13 +69,11 @@ function statusReport = cadi_stage4_polan_inversion(outBaseDir, sStation, startD
             fileVars = whos('-file', fullPath);
             varNames = {fileVars.name};
 
-            % Verify that Stage 3 virtual profile exists in the file
             if ~ismember('ScaleV_unet', varNames)
                 missingStage3 = missingStage3 + 1;
                 continue;
             end
 
-            % Skip if already processed and overwrite is disabled
             if ~opts.overwrite && ismember('ScaleR_polan', varNames) && ismember('polanRes', varNames)
                 skippedCount = skippedCount + 1;
                 continue;
@@ -121,7 +95,6 @@ function statusReport = cadi_stage4_polan_inversion(outBaseDir, sStation, startD
         return;
     end
 
-    % 3. Run POLAN inversion loop over selected files
     stageTimer        = tic;
     processedCount    = 0;
     successCount      = 0;
@@ -137,7 +110,6 @@ function statusReport = cadi_stage4_polan_inversion(outBaseDir, sStation, startD
             d = load(fPath, 'ScaleV_unet', 'siteStruct');
             ScaleV = d.ScaleV_unet;
 
-            % Determine station gyrofrequency (fb) and magnetic dip angle (dip)
             if isfield(opts, 'fb') && ~isempty(opts.fb)
                 fb_val = double(opts.fb);
             elseif isfield(d, 'siteStruct') && isfield(d.siteStruct, 'gyrofreq')
@@ -158,13 +130,11 @@ function statusReport = cadi_stage4_polan_inversion(outBaseDir, sStation, startD
                                'start_val', opts.start_val, 'amode', opts.amode, ...
                                'valley', opts.valley);
 
-            % Check if virtual profile has enough valid points
             if isempty(ScaleV) || size(ScaleV, 1) < opts.min_pts
                 ScaleR_polan = zeros(0, 2);
                 polanRes     = create_empty_polan_struct('INSUFFICIENT_VIRTUAL_PTS');
                 emptyOrShortCount = emptyOrShortCount + 1;
             else
-                % Ensure strictly monotonically increasing frequencies for POLAN
                 f_in = double(ScaleV(:, 1));
                 h_in = double(ScaleV(:, 2));
                 validMask = ~isnan(f_in) & ~isnan(h_in) & (f_in > 0) & (h_in > 0);
@@ -179,22 +149,17 @@ function statusReport = cadi_stage4_polan_inversion(outBaseDir, sStation, startD
                     polanRes     = create_empty_polan_struct('INSUFFICIENT_UNIQUE_FREQS');
                     emptyOrShortCount = emptyOrShortCount + 1;
                 else
-                    % Execute exact Fortran-ported POLAN inversion
                     [polanRes, ~, ~, ~, ~] = polan_fortran_exact( ...
                         f_in, h_in, fb_val, dip_val, ...
                         opts.start_val, opts.amode, opts.valley, opts.list_flag);
 
-                    % Compute equivalent slab thickness SlabT (km) if foF2 > 0
                     if isfield(polanRes, 'foF2') && polanRes.foF2 > 0 && isfield(polanRes, 'TEC')
-                        % Note: in polan_fortran_exact, TEC = P.tcont * 0.124
-                        % and SlabT printed in sub_peak is P.tcont / (P.FC^2)
                         tcont_val = polanRes.TEC / 0.124;
                         polanRes.SlabT = tcont_val / (polanRes.foF2 ^ 2);
                     else
                         polanRes.SlabT = NaN;
                     end
 
-                    % Assemble [f_real_all, h_real_all] matrix for plotting and analysis
                     if ~isempty(polanRes.f_real_all) && ~isempty(polanRes.h_real_all)
                         ScaleR_polan = [polanRes.f_real_all(:), polanRes.h_real_all(:)];
                         if strcmp(polanRes.status, 'OK')
@@ -206,7 +171,6 @@ function statusReport = cadi_stage4_polan_inversion(outBaseDir, sStation, startD
                 end
             end
 
-            % Append real-height profile and POLAN metadata back to *_ion.mat
             save(fPath, 'ScaleR_polan', 'polanRes', 'polanOpts', '-append');
 
             processedCount = processedCount + 1;
@@ -243,9 +207,6 @@ function statusReport = cadi_stage4_polan_inversion(outBaseDir, sStation, startD
     fprintf('============================================================\n');
 end
 
-% =========================================================================
-% HELPER: INITIALIZE EMPTY POLAN RESULT STRUCTURE WHEN TRACE IS TOO SHORT
-% =========================================================================
 function out = create_empty_polan_struct(statusStr)
     out = struct();
     out.N_out      = 0;
