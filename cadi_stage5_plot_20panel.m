@@ -1,7 +1,7 @@
 function statusReport = cadi_stage5_plot_20panel(outBaseDir, sStation, startDT, endDT, opts)
 % CADI_STAGE5_PLOT_20PANEL Stage 5 of the CADI pipeline: Generates and exports 
 % comprehensive 20-panel diagnostic ionogram plots with overlaid thin black lines 
-% for U-Net virtual profiles and POLAN real-height profiles as high-resolution PNGs.
+% for U-Net virtual profiles and POLAN real-height profiles as PNGs.
 
     if nargin < 5 || isempty(opts), opts = struct(); end
     if ~isfield(opts, 'visible'),   opts.visible   = 'off';  end 
