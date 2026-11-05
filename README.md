@@ -60,8 +60,14 @@
 
 **batch_validate_polan.m**                  Batch processes _pol.mat files (prepared from David *.pol files), runs MATLAB POLAN, saves individual comparison PNG plots using a single reusable window, compiles a consolidated log.mat, and generates statistical metric plots.
 
-**cadi_compare_with_david_mat.m**           Loads David's POLAN results from a .mat file 
-(records struct), runs polan_fortran_exact(), and plots a detailed comparison including both bottomside and topside real profiles.
+**cadi_compare_with_david_mat.m**           Performs cross-validation of the CADI automated processing pipeline results against David's reference manual scaling dataset (*_pol.mat files) Computes quantitative error metrics for matched sessions:
+        - Bias (mean error / systematic shift)
+        - MAE (Mean Absolute Error)
+        - RMSE (Root Mean Square Error)
+        - R (Pearson correlation coefficient)
+Visualization: Generates a 2x2 panel of regression scatter plots for foF2, hmF2, ScaleHt, and SlabT featuring an ideal 1:1 line, a linear fit line, and computed metrics in the titles, exporting the final figure to a PNG file
+
+**run_cadi_compare_with_david_mat.m**      Run cadi_compare_with_david_mat() with diary logging
 
 
 ## PREPARE DATA FOR TRAINING, TRAINING, EVALUATIONG, VISUALIZING
@@ -95,4 +101,6 @@
 **cadi_run_pipeline**                      Master wrapper script to execute all stages of the CADI processing, inversion, and visualization pipeline sequentially with English console and file logging in the root of outBaseDir.
 
 **run_cadi_run_pipeline**                  MASTER EXECUTION SCRIPT FOR CADI PROCESSING PIPELINE  This script sets up the paths, station parameters, time windows, and executes the complete 5-stage CADI pipeline using cadi_run_pipelin
+
+## 
 

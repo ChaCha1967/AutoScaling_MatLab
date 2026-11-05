@@ -1,8 +1,34 @@
 function comparisonReport = cadi_compare_with_david(pipelineOutDir, davidPolDir, outBaseDir, opts)
-% CADI_COMPARE_WITH_DAVID Cross-validates pipeline inversion results against 
-% David's reference manual scaling (*_pol.mat files).
+% CADI_COMPARE_WITH_DAVID Performs cross-validation of the CADI automated 
+% processing pipeline results against David's reference manual scaling dataset 
+% (*_pol.mat files).
 %
 % Syntax:
+%   report = cadi_compare_with_david(pipelineOutDir, davidPolDir, outBaseDir, opts)
+%
+% Key workflow steps:
+%   1. Scanning Reference Files: Scans the reference directory (davidPolDir) 
+%      to locate all manual scaling files (*_pol.mat).
+%   2. Pair Matching: Matches each David reference file with its corresponding 
+%      automated pipeline result file (*_ion.mat) in (pipelineOutDir) folder
+%      based on identical base names.
+%   3. Safe Data Extraction: Safely extracts reference peak parameters (foF2, 
+%      hmF2, ScaleHt, SlabT) using a robust helper function (get_field_safe) 
+%      while loading pipeline POLAN inversion outputs (polanRes and ScaleR_polan).
+%   4. Success Rate Calculation: Computes the overall success percentage of the 
+%      pipeline's real-height profile generation against David's benchmark set.
+%   5. Statistical Evaluation: Computes quantitative error metrics for matched 
+%      sessions:
+%        - Bias (mean error / systematic shift)
+%        - MAE (Mean Absolute Error)
+%        - RMSE (Root Mean Square Error)
+%        - R (Pearson correlation coefficient)
+%   6. Visualization: Generates a 2x2 panel of regression scatter plots for 
+%      foF2, hmF2, ScaleHt, and SlabT featuring an ideal 1:1 line, a linear fit 
+%      line, and computed metrics in the titles, exporting the final figure to a PNG file
+%      to (outBaseDir) filder.
+%
+% Syntax example:
 %   report = cadi_compare_with_david('N:/cadi_out_test/RB/2008', ...
 %                                    'N:/cadi_synced/RB/2008_p1_m1_p1_m1/', ...
 %                                    'N:/cadi_out_test/');
