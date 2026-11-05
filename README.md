@@ -13,7 +13,7 @@
 
 **parse_polan_file_synced.m**               Parses text-based POLAN output files (.pol), extracts session headers, input virtual heights, peak characteristics (foF2, hmF2), real heights, and calculation coefficients, and saves the structured data into a .mat file.
 
-**sync_cadi_data.m                        Script to synchronize and extract matching .pol and .md2.gz files Includes hierarchical scanning, dual logging, and a final summary table
+**sync_cadi_data.m**                        Script to synchronize and extract matching .pol and .md2.gz files Includes hierarchical scanning, dual logging, and a final summary table
 
 **run_cadi_evaluate_model.m**               run cadi_evaluate_model() function
 
