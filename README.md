@@ -11,17 +11,9 @@
 
 **CustomColormap.m**                        Create custom colormap for polarization ionograms
 
-**parse_polan_file_synced.m**               Parses text-based POLAN output files (.pol), extracts session headers, input virtual heights, peak characteristics (foF2, hmF2), real heights, and calculation coefficients, and saves the structured data into a .mat file.
-
 **sync_cadi_data.m**                        Script to synchronize and extract matching .pol and .md2.gz files Includes hierarchical scanning, dual logging, and a final summary table
 
-**run_cadi_evaluate_model.m**               run cadi_evaluate_model() function
-
-**run_cadi_evaluate_model_profile.m**       run cadi_evaluate_model_profile() function
-
-**run_cadi_train_unet.m**                   run cadi_train_unet() function
-
-**run_cadi_visualize_from_mat.m**           run cadi_visualize_from_mat() function
+**parse_polan_file_synced.m**               Parses text-based POLAN output files (.pol), extracts session headers, input virtual heights, peak characteristics (foF2, hmF2), real heights, and calculation coefficients, and saves the structured data into a .mat file.
 
 **run_parse_polan_synced.m**                Batch processes all .pol files in the given directory tree Extracts data to .mat. If plot_flag == 1, also generates and saves PNG plots
 
@@ -50,6 +42,10 @@
 **Plot_CADI_ion_im2PNG.m**                  Batch processes CADI ionosphere data files (*_ion.mat) and files with scaled and real-height (POLAN) ionospheric profiles (*.pol) provided by David and converted to (*_pol.mat), applies multi-antenna interference filtering and phase analysis, saves processed matrices back to files, and exports comprehensive 20-panel diagnostic ionogram plots with profiles as high-resolution PNG images.
 
 **cadi_visualize_from_mat.m**               Batch visualizes unified CADI dataset *.mat files across a directory tree using pre-initialized graphics handles for maximum rendering speed, saving output figures as *.png files alongside the source *.mat files.
+
+**run_cadi_visualize_from_mat.m**           run cadi_visualize_from_mat() function
+
+**cadi_visualize_pair_from_mat.m**          Script to visually inspect generated CADI dataset pairs on a 4-panel figure. Prompts the user to select a tensor file (*_tns3.mat) and automatically finds its companion mask file (*_lbl.png).
 
 **cadi_visualize_from_mat_single.m**        Visualizes generated CADI dataset samples from unified .mat files on a 3-panel professional figure with logarithmic frequency axis, high-contrast modes, full bounding boxes, and enlarged typography.
 
@@ -86,11 +82,15 @@ Visualization: Generates a 2x2 panel of regression scatter plots for foF2, hmF2,
 
 **cadi_train_unet.m**                       Trains a U-Net deep learning model in MATLAB R2026b using trainnet for ionogram O-mode trace segmentation.
 
+**run_cadi_train_unet.m**                   run cadi_train_unet() function
+
 **cadi_evaluate_model.m**                   Evaluates the trained U-Net model on the held-out 10% test split (use trained *.mat file)
+
+**run_cadi_evaluate_model.m**               run cadi_evaluate_model() function
 
 **cadi_evaluate_model_profile.m**           Evaluates the trained U-Net model on the held-out test split, extracts predicted virtual ionospheric profiles from masks (top, center, or bottom edge), compares them against David's reference virtual profiles (david_pts_virtual), and computes height error metrics (use trained *.mat file).
 
-**cadi_visualize_pair_from_mat.m**          Script to visually inspect generated CADI dataset pairs on a 4-panel figure. Prompts the user to select a tensor file (*_tns3.mat) and automatically finds its companion mask file (*_lbl.png).
+**run_cadi_evaluate_model_profile.m**       run cadi_evaluate_model_profile() function
 
 ## PROCESSING ANY RAW CADI *.md2 FILES (INCLUDING NOT SCALED BY DAVID) USING U-NET TRAINED NETWORK
 
