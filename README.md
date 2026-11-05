@@ -58,7 +58,12 @@
 
 **polan_fortran_exact.m**                   Exact 1-to-1 line-by-line MATLAB translation of Titheridge's Fortran-77 POLAN source files: polan.f, polsin.f, polsub.f, and polmis.f.
 
-**batch_validate_polan.m**                  Batch processes _pol.mat files (prepared from David *.pol files), runs MATLAB POLAN, saves individual comparison PNG plots using a single reusable window, compiles a consolidated log.mat, and generates statistical metric plots.
+**batch_validate_polan.m**                  Performs batch processing, validation, and comparative analysis of ionospheric POLAN inversion results against reference dataset files (`*_pol.mat`).
+Recursive Search & Organization:  Recursively scans the input directory (`InPath`) for all `*_pol.mat` files, replicating the folder structure in the output directory (`OutPath`).
+Batch Processing & MATLAB POLAN Execution: Extracts virtual ionospheric heights ($h'(f)$) and reference parameters from each file, runs the MATLAB POLAN exact inversion algorithm, and computes critical parameters ($f_oF2$, $h_mF2$, Scale Height, and Slab Thickness).
+Comparative Visualization: Utilizes a single reusable figure window to render and export individual verification PNG plots for every session, featuring virtual input traces, reference real heights, MATLAB inversion profiles, and an embedded summary text box.
+Consolidated Logging: Compiles all valid inversion structures and records into a single consolidated `log.mat` file stored at the root of the output directory.
+Statistical Evaluation & Metrics: Automatically computes error metrics (MAE and RMSE) for key ionospheric parameters and generates a multi-panel evaluation figure containing error distribution histograms and equal-axis regression scatter plots against reference data.
 
 **cadi_compare_with_david_mat.m**           Performs cross-validation of the CADI automated processing pipeline results against David's reference manual scaling dataset (*_pol.mat files) Computes quantitative error metrics for matched sessions:
         - Bias (mean error / systematic shift)

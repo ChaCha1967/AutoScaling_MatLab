@@ -1,11 +1,29 @@
 function batch_validate_polan(InPath, OutPath)
-% BATCH_VALIDATE_POLAN Batch processes _pol.mat files, runs MATLAB POLAN,
-% saves individual comparison PNG plots using a single reusable window,
-% compiles a consolidated log.mat, and generates statistical metric plots.
+% BATCH_VALIDATE_POLAN Batch processes reference _pol.mat files, executes 
+% MATLAB POLAN ionospheric true-height inversion, compares the results 
+% against benchmark data, and compiles comprehensive statistical metrics.
+%
+% KEY WORKFLOW STEPS:
+%   1. Recursive File Discovery: Scans InPath for all *_pol.mat files and 
+%      replicates directory hierarchies in OutPath.
+%   2. POLAN Execution & Parameter Extraction: Loads virtual height traces 
+%      and reference profiles, runs polan_fortran_exact, and computes foF2, 
+%      hmF2, ScaleHt, and SlabT.
+%   3. Individual Plot Generation: Renders comparison plots (Virtual traces, 
+%      Reference real heights, and MATLAB profiles) with embedded parameter 
+%      boxes, saving each as an individual *_pol.png.
+%   4. Consolidated Logging: Saves all valid output structures into a unified 
+%      log.mat file in the root output folder.
+%   5. Statistical Metrics & Evaluation: Automatically computes MAE and RMSE, 
+%      plotting error histograms and equal-axis regression scatter panels 
+%      saved as polan_evaluation_metrics.png.
+%
+% SYNTAX:
+%   batch_validate_polan(InPath, OutPath)
 %
 % INPUTS:
 %   - InPath  : Root directory containing subfolders with *_pol.mat files
-%   - OutPath : Root directory where results, PNGs, and log.mat will be saved
+%   - OutPath : Root directory where results, PNG plots, and log.mat are saved
 
     if nargin < 2
         error('Please provide both InPath and OutPath arguments.');
