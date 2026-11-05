@@ -1,16 +1,31 @@
 function success = cadi_visualize_from_mat(out_filepath, use_filtered)
-% CADI_VISUALIZE_FROM_MAT Batch visualizes unified CADI dataset *.mat files 
-% across a directory tree using pre-initialized graphics handles for 
-% maximum rendering speed, saving output figures as *.png files alongside 
-% the source *.mat files.
+% CADI_VISUALIZE_FROM_MAT Performs rapid batch visualization of unified CADI 
+% ionogram dataset .mat files across a complete directory tree.
 %
-% Inputs:
-%   out_filepath : Path to the root folder containing processed *.mat files (or a single .mat file)
-%   use_filtered : Logical flag (true = visualize filtered ID.mat -> ID.png; 
-%                                false = visualize original noisy IDo.mat -> IDo.png)
+% DETAILED WORKFLOW:
+%   1. File Discovery & Filtering: Recursively scans the root directory for 
+%      processed dataset files while excluding raw outputs (_ion.mat, _pol.mat). 
+%      Selects either filtered or original noisy files (*o.mat) based on 
+%      the use_filtered flag.
+%   2. Graphics Pre-initialization: Instantiates figure windows, axes, and 
+%      surface handles once before the loop to maximize rendering speed.
+%   3. Multi-Panel Rendering: Generates a 3-panel comparative layout:
+%        - Panel 1: Amplitude Power Ionogram (Channel 1 with Parula colormap)
+%        - Panel 2: Separated O-mode (Deep Blue) and X-mode (Deep Red) composite
+%        - Panel 3: Binary Mask Contour overlay and David's reference profile
+%   4. Automated Export: Dynamically parses session timestamps, updates axis 
+%      limits for non-linear frequency grids, and saves high-resolution 
+%      *.png files directly alongside source .mat files.
 %
-% Output:
-%   success      : Logical flag (true if batch visualization completed successfully)
+% SYNTAX:
+%   success = cadi_visualize_from_mat(out_filepath, use_filtered)
+%
+% INPUTS:
+%   - out_filepath : Root folder path containing processed .mat files
+%   - use_filtered : Logical flag (true = filtered .mat; false = noisy *o.mat)
+%
+% OUTPUT:
+%   - success      : Logical true if batch visualization completed successfully
 
     success = false;
 

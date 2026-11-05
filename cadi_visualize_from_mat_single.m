@@ -1,10 +1,24 @@
 function success = cadi_visualize_from_mat_single()
-% CADI_VISUALIZE_FROM_MAT Visualizes generated CADI dataset samples from unified .mat files
-% on a 3-panel professional figure with logarithmic frequency axis, high-contrast modes,
-% full bounding boxes, and enlarged typography.
+% CADI_VISUALIZE_FROM_MAT_SINGLE Provides an interactive, single-file 
+% visualization tool for detailed manual inspection of individual CADI samples.
 %
-% Output:
-%   success : Logical flag (true if visualization completed successfully, false if cancelled/error)
+% DETAILED FEATURES:
+%   1. Interactive Dialog: Prompts the user to select a specific CADI .mat 
+%      file using a graphical file selection window.
+%   2. Strict Field Validation: Verifies the presence of all required tensor, 
+%      mask, and grid variables before processing.
+%   3. Professional 3-Panel Inspection Figure:
+%        - Logarithmic frequency scaling with dynamic physical tick marks
+%        - Gamma-boosted high-contrast RGB mapping (O-mode blue, X-mode red)
+%        - Binary mask contours and David's manual virtual profile overlay
+%   4. Publication-Ready Formatting: Full enclosing bounding boxes, high-resolution 
+%      grid layers, and enlarged typography.
+%
+% SYNTAX:
+%   success = cadi_visualize_from_mat_single()
+%
+% OUTPUT:
+%   - success : Logical true if inspection figure rendered successfully
 
     success = false;
 

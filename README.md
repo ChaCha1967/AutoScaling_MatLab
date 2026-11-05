@@ -41,14 +41,19 @@
 
 **Plot_CADI_ion_im2PNG.m**                  Batch processes CADI ionosphere data files (*_ion.mat) and files with scaled and real-height (POLAN) ionospheric profiles (*.pol) provided by David and converted to (*_pol.mat), applies multi-antenna interference filtering and phase analysis, saves processed matrices back to files, and exports comprehensive 20-panel diagnostic ionogram plots with profiles as high-resolution PNG images.
 
-**cadi_visualize_from_mat.m**               Batch visualizes unified CADI dataset *.mat files across a directory tree using pre-initialized graphics handles for maximum rendering speed, saving output figures as *.png files alongside the source *.mat files.
 
-**run_cadi_visualize_from_mat.m**           run cadi_visualize_from_mat() function
+**cadi_visualize_from_mat.m**               Performs rapid batch visualization of unified CADI ionogram dataset `.mat` files across a complete directory tree. 
+* Performance Optimization: Pre-initializes graphics handles (figures, axes, and surface objects) once prior to execution, significantly accelerating rendering speed across large datasets.
+* Flexible Source Selection: Automatically scans folders, filters out raw files (`_ion.mat`, `_pol.mat`), and allows switching between filtered datasets and original noisy recordings (`*o.mat`) via a logical flag.
+* Professional Layout: Renders a 3-panel professional figure featuring an amplitude power ionogram (with custom colormap), separated O-mode (blue) and X-mode (red) traces, and a mask contour combined with David's reference profile.
+* Automated Export: Automatically extracts session dates and times from filenames or metadata, updates plot titles dynamically, and exports high-resolution `.png` figures directly alongside source `.mat` files.
 
-**cadi_visualize_pair_from_mat.m**          Script to visually inspect generated CADI dataset pairs on a 4-panel figure. Prompts the user to select a tensor file (*_tns3.mat) and automatically finds its companion mask file (*_lbl.png).
+**run_cadi_visualize_from_mat.m**          A lightweight execution wrapper script configured to launch the batch visualization pipeline (`cadi_visualize_from_mat.m`) with predefined target directories and visualization parameters (such as targeting original noisy recordings).
 
-**cadi_visualize_from_mat_single.m**        Visualizes generated CADI dataset samples from unified .mat files on a 3-panel professional figure with logarithmic frequency axis, high-contrast modes, full bounding boxes, and enlarged typography.
-
+**cadi_visualize_from_mat_single.m**       Provides an interactive, single-file visualization tool for detailed manual inspection of individual CADI dataset samples.
+* Interactive Selection: Prompts the user via a graphical file dialog (`uigetfile`) to select any unified CADI sample `.mat` file.
+* Advanced Visual Styling: Employs a non-linear logarithmic frequency axis with customized tick marks, full bounding boxes, and enlarged typography tailored for presentations and technical reports.
+* High-Contrast Mode Blending: Converts multi-channel tensor data into vivid high-contrast RGB composites, mapping true O-modes to deep blue shades and X-modes to deep red shades on a clean white background.
 
 ## POLAN MATLAB CODE PORTED FROM FORTRAN & COMPARE DAVID'S REAL HEIGHT PROFILE WITH MATLAB POLAN CALCULATION
 

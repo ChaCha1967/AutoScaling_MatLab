@@ -6,8 +6,7 @@ function moveReport = cadi_sort_png_by_category(outBaseDir, sStation, targetYear
 %   moveReport = cadi_sort_png_by_category('N:/cadi_out_test/', 'RB', 2008, summaryData);
 
     if nargin < 5 || isempty(opts), opts = struct(); end
-    if ~isfield(opts, 'moveMode'), opts.moveMode = true; end % true = move, false = copy (for safety test)
-
+    if ~isfield(opts, 'moveMode'), opts.moveMode = true; end % true = move, false = copy (for safety test) ';'
     sYear = sprintf('%04d', targetYear);
     sourceDir = fullfile(outBaseDir, sStation, sYear);
 
