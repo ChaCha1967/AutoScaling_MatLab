@@ -14,8 +14,8 @@ sStation   = 'RB'; % Station code (e.g., 'RB')
 % 2. Define target time range [YYYY, MM, DD, hh, mm, ss]
 % startDT = [2008, 02, 01, 00, 00, 00];
 % endDT   = [2008, 12, 31, 23, 55, 00];
-startDT = [2008, 05, 01, 00, 00, 00];
-endDT   = [2008, 06, 01, 00, 00, 00];
+startDT = [2009, 01, 01, 00, 00, 00];
+endDT   = [2009, 12, 31, 23, 55, 00];
 
 % 3. Select which stages to run (e.g., [1, 2, 3, 4, 5] for the full pipeline)
 %    - Stage 1: MD2 unpacking & raw data extraction
@@ -23,8 +23,8 @@ endDT   = [2008, 06, 01, 00, 00, 00];
 %    - Stage 3: U-Net inference & virtual profile extraction
 %    - Stage 4: POLAN real-height profile inversion
 %    - Stage 5: 20-panel diagnostic plot export
-% runStages = [1, 2, 3, 4, 5];
-runStages = 5;
+runStages = [1, 2, 3, 4, 5];
+% runStages = 5;
 
 % 4. Select Stage 5 plotting variant:
 %    - 'new'  (or 'avt') : Runs cadi_stage5_plot.m with tensor column (suffix: '_ion_avt.png')

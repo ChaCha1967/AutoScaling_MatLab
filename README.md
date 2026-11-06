@@ -127,7 +127,7 @@ Visualization: Generates a 2x2 panel of regression scatter plots for foF2, hmF2,
 
 **cadi_sort_png_by_category.m**             Sorts and moves generated session PNG plots into category-specific subdirectories (categories 1 to 6 mapped to `YYYY_01` through `YYYY_06` folders) based on the automatic quality classification results. 
 
-## COMPARE CADI ANNUAL STATISTICS OBTAINED USING USING U-NET TRAINED NETWORK & DAVID MANUAL SCALING DATA
+## COMPARE CADI ANNUAL STATISTICS OBTAINED USING U-NET TRAINED NETWORK & DAVID MANUAL SCALING DATA
 
 **plot_david_annual_stats**                 Scans David's manual scaling *_pol.mat files, extracts Peak parameters (foF2, hmF2, SlabT, and calculated TEC), and exports 4 multi-panel figures showing monthly diurnal variations with individual points, mean curves, and median curves.
 
