@@ -1,12 +1,32 @@
 function moveReport = cadi_sort_png_by_category(outBaseDir, sStation, targetYear, summaryData, opts)
-% CADI_SORT_PNG_BY_CATEGORY Moves PNG files into subdirectories based on 
-% summaryData.qualityCategory (categories 1 to 6 into folders YYYY_01 ... YYYY_06).
+% CADI_SORT_PNG_BY_CATEGORY Automatically sorts and moves generated session PNG 
+% plots into category-specific subdirectories based on automated quality classification.
 %
-% Syntax:
-%   moveReport = cadi_sort_png_by_category('N:/cadi_out_test/', 'RB', 2008, summaryData);
+% SYNTAX:
+%   moveReport = cadi_sort_png_by_category(outBaseDir, sStation, targetYear, summaryData, opts)
+%
+% INPUTS:
+%   - outBaseDir  : Root output directory path containing the station and year subfolders (e.g., 'N:/cadi_out_test/')
+%   - sStation    : Two-letter station code string defining the station subfolder (e.g., 'RB')
+%   - targetYear  : Numeric target year corresponding to the dataset folder (e.g., 2008)
+%   - summaryData : Structure containing session filenames (fNames) and automated 
+%                   quality classification labels (qualityCategory)
+%   - opts        : (Optional) Structure containing advanced configuration fields:
+%                   * opts.moveMode : Logical flag. When set to true (default), 
+%                                     physically moves the PNG plot files from the 
+%                                     source directory into the respective category 
+%                                     subfolders (categories 1 to 6 mapped to 
+%                                     YYYY_01 through YYYY_06). When set to false, 
+%                                     copies the files instead of moving them 
+%                                     (useful for safety testing, debugging, or 
+%                                     preserving original files in the source directory).
+%
+% OUTPUT:
+%   - moveReport  : Structure containing transfer counts per category, destination 
+%                   folder paths, and total execution time in seconds.
 
     if nargin < 5 || isempty(opts), opts = struct(); end
-    if ~isfield(opts, 'moveMode'), opts.moveMode = true; end % true = move, false = copy (for safety test) ';'
+    if ~isfield(opts, 'moveMode'), opts.moveMode = true; end % true = move, false = copy (for safety test)
     sYear = sprintf('%04d', targetYear);
     sourceDir = fullfile(outBaseDir, sStation, sYear);
 

@@ -115,5 +115,15 @@ Visualization: Generates a 2x2 panel of regression scatter plots for foF2, hmF2,
 
 **run_cadi_run_pipeline**                  MASTER EXECUTION SCRIPT FOR CADI PROCESSING PIPELINE  This script sets up the paths, station parameters, time windows, and executes the complete 5-stage CADI pipeline using cadi_run_pipelin
 
-## 
+## CADI ANNUAL STATISTICS, U-NET VALIDATION & QUALITY SORTING PIPELINE
+
+**cadi_analyze_annual_stats.m**            Scans all processed `*_ion.mat` files for a full year, compiles an annual summary dataset, computes pipeline coverage statistics and automatic 6-category quality classification[cite: 11], and exports monthly diurnal variation plots and comparative analysis figures  
+* Annual Summary Compilation: Scans minute session files, extracts profile parameters, TEC, and U-Net metrics, saving a consolidated `CADI_Summary_*.mat`  
+* Pipeline Coverage & Statistics: Computes processing success rates, identifying drops between virtual and real profile inversions  
+* Automatic Quality Classification: Categorizes sessions into 6 distinct classes (Good F2 profiles, E/Es misidentifications, jagged profiles, blanketing Es, weak ionosphere/blackout, and missed F-region traces)  
+* Diurnal & Comparative Visualization: Generates 12-panel monthly diurnal plots for foF2, foF2_unet, hmF2, TEC, Scale Height, and Slab Thickness, alongside a direct POLAN vs U-Net foF2 comparison  
+
+**run_cadi_analyze_annual_stats.m**         Execution wrapper script that sets up base directories, station codes, and target years, initializes automated `diary` logging, and executes the annual statistics pipeline.  
+
+**cadi_sort_png_by_category.m**             Sorts and moves generated session PNG plots into category-specific subdirectories (categories 1 to 6 mapped to `YYYY_01` through `YYYY_06` folders) based on the automatic quality classification results.  
 

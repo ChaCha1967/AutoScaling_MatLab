@@ -1,10 +1,32 @@
 function summaryData = cadi_analyze_annual_stats(outBaseDir, sStation, targetYear, opts)
 % CADI_ANALYZE_ANNUAL_STATS Scans all processed *_ion.mat files for a full year,
 % compiles a fast summary table, computes pipeline & quality classification 
-% statistics (Tasks 1 & 4), and exports 7 monthly diurnal variation figures:
-%   1-5: foF2, hmF2, TEC (0-50 TECU), H_scale, SlabT (Points + Mean + Median)
-%   6  : foF2_unet (Points + Mean + Median)
-%   7  : Comparison of foF2 (POLAN) vs foF2_unet (Mean & Median curves)
+% statistics, and exports monthly diurnal variation and comparison plots.
+%
+% SYNTAX:
+%   summaryData = cadi_analyze_annual_stats(outBaseDir, sStation, targetYear, opts)
+%
+% INPUTS:
+%   - outBaseDir : Root directory containing station subfolders (e.g., 'N:/cadi_out_test/')
+%   - sStation   : Two-letter station code string defining the station subfolder (e.g., 'RB')
+%   - targetYear : Numeric target year to be processed (e.g., 2008)
+%   - opts       : (Optional) Structure containing advanced configuration fields:
+%                  * opts.forceRebuild   : Logical flag. When set to true, forces 
+%                                          re-scanning of all *_ion.mat files and 
+%                                          rebuilds the annual summary MAT file from 
+%                                          scratch, ignoring any existing cached summary. 
+%                                          When false (default), loads the pre-existing 
+%                                          summary file if available to save processing time.
+%                  * opts.tecScaleFactor : Numeric multiplier applied to raw POLAN TEC 
+%                                          values (default: 10.0). Used to adjust 
+%                                          total electron content units so that data 
+%                                          properly scales and fits standard plotting 
+%                                          ranges (e.g., [0, 50] TECU).
+%
+% OUTPUTS:
+%   - summaryData: Structure containing compiled annual parameters, session timestamps, 
+%                  pipeline coverage statistics, U-Net metrics, and automatic 
+%                  6-category quality classification IDs for every record.
 
     if nargin < 4 || isempty(opts), opts = struct(); end
     if ~isfield(opts, 'forceRebuild'), opts.forceRebuild = false; end
