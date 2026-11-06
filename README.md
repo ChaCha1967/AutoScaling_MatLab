@@ -125,5 +125,10 @@ Visualization: Generates a 2x2 panel of regression scatter plots for foF2, hmF2,
 
 **run_cadi_analyze_annual_stats.m**         Execution wrapper script that sets up base directories, station codes, and target years, initializes automated `diary` logging, and executes the annual statistics pipeline.  
 
-**cadi_sort_png_by_category.m**             Sorts and moves generated session PNG plots into category-specific subdirectories (categories 1 to 6 mapped to `YYYY_01` through `YYYY_06` folders) based on the automatic quality classification results.  
+**cadi_sort_png_by_category.m**             Sorts and moves generated session PNG plots into category-specific subdirectories (categories 1 to 6 mapped to `YYYY_01` through `YYYY_06` folders) based on the automatic quality classification results. 
 
+## COMPARE CADI ANNUAL STATISTICS OBTAINED USING USING U-NET TRAINED NETWORK & DAVID MANUAL SCALING DATA
+
+**plot_david_annual_stats**                 Scans David's manual scaling *_pol.mat files, extracts Peak parameters (foF2, hmF2, SlabT, and calculated TEC), and exports 4 multi-panel figures showing monthly diurnal variations with individual points, mean curves, and median curves.
+
+**compare_pipeline_vs_david**               Compares pipeline processing results against David's manual scaling reference data across 4 monthly diurnal multi-panel figures foF2, hmF2, SlabT, and calculated TEC).
