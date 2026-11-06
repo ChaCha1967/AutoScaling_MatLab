@@ -206,8 +206,6 @@ function summaryData = cadi_analyze_annual_stats(outBaseDir, sStation, targetYea
         summaryData.fRegionPx   = fRegionPx;
         summaryData.eMaxFreqMHz = eMaxFreqMHz;
 
-        save(summaryMatPath, 'summaryData', '-v7.3');
-        fprintf('Saved annual summary dataset to: %s\n', summaryMatPath);
     end
 
     % =====================================================================
@@ -431,10 +429,17 @@ function summaryData = cadi_analyze_annual_stats(outBaseDir, sStation, targetYea
         title(ax, sprintf('%s (N = %d)', monthNames{m}, nnz(idxM)), 'FontSize', 11);
         xlabel(ax, 'Time (UT, hours)');
         ylabel(ax, 'Critical Frequency (MHz)');
-    end % <-- Этот end отсутствовал
+    end 
 
     outCompPath = fullfile(outBaseDir, sprintf('CADI_%s_%d_Diurnal_foF2_Comparison.png', sStation, targetYear));
     exportgraphics(hFigComp, outCompPath, 'Resolution', 150);
     close(hFigComp);
     fprintf('Saved foF2 comparison plot: %s\n', outCompPath);
+
+    % =====================================================================
+    % STEP 6: Saved annual summary dataset
+    % =====================================================================
+    save(summaryMatPath, 'summaryData', '-v7.3');
+    fprintf('Saved annual summary dataset to: %s\n', summaryMatPath);
+
 end
