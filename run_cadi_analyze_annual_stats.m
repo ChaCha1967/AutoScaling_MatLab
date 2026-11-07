@@ -8,9 +8,9 @@
 
 outBaseDir = 'N:/cadi_out_test/';
 sStation = 'RB'; 
-targetYear = 2008;
+targetYear = 2009;
 opts = struct();
-opts.forceRebuild = false;
+opts.forceRebuild = true; % false
 
 diaryFile = fullfile(outBaseDir, sprintf('CADI_Stats_%s_%d.log', sStation, targetYear));
 diary(diaryFile);
