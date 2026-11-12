@@ -14,8 +14,8 @@ sStation   = 'RB'; % Station code (e.g., 'RB')
 % 2. Define target time range [YYYY, MM, DD, hh, mm, ss]
 % startDT = [2008, 02, 01, 00, 00, 00];
 % endDT   = [2008, 12, 31, 23, 55, 00];
-startDT = [2008, 01, 01, 00, 00, 00];
-endDT   = [2008, 12, 31, 23, 55, 00];
+startDT = [2009, 01, 01, 00, 00, 00];
+endDT   = [2009, 12, 31, 23, 55, 00];
 
 % 3. Select which stages to run (e.g., [1, 2, 3, 4, 5] for the full pipeline)
 %    - Stage 1: MD2 unpacking & raw data extraction
@@ -68,7 +68,7 @@ stageOpts.stage5 = struct(...
 
 % 6. Execute the pipeline
 fprintf('Starting CADI 1-channel pipeline execution for station %s (Stage 4 mode: %s)...\n', sStation, stage5Variant);
-pipelineReport = cadi_run_pipeline(inBaseDir, outBaseDir, sStation, startDT, endDT, runStages, stageOpts);
+pipelineReport = cadi_run_pipeline_1ch(inBaseDir, outBaseDir, sStation, startDT, endDT, runStages, stageOpts);
 
 % 7. Display summary results (and append to log file if logging is enabled)
 if stageOpts.enableLog && isfield(pipelineReport, 'logFilePath') && ~isempty(pipelineReport.logFilePath)
