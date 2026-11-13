@@ -3,8 +3,8 @@
 % =========================================================================
 
 % Define directory paths for pipeline results, David's reference files, and outputs
-pipelineOutDir = 'N:/cadi_out_test/RB/2008';
-davidPolDir    = 'N:/cadi_synced/RB/2008_p1_m1_p1_m1/'; % Path to files with *_pol.mat
+pipelineOutDir = 'N:/cadi_out_test_1ch/RB/2009';
+davidPolDir    = 'N:/cadi_synced/RB/2009_p1_m1_p1_m1/'; % Path to files with *_pol.mat
 outBaseDir     = 'N:/cadi_out_test/';
 
 % Specify the path for the final validation log file

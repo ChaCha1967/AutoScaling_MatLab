@@ -6,7 +6,7 @@
 %   enables automated diary logging to a text file, and executes the 
 %   complete statistical analysis routine.
 
-outBaseDir = 'N:/cadi_out_test/';
+outBaseDir = 'N:/cadi_out_test_1ch/';
 sStation = 'RB'; 
 targetYear = 2009;
 opts = struct();
