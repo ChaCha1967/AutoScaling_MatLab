@@ -1,7 +1,7 @@
 function statusReport = cadi_stage4_polan_inversion(outBaseDir, sStation, startDT, endDT, opts)
-% CADI_STAGE4_POLAN_INVERSION Stage 4 of the CADI pipeline: Loads the U-Net 
-% extracted virtual height profile ScaleV_unet, runs Titheridge's POLAN real-height 
-% inversion, and appends ScaleR_polan and polanRes.
+% CADI_STAGE4_POLAN_INVERSION Stage 4 of the CADI pipeline.
+% Loads the U-Net extracted virtual profile using dynamic netID suffix,
+% runs Titheridge's POLAN, and appends results with matching netID suffix.
 
     if nargin < 5 || isempty(opts), opts = struct(); end
     if ~isfield(opts, 'start_val'), opts.start_val = 0.0;  end
@@ -10,16 +10,22 @@ function statusReport = cadi_stage4_polan_inversion(outBaseDir, sStation, startD
     if ~isfield(opts, 'list_flag'), opts.list_flag = -10;  end 
     if ~isfield(opts, 'min_pts'),   opts.min_pts   = 3;    end
     if ~isfield(opts, 'overwrite'), opts.overwrite = true; end
+    if ~isfield(opts, 'netID'),     opts.netID = '';       end % Suffix
+
+    % Dynamic variable names based on netID
+    var_scalev = ['ScaleV_unet',  opts.netID];
+    var_scaler = ['ScaleR_polan', opts.netID];
+    var_res    = ['polanRes',     opts.netID];
+    var_opts   = ['polanOpts',    opts.netID];
 
     defaultSite = CADI_site_mtrx(sStation);
-
     tStart = datetime(startDT(1), startDT(2), startDT(3), startDT(4), startDT(5), startDT(6));
     tEnd   = datetime(endDT(1), endDT(2), endDT(3), endDT(4), endDT(5), endDT(6));
 
     yearsToScan  = unique(startDT(1):endDT(1));
     monthLetters = 'ABCDEFGHIJKL';
-
     candidateFiles = [];
+    
     for yIdx = 1:numel(yearsToScan)
         sYear   = sprintf('%04d', yearsToScan(yIdx));
         yearDir = fullfile(outBaseDir, sStation, sYear);
@@ -38,6 +44,7 @@ function statusReport = cadi_stage4_polan_inversion(outBaseDir, sStation, startD
     fprintf('Station        : %s (Default Gyro: %.3f MHz, Dip: %.2f deg)\n', ...
         sStation, defaultSite.gyrofreq, defaultSite.magdip);
     fprintf('Time Range     : %s to %s\n', datestr(tStart), datestr(tEnd));
+    fprintf('Network ID     : [%s] (Base if empty)\n', opts.netID);
     fprintf('POLAN Settings : Start=%.1f, Amode=%.1f, Valley=%.1f, MinPts=%d\n', ...
         opts.start_val, opts.amode, opts.valley, opts.min_pts);
 
@@ -49,9 +56,7 @@ function statusReport = cadi_stage4_polan_inversion(outBaseDir, sStation, startD
         fname    = candidateFiles(i).name;
         baseName = erase(fname, '_ion.mat');
 
-        if length(baseName) ~= 10
-            continue;
-        end
+        if length(baseName) ~= 10, continue; end
 
         mChar     = upper(baseName(4));
         fileMonth = strfind(monthLetters, mChar);
@@ -69,12 +74,12 @@ function statusReport = cadi_stage4_polan_inversion(outBaseDir, sStation, startD
             fileVars = whos('-file', fullPath);
             varNames = {fileVars.name};
 
-            if ~ismember('ScaleV_unet', varNames)
+            if ~ismember(var_scalev, varNames)
                 missingStage3 = missingStage3 + 1;
                 continue;
             end
 
-            if ~opts.overwrite && ismember('ScaleR_polan', varNames) && ismember('polanRes', varNames)
+            if ~opts.overwrite && ismember(var_scaler, varNames) && ismember(var_res, varNames)
                 skippedCount = skippedCount + 1;
                 continue;
             end
@@ -107,8 +112,8 @@ function statusReport = cadi_stage4_polan_inversion(outBaseDir, sStation, startD
         [~, fnameOnly, ext] = fileparts(fPath);
 
         try
-            d = load(fPath, 'ScaleV_unet', 'siteStruct');
-            ScaleV = d.ScaleV_unet;
+            d = load(fPath, var_scalev, 'siteStruct');
+            ScaleV = d.(var_scalev);
 
             if isfield(opts, 'fb') && ~isempty(opts.fb)
                 fb_val = double(opts.fb);
@@ -128,7 +133,7 @@ function statusReport = cadi_stage4_polan_inversion(outBaseDir, sStation, startD
 
             polanOpts = struct('fb', fb_val, 'dip', dip_val, ...
                                'start_val', opts.start_val, 'amode', opts.amode, ...
-                               'valley', opts.valley);
+                               'valley', opts.valley, 'netID', opts.netID);
 
             if isempty(ScaleV) || size(ScaleV, 1) < opts.min_pts
                 ScaleR_polan = zeros(0, 2);
@@ -171,7 +176,12 @@ function statusReport = cadi_stage4_polan_inversion(outBaseDir, sStation, startD
                 end
             end
 
-            save(fPath, 'ScaleR_polan', 'polanRes', 'polanOpts', '-append');
+            % Save dynamically appended structures
+            outData = struct();
+            outData.(var_scaler) = ScaleR_polan;
+            outData.(var_res)    = polanRes;
+            outData.(var_opts)   = polanOpts;
+            save(fPath, '-struct', 'outData', '-append');
 
             processedCount = processedCount + 1;
             processedFiles{end+1} = [fnameOnly, ext]; %#ok<AGROW>

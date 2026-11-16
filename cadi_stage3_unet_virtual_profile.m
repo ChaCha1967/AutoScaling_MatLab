@@ -1,7 +1,7 @@
 function statusReport = cadi_stage3_unet_virtual_profile(outBaseDir, sStation, startDT, endDT, opts)
-% CADI_STAGE3_UNET_VIRTUAL_PROFILE Stage 3 of the CADI pipeline: Loads the 
-% trained U-Net model, runs batched inference on *_ion.mat files, extracts 
-% virtual height profile ScaleV_unet and foF2_unet, and appends results.
+% CADI_STAGE3_UNET_VIRTUAL_PROFILE Stage 3 of the CADI pipeline.
+% Loads the trained U-Net model, determines required input channels (1, 3, or 6),
+% runs batched inference, and appends the virtual profile using dynamic field names.
 
     if nargin < 5 || isempty(opts), opts = struct(); end
     if ~isfield(opts, 'model_path') || isempty(opts.model_path)
@@ -12,18 +12,25 @@ function statusReport = cadi_stage3_unet_virtual_profile(outBaseDir, sStation, s
     if ~isfield(opts, 'edge_choice'),   opts.edge_choice = 'center'; end
     if ~isfield(opts, 'batchSize'),     opts.batchSize = 64;         end
     if ~isfield(opts, 'overwrite'),     opts.overwrite = true;       end
+    if ~isfield(opts, 'netID'),         opts.netID = '';             end % Suffix (e.g., '_3ch_mix')
 
     if ~isfile(opts.model_path)
         error('Trained U-Net model file not found: %s', opts.model_path);
     end
+
+    % Dynamic variable names based on netID
+    var_mask   = ['mask_pred', opts.netID];
+    var_scalev = ['ScaleV_unet', opts.netID];
+    var_fof2   = ['foF2_unet', opts.netID];
+    var_opts   = ['unetOpts', opts.netID];
 
     tStart = datetime(startDT(1), startDT(2), startDT(3), startDT(4), startDT(5), startDT(6));
     tEnd   = datetime(endDT(1), endDT(2), endDT(3), endDT(4), endDT(5), endDT(6));
 
     yearsToScan  = unique(startDT(1):endDT(1));
     monthLetters = 'ABCDEFGHIJKL';
-
     candidateFiles = [];
+    
     for yIdx = 1:numel(yearsToScan)
         sYear   = sprintf('%04d', yearsToScan(yIdx));
         yearDir = fullfile(outBaseDir, sStation, sYear);
@@ -42,6 +49,7 @@ function statusReport = cadi_stage3_unet_virtual_profile(outBaseDir, sStation, s
     fprintf('Station        : %s\n', sStation);
     fprintf('Time Range     : %s to %s\n', datestr(tStart), datestr(tEnd));
     fprintf('Model Path     : %s\n', opts.model_path);
+    fprintf('Network ID     : [%s] (Base if empty)\n', opts.netID);
     fprintf('Extraction Mode: [%s] | Threshold: %.2f (Min blob: %d px)\n', ...
         opts.edge_choice, opts.threshold, opts.min_blob_size);
 
@@ -53,9 +61,7 @@ function statusReport = cadi_stage3_unet_virtual_profile(outBaseDir, sStation, s
         fname    = candidateFiles(i).name;
         baseName = erase(fname, '_ion.mat');
 
-        if length(baseName) ~= 10
-            continue;
-        end
+        if length(baseName) ~= 10, continue; end
 
         mChar     = upper(baseName(4));
         fileMonth = strfind(monthLetters, mChar);
@@ -78,7 +84,8 @@ function statusReport = cadi_stage3_unet_virtual_profile(outBaseDir, sStation, s
                 continue;
             end
 
-            if ~opts.overwrite && ismember('ScaleV_unet', varNames) && ismember('mask_pred', varNames)
+            % Overwrite check using dynamic variable names
+            if ~opts.overwrite && ismember(var_scalev, varNames) && ismember(var_mask, varNames)
                 skippedCount = skippedCount + 1;
                 continue;
             end
@@ -106,10 +113,20 @@ function statusReport = cadi_stage3_unet_virtual_profile(outBaseDir, sStation, s
     strategy = '6ch_combined';
     if isfield(modelData, 'trainInfo') && isfield(modelData.trainInfo, 'strategy')
         strategy = modelData.trainInfo.strategy;
+    elseif isfield(modelData, 'strategy')
+        strategy = modelData.strategy;
     end
-    is_6ch = contains(lower(strategy), '6ch');
+
+    % Determine input channels dynamically
     inChannels = 3;
-    if is_6ch, inChannels = 6; end
+    if isfield(modelData, 'input_size')
+        inChannels = modelData.input_size(3);
+    else
+        if contains(lower(strategy), '6ch'), inChannels = 6; end
+        if contains(lower(strategy), '1ch'), inChannels = 1; end
+    end
+
+    fprintf('Detected U-Net architecture: %d input channels (Strategy: %s)\n', inChannels, strategy);
 
     useGPU = canUseGPU();
     if useGPU
@@ -130,7 +147,7 @@ function statusReport = cadi_stage3_unet_virtual_profile(outBaseDir, sStation, s
 
     unetOpts = struct('model_path', opts.model_path, 'strategy', strategy, ...
                       'threshold', opts.threshold, 'min_blob_size', opts.min_blob_size, ...
-                      'edge_choice', opts.edge_choice);
+                      'edge_choice', opts.edge_choice, 'netID', opts.netID);
 
     for b = 1:numBatches
         idxStart = (b - 1) * batchSize + 1;
@@ -146,20 +163,26 @@ function statusReport = cadi_stage3_unet_virtual_profile(outBaseDir, sStation, s
             fileIdx = idxStart + k - 1;
             fPath   = validFileList{fileIdx};
             try
-                if is_6ch
-                    d = load(fPath, 'X_tensor_6ch', 'X_tensor_filt', 'X_tensor_orig', 'f_grid', 'h_grid');
-                    if isfield(d, 'X_tensor_6ch')
+                d = load(fPath, 'X_tensor_6ch', 'X_tensor_filt', 'X_tensor_orig', 'f_grid', 'h_grid');
+                
+                % Extract proper tensor slice based on required input channels
+                if inChannels == 6
+                    if isfield(d, 'X_tensor_6ch') && ~isempty(d.X_tensor_6ch)
                         X_batch(:, :, :, k) = single(d.X_tensor_6ch);
                     else
                         X_batch(:, :, :, k) = cat(3, single(d.X_tensor_filt), single(d.X_tensor_orig));
                     end
-                else
-                    if contains(lower(strategy), 'filt')
-                        d = load(fPath, 'X_tensor_filt', 'f_grid', 'h_grid');
-                        X_batch(:, :, :, k) = single(d.X_tensor_filt);
-                    else
-                        d = load(fPath, 'X_tensor_orig', 'f_grid', 'h_grid');
+                elseif inChannels == 3
+                    if contains(lower(strategy), 'orig') || contains(lower(strategy), 'noisy')
                         X_batch(:, :, :, k) = single(d.X_tensor_orig);
+                    else
+                        X_batch(:, :, :, k) = single(d.X_tensor_filt);
+                    end
+                elseif inChannels == 1
+                    if contains(lower(strategy), 'orig') || contains(lower(strategy), 'noisy')
+                        X_batch(:, :, 1, k) = single(d.X_tensor_orig(:, :, 1));
+                    else
+                        X_batch(:, :, 1, k) = single(d.X_tensor_filt(:, :, 1));
                     end
                 end
 
@@ -189,9 +212,7 @@ function statusReport = cadi_stage3_unet_virtual_profile(outBaseDir, sStation, s
         probsBatch = gather(extractdata(dlY_pred));
 
         for k = 1:curBatchSize
-            if ~batchValid(k)
-                continue;
-            end
+            if ~batchValid(k), continue; end
 
             fileIdx = idxStart + k - 1;
             fPath   = validFileList{fileIdx};
@@ -214,7 +235,13 @@ function statusReport = cadi_stage3_unet_virtual_profile(outBaseDir, sStation, s
                     ScaleV_unet = zeros(0, 2);
                 end
 
-                save(fPath, 'mask_pred', 'ScaleV_unet', 'foF2_unet', 'unetOpts', '-append');
+                % Save dynamically appended structures
+                outData = struct();
+                outData.(var_mask)   = mask_pred;
+                outData.(var_scalev) = ScaleV_unet;
+                outData.(var_fof2)   = foF2_unet;
+                outData.(var_opts)   = unetOpts;
+                save(fPath, '-struct', 'outData', '-append');
 
                 processedCount = processedCount + 1;
                 processedFiles{end+1} = [fnameOnly, ext]; %#ok<AGROW>
@@ -224,7 +251,6 @@ function statusReport = cadi_stage3_unet_virtual_profile(outBaseDir, sStation, s
             end
         end
 
-        % fprintf('  Processed %d / %d sessions (%.1f s)\n', idxEnd, numValid, toc(stageTimer));
         elapsedSec = toc(stageTimer);
         filesPerSec = idxEnd / max(elapsedSec, 0.001);
         remainingFiles = numValid - idxEnd;
@@ -232,7 +258,6 @@ function statusReport = cadi_stage3_unet_virtual_profile(outBaseDir, sStation, s
 
         fprintf('  Progress: %d / %d sessions (Batch %d / %d) | Elapsed: %.1f s | ETA: %.1f s\n', ...
             idxEnd, numValid, b, numBatches, elapsedSec, etaSec);
-
     end
 
     statusReport = struct();
@@ -255,20 +280,14 @@ end
 
 function mask_filtered = filter_significant_trace_blobs(mask_clean)
     mask_filtered = false(size(mask_clean));
-    if ~any(mask_clean(:))
-        return;
-    end
-
+    if ~any(mask_clean(:)), return; end
     cc = bwconncomp(mask_clean);
-    if cc.NumObjects == 0
-        return;
-    end
+    if cc.NumObjects == 0, return; end
 
     numPixels = cellfun(@numel, cc.PixelIdxList);
     maxArea   = max(numPixels);
-
-    keepMask = (numPixels >= 0.15 * maxArea) | (numPixels >= 25);
-    validIdx = find(keepMask);
+    keepMask  = (numPixels >= 0.15 * maxArea) | (numPixels >= 25);
+    validIdx  = find(keepMask);
 
     for i = 1:numel(validIdx)
         mask_filtered(cc.PixelIdxList{validIdx(i)}) = true;
@@ -278,9 +297,7 @@ end
 function [f_virt, h_virt, foF2_val] = extract_virtual_profile_and_fof2(mask, f_grid, h_grid, edge_choice)
     cols_with_trace = find(any(mask, 1));
     if isempty(cols_with_trace)
-        f_virt   = [];
-        h_virt   = [];
-        foF2_val = NaN;
+        f_virt = []; h_virt = []; foF2_val = NaN;
         return;
     end
 
@@ -313,9 +330,7 @@ function [f_virt, h_virt, foF2_val] = extract_virtual_profile_and_fof2(mask, f_g
                 target_row = round(mean(rows_in_col));
                 h_virt(idx) = h_grid(target_row);
         end
-
         f_virt(idx) = f_grid(c);
     end
-
     foF2_val = max(f_virt);
 end

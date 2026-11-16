@@ -1,66 +1,49 @@
-% function summaryData = cadi_analyze_annual_stats(outBaseDir, sStation, targetYear, opts)
+% function summaryDataArray = cadi_analyze_annual_stats(outBaseDir, sStation, targetYear, opts)
 % % CADI_ANALYZE_ANNUAL_STATS Scans all processed *_ion.mat files for a full year,
-% % compiles a fast summary table, computes pipeline & quality classification 
-% % statistics, and exports monthly diurnal variation and comparison plots.
-% %
-% % SYNTAX:
-% %   summaryData = cadi_analyze_annual_stats(outBaseDir, sStation, targetYear, opts)
-% %
-% % INPUTS:
-% %   - outBaseDir : Root directory containing station subfolders (e.g., 'N:/cadi_out_test/')
-% %   - sStation   : Two-letter station code string defining the station subfolder (e.g., 'RB')
-% %   - targetYear : Numeric target year to be processed (e.g., 2008)
-% %   - opts       : (Optional) Structure containing advanced configuration fields:
-% %                  * opts.forceRebuild   : Logical flag. When set to true, forces 
-% %                                          re-scanning of all *_ion.mat files and 
-% %                                          rebuilds the annual summary MAT file from 
-% %                                          scratch, ignoring any existing cached summary. 
-% %                                          When false (default), loads the pre-existing 
-% %                                          summary file if available to save processing time.
-% %                  * opts.tecScaleFactor : Numeric multiplier applied to raw POLAN TEC 
-% %                                          values (default: 10.0). Used to adjust 
-% %                                          total electron content units so that data 
-% %                                          properly scales and fits standard plotting 
-% %                                          ranges (e.g., [0, 50] TECU).
+% % compiles fast summary tables for MULTIPLE neural network models simultaneously, 
+% % computes pipeline & quality classification statistics for each, and exports 
+% % joint multi-model diurnal variation and correlation plots.
 % %
 % % OUTPUTS:
-% %   - summaryData: Structure containing compiled annual parameters, session timestamps, 
-% %                  pipeline coverage statistics, U-Net metrics, and automatic 
-% %                  6-category quality classification IDs for every record.
+% %   - summaryDataArray: Cell array of summaryData structures (one for each model).
 % 
 %     if nargin < 4 || isempty(opts), opts = struct(); end
 %     if ~isfield(opts, 'forceRebuild'), opts.forceRebuild = false; end
-%     if ~isfield(opts, 'tecScaleFactor'), opts.tecScaleFactor = 10.0; end % Multiply raw polanRes.TEC by 10 if needed
+%     if ~isfield(opts, 'tecScaleFactor'), opts.tecScaleFactor = 10.0; end
+%     if ~isfield(opts, 'models')
+%         opts.models(1).netID = ''; 
+%         opts.models(1).label = 'base_model';
+%     end
 % 
-%     sYear = sprintf('%04d', targetYear);
-%     yearDir = fullfile(outBaseDir, sStation, sYear);
-%     summaryMatPath = fullfile(outBaseDir, sprintf('CADI_Summary_%s_%s.mat', sStation, sYear));
+%     numModels = length(opts.models);
+%     sYear     = sprintf('%04d', targetYear);
+%     yearDir   = fullfile(outBaseDir, sStation, sYear);
+% 
+%     summaryDataArray = cell(numModels, 1);
+%     allSummariesExist = true;
+%     summaryPaths = cell(numModels, 1);
+% 
+%     % Check if all summary files already exist
+%     for m = 1:numModels
+%         summaryPaths{m} = fullfile(outBaseDir, sprintf('CADI_Summary_%s_%s_%s.mat', sStation, sYear, opts.models(m).label));
+%         if ~isfile(summaryPaths{m})
+%             allSummariesExist = false;
+%         end
+%     end
 % 
 %     % =====================================================================
-%     % STEP 1: LOAD OR BUILD FAST ANNUAL SUMMARY TABLE
+%     % STEP 1: LOAD OR BUILD FAST ANNUAL SUMMARY TABLES FOR ALL MODELS
 %     % =====================================================================
-%     if isfile(summaryMatPath) && ~opts.forceRebuild
-%         fprintf('Loading existing annual summary from: %s\n', summaryMatPath);
-%         load(summaryMatPath, 'summaryData');
-% 
-%         % Normalize TEC scale if loaded from an older summary file so it fits [0, 50] TECU
-%         medTEC = median(summaryData.TEC(summaryData.TEC > 0), 'omitnan');
-%         if ~isnan(medTEC)
-%             if medTEC < 1.5
-%                 fprintf('Scaling loaded summaryData.TEC by x10 (median was %.2f)...\n', medTEC);
-%                 summaryData.TEC = summaryData.TEC * 10.0;
-%                 save(summaryMatPath, 'summaryData', '-v7.3');
-%             elseif medTEC > 50.0
-%                 fprintf('Scaling loaded summaryData.TEC by /10 to fit [0, 50] TECU (median was %.2f)...\n', medTEC);
-%                 summaryData.TEC = summaryData.TEC / 10.0;
-%                 save(summaryMatPath, 'summaryData', '-v7.3');
-%             end
+%     if allSummariesExist && ~opts.forceRebuild
+%         fprintf('Loading existing annual summaries for all %d models...\n', numModels);
+%         for m = 1:numModels
+%             tmp = load(summaryPaths{m}, 'summaryData');
+%             summaryDataArray{m} = tmp.summaryData;
 %         end
 %     else
-%         fprintf('Scanning directory: %s ...\n', yearDir);
+%         fprintf('Scanning directory: %s for %d models...\n', yearDir, numModels);
 %         allFiles = dir(fullfile(yearDir, '*_ion.mat'));
 % 
-%         % Keep only 10-character minute session files (exclude 8-char hourly files)
 %         baseNames = erase({allFiles.name}, '_ion.mat');
 %         isMinuteFile = cellfun(@(s) length(s) == 10, baseNames);
 %         matFiles = allFiles(isMinuteFile);
@@ -68,93 +51,112 @@
 % 
 %         fprintf('Found %d minute *_ion.mat files. Extracting metrics...\n', N);
 % 
-%         % Preallocate arrays for speed
-%         fNames       = {matFiles.name}';
-%         dtNums       = nan(N, 1);
-%         nPtsV        = zeros(N, 1);
-%         nPtsR        = zeros(N, 1);
-%         foF2_unet    = nan(N, 1);
-%         foF2_pol     = nan(N, 1);
-%         hmF2_pol     = nan(N, 1);
-%         TEC_pol      = nan(N, 1);
-%         Hscale_pol   = nan(N, 1);
-%         SlabT_pol    = nan(N, 1);
-%         devH_pol     = nan(N, 1);
-%         polStatus    = strings(N, 1);
+%         fNames = {matFiles.name}';
+%         dtNums = nan(N, 1);
 % 
-%         % Feature arrays for Task 4 automatic classification
-%         v_hMin       = nan(N, 1);
-%         v_hMax       = nan(N, 1);
-%         v_hMean      = nan(N, 1);
-%         v_maxJumpUp  = nan(N, 1);
-%         v_maxJumpDn  = nan(N, 1);
-%         v_roughness  = nan(N, 1);
-%         eRegionPx    = zeros(N, 1);
-%         fRegionPx    = zeros(N, 1);
-%         eMaxFreqMHz  = nan(N, 1);
+%         % Preallocate arrays for each model in a struct array for speed
+%         MData = repmat(struct(), numModels, 1);
+%         for m = 1:numModels
+%             MData(m).nPtsV       = zeros(N, 1);
+%             MData(m).nPtsR       = zeros(N, 1);
+%             MData(m).foF2_unet   = nan(N, 1);
+%             MData(m).foF2        = nan(N, 1);
+%             MData(m).hmF2        = nan(N, 1);
+%             MData(m).TEC         = nan(N, 1);
+%             MData(m).H_scale     = nan(N, 1);
+%             MData(m).SlabT       = nan(N, 1);
+%             MData(m).devH        = nan(N, 1);
+%             MData(m).polStatus   = strings(N, 1);
+%             MData(m).v_hMin      = nan(N, 1);
+%             MData(m).v_hMax      = nan(N, 1);
+%             MData(m).v_hMean     = nan(N, 1);
+%             MData(m).v_maxJumpUp = nan(N, 1);
+%             MData(m).v_maxJumpDn = nan(N, 1);
+%             MData(m).v_roughness = nan(N, 1);
+%         end
+% 
+%         % Shared feature arrays for Task 4
+%         eRegionPx   = zeros(N, 1);
+%         fRegionPx   = zeros(N, 1);
+%         eMaxFreqMHz = nan(N, 1);
+% 
+%         % Build dynamic variable names to load efficiently
+%         varsToLoad = {'DT', 'X_tensor_filt', 'f_grid'};
+%         for m = 1:numModels
+%             netID = opts.models(m).netID;
+%             varsToLoad = [varsToLoad, ...
+%                 {['ScaleV_unet', netID], ['ScaleR_polan', netID], ...
+%                  ['foF2_unet', netID], ['polanRes', netID]}]; %#ok<AGROW>
+%         end
 % 
 %         tTimer = tic;
+%         w = warning('off', 'MATLAB:load:variableNotFound');
+% 
 %         for i = 1:N
 %             fPath = fullfile(matFiles(i).folder, matFiles(i).name);
 %             try
-%                 w = warning('off', 'MATLAB:load:variableNotFound');
-%                 d = load(fPath, 'DT', 'ScaleV_unet', 'ScaleR_polan', 'foF2_unet', ...
-%                                 'polanRes', 'X_tensor_filt', 'f_grid', 'h_grid');
-%                 warning(w);
+%                 d = load(fPath, varsToLoad{:});
 % 
 %                 if isfield(d, 'DT') && numel(d.DT) >= 6
 %                     dtNums(i) = datenum(double(d.DT(1:6)));
 %                 end
 % 
-%                 % Virtual profile metrics
-%                 if isfield(d, 'ScaleV_unet') && ~isempty(d.ScaleV_unet)
-%                     sv = double(d.ScaleV_unet);
-%                     nPtsV(i)   = size(sv, 1);
-%                     v_hMin(i)  = min(sv(:, 2));
-%                     v_hMax(i)  = max(sv(:, 2));
-%                     v_hMean(i) = mean(sv(:, 2));
-%                     if size(sv, 1) >= 2
-%                         dh = diff(sv(:, 2));
-%                         v_maxJumpUp(i) = max(dh);
-%                         v_maxJumpDn(i) = min(dh);
-%                         v_roughness(i) = sum(abs(dh(dh < 0)));
-%                     else
-%                         v_maxJumpUp(i) = 0; v_maxJumpDn(i) = 0; v_roughness(i) = 0;
-%                     end
-%                 end
-% 
-%                 if isfield(d, 'foF2_unet') && ~isempty(d.foF2_unet)
-%                     foF2_unet(i) = double(d.foF2_unet);
-%                 end
-% 
-%                 % Real profile & POLAN parameters
-%                 if isfield(d, 'ScaleR_polan') && ~isempty(d.ScaleR_polan)
-%                     nPtsR(i) = size(d.ScaleR_polan, 1);
-%                 end
-% 
-%                 if isfield(d, 'polanRes') && isstruct(d.polanRes)
-%                     pr = d.polanRes;
-%                     if isfield(pr, 'foF2') && ~isempty(pr.foF2),       foF2_pol(i)   = double(pr.foF2);    end
-%                     if isfield(pr, 'hmF2') && ~isempty(pr.hmF2),       hmF2_pol(i)   = double(pr.hmF2);    end
-%                     if isfield(pr, 'TEC') && ~isempty(pr.TEC),         TEC_pol(i)    = double(pr.TEC) * opts.tecScaleFactor; end
-%                     if isfield(pr, 'H_scale') && ~isempty(pr.H_scale), Hscale_pol(i) = double(pr.H_scale); end
-%                     if isfield(pr, 'SlabT') && ~isempty(pr.SlabT),     SlabT_pol(i)  = double(pr.SlabT);   end
-%                     if isfield(pr, 'dev_h') && ~isempty(pr.dev_h),     devH_pol(i)   = double(pr.dev_h);   end
-%                     if isfield(pr, 'status') && ~isempty(pr.status),   polStatus(i)  = string(pr.status);  end
-%                 end
-% 
-%                 % Tensor energy features for E/Es vs F region
+%                 % Shared tensor energy features
 %                 if isfield(d, 'X_tensor_filt') && ~isempty(d.X_tensor_filt)
 %                     ampFilt = double(d.X_tensor_filt(1:171, 1:92, 1));
-%                     eRows = 30:49;
-%                     fRows = 60:160;
-%                     eMask = ampFilt(eRows, :) > 0.15;
-%                     fMask = ampFilt(fRows, :) > 0.12;
+%                     eMask = ampFilt(30:49, :) > 0.15;
+%                     fMask = ampFilt(60:160, :) > 0.12;
 %                     eRegionPx(i) = nnz(eMask);
 %                     fRegionPx(i) = nnz(fMask);
 %                     if any(eMask(:)) && isfield(d, 'f_grid') && numel(d.f_grid) >= 92
 %                         colsE = find(any(eMask, 1));
 %                         eMaxFreqMHz(i) = double(d.f_grid(max(colsE)));
+%                     end
+%                 end
+% 
+%                 % Extract metrics for EACH model
+%                 for m = 1:numModels
+%                     netID = opts.models(m).netID;
+%                     vScaleV = ['ScaleV_unet', netID];
+%                     vScaleR = ['ScaleR_polan', netID];
+%                     vfoF2   = ['foF2_unet', netID];
+%                     vRes    = ['polanRes', netID];
+% 
+%                     if isfield(d, vScaleV) && ~isempty(d.(vScaleV))
+%                         sv = double(d.(vScaleV));
+%                         MData(m).nPtsV(i)   = size(sv, 1);
+%                         MData(m).v_hMin(i)  = min(sv(:, 2));
+%                         MData(m).v_hMax(i)  = max(sv(:, 2));
+%                         MData(m).v_hMean(i) = mean(sv(:, 2));
+%                         if size(sv, 1) >= 2
+%                             dh = diff(sv(:, 2));
+%                             MData(m).v_maxJumpUp(i) = max(dh);
+%                             MData(m).v_maxJumpDn(i) = min(dh);
+%                             MData(m).v_roughness(i) = sum(abs(dh(dh < 0)));
+%                         else
+%                             MData(m).v_maxJumpUp(i) = 0; 
+%                             MData(m).v_maxJumpDn(i) = 0; 
+%                             MData(m).v_roughness(i) = 0;
+%                         end
+%                     end
+% 
+%                     if isfield(d, vfoF2) && ~isempty(d.(vfoF2))
+%                         MData(m).foF2_unet(i) = double(d.(vfoF2));
+%                     end
+% 
+%                     if isfield(d, vScaleR) && ~isempty(d.(vScaleR))
+%                         MData(m).nPtsR(i) = size(d.(vScaleR), 1);
+%                     end
+% 
+%                     if isfield(d, vRes) && isstruct(d.(vRes))
+%                         pr = d.(vRes);
+%                         if isfield(pr, 'foF2') && ~isempty(pr.foF2),       MData(m).foF2(i)      = double(pr.foF2);    end
+%                         if isfield(pr, 'hmF2') && ~isempty(pr.hmF2),       MData(m).hmF2(i)      = double(pr.hmF2);    end
+%                         if isfield(pr, 'TEC') && ~isempty(pr.TEC),         MData(m).TEC(i)       = double(pr.TEC) * opts.tecScaleFactor; end
+%                         if isfield(pr, 'H_scale') && ~isempty(pr.H_scale), MData(m).H_scale(i)   = double(pr.H_scale); end
+%                         if isfield(pr, 'SlabT') && ~isempty(pr.SlabT),     MData(m).SlabT(i)     = double(pr.SlabT);   end
+%                         if isfield(pr, 'dev_h') && ~isempty(pr.dev_h),     MData(m).devH(i)      = double(pr.dev_h);   end
+%                         if isfield(pr, 'status') && ~isempty(pr.status),   MData(m).polStatus(i) = string(pr.status);  end
 %                     end
 %                 end
 % 
@@ -169,344 +171,305 @@
 %                     i, N, 100*i/N, el, eta);
 %             end
 %         end
+%         warning(w);
 % 
-%         % Auto-check TEC magnitude so majority of points lie within [0, 50] TECU
-%         medTEC = median(TEC_pol(TEC_pol > 0), 'omitnan');
-%         if ~isnan(medTEC) && medTEC > 50.0
-%             while median(TEC_pol(TEC_pol > 0), 'omitnan') > 50.0
-%                 TEC_pol = TEC_pol / 10.0;
-%             end
-%         elseif ~isnan(medTEC) && medTEC < 1.5
-%             TEC_pol = TEC_pol * 10.0;
+%         % Build distinct summaryData structures and save them
+%         for m = 1:numModels
+%             summaryData = struct();
+%             summaryData.station     = sStation;
+%             summaryData.year        = targetYear;
+%             summaryData.modelLabel  = opts.models(m).label;
+%             summaryData.fNames      = fNames;
+%             summaryData.dt          = datetime(dtNums, 'ConvertFrom', 'datenum');
+%             summaryData.nPtsV       = MData(m).nPtsV;
+%             summaryData.nPtsR       = MData(m).nPtsR;
+%             summaryData.foF2_unet   = MData(m).foF2_unet;
+%             summaryData.foF2        = MData(m).foF2;
+%             summaryData.hmF2        = MData(m).hmF2;
+%             summaryData.TEC         = MData(m).TEC;
+%             summaryData.H_scale     = MData(m).H_scale;
+%             summaryData.SlabT       = MData(m).SlabT;
+%             summaryData.devH        = MData(m).devH;
+%             summaryData.polStatus   = MData(m).polStatus;
+% 
+%             % Shared features needed for comparison rules
+%             summaryData.eRegionPx   = eRegionPx;
+%             summaryData.fRegionPx   = fRegionPx;
+%             summaryData.eMaxFreqMHz = eMaxFreqMHz;
+% 
+%             summaryData.v_hMin      = MData(m).v_hMin;
+%             summaryData.v_hMax      = MData(m).v_hMax;
+%             summaryData.v_hMean     = MData(m).v_hMean;
+%             summaryData.v_maxJumpUp = MData(m).v_maxJumpUp;
+%             summaryData.v_maxJumpDn = MData(m).v_maxJumpDn;
+%             summaryData.v_roughness = MData(m).v_roughness;
+% 
+%             summaryDataArray{m} = summaryData;
+%         end
+%     end
+% 
+%     % Color Palette for Multi-Model plotting
+%     colors = [
+%         0.85, 0.15, 0.15; % Model 1: Red
+%         0.15, 0.35, 0.85; % Model 2: Blue
+%         0.20, 0.80, 0.20; % Model 3: Green
+%         0.70, 0.20, 0.70; % Model 4: Magenta
+%         0.10, 0.80, 0.80  % Model 5: Cyan
+%     ];
+% 
+%     % =====================================================================
+%     % STEP 2 & 3: COVERAGE STATISTICS & AUTOMATIC QUALITY CLASSIFICATION
+%     % =====================================================================
+%     for m = 1:numModels
+%         sD = summaryDataArray{m};
+%         N_total = numel(sD.nPtsV);
+%         hasV    = sD.nPtsV > 0;
+%         hasR    = sD.nPtsR > 0;
+%         vNoR    = hasV & ~hasR;
+% 
+%         fprintf('\n====================================================================\n');
+%         fprintf('   MODEL: %s | CADI %s %d PIPELINE STATISTICS\n', opts.models(m).label, sStation, targetYear);
+%         fprintf('====================================================================\n');
+%         fprintf('1. Total Processed Sessions (*.mat)       : %7d (100.00%%)\n', N_total);
+%         fprintf('2. Virtual Profile Extracted (ScaleV > 0) : %7d (%6.2f%%)\n', nnz(hasV), 100*nnz(hasV)/N_total);
+%         fprintf('3. Real Profile Inverted (ScaleR > 0)     : %7d (%6.2f%%)\n', nnz(hasR), 100*nnz(hasR)/N_total);
+% 
+%         catID = zeros(N_total, 1);
+%         isNoV = ~hasV;
+%         isBlanketedEs = isNoV & (sD.eRegionPx >= 18 | sD.eMaxFreqMHz >= 3.2) & (sD.fRegionPx < 35);
+%         isMissedF2    = isNoV & (sD.fRegionPx >= 35);
+%         isWeakIono    = isNoV & ~isBlanketedEs & ~isMissedF2;
+% 
+%         catID(isBlanketedEs) = 4;
+%         catID(isWeakIono)    = 5;
+%         catID(isMissedF2)    = 6;
+% 
+%         isE_as_F2 = hasV & ((sD.hmF2 < 165) | (sD.v_hMean < 160 & (sD.v_hMax - sD.v_hMin) < 30));
+%         isJaggedOrBad = hasV & ~isE_as_F2 & ( ...
+%             ~hasR | ...
+%             sD.v_maxJumpUp > 45 | sD.v_maxJumpDn < -18 | sD.v_roughness > 30 | ...
+%             sD.hmF2 > 520 | sD.H_scale < 5 | sD.H_scale > 120 | ...
+%             sD.SlabT < 10  | sD.SlabT > 600);
+% 
+%         isGoodF2 = hasV & ~isE_as_F2 & ~isJaggedOrBad;
+% 
+%         catID(isGoodF2)      = 1;
+%         catID(isE_as_F2)     = 2;
+%         catID(isJaggedOrBad) = 3;
+% 
+%         summaryDataArray{m}.qualityCategory = catID;
+% 
+%         catNames = {
+%             '1. Realistic F2 Profile (Good)', ...
+%             '2. E / Es Misidentified as F2', ...
+%             '3. Jagged / Unrealistic Profile', ...
+%             '4. No Profile: Blanketing Es', ...
+%             '5. No Profile: Weak Ionosphere / Blackout', ...
+%             '6. No Profile: Missed Valid F-Region Trace'
+%         };
+% 
+%         fprintf('--- AUTOMATIC CLASSIFICATION ---\n');
+%         for c = 1:6
+%             cnt = nnz(catID == c);
+%             fprintf('  %-44s : %7d (%6.2f%%)\n', catNames{c}, cnt, 100*cnt/N_total);
 %         end
 % 
-%         % Assemble into summary structure
-%         summaryData = struct();
-%         summaryData.station     = sStation;
-%         summaryData.year        = targetYear;
-%         summaryData.fNames      = fNames;
-%         summaryData.dt          = datetime(dtNums, 'ConvertFrom', 'datenum');
-%         summaryData.nPtsV       = nPtsV;
-%         summaryData.nPtsR       = nPtsR;
-%         summaryData.foF2_unet   = foF2_unet;
-%         summaryData.foF2        = foF2_pol;
-%         summaryData.hmF2        = hmF2_pol;
-%         summaryData.TEC         = TEC_pol;
-%         summaryData.H_scale     = Hscale_pol;
-%         summaryData.SlabT       = SlabT_pol;
-%         summaryData.devH        = devH_pol;
-%         summaryData.polStatus   = polStatus;
-%         summaryData.v_hMin      = v_hMin;
-%         summaryData.v_hMax      = v_hMax;
-%         summaryData.v_hMean     = v_hMean;
-%         summaryData.v_maxJumpUp = v_maxJumpUp;
-%         summaryData.v_maxJumpDn = v_maxJumpDn;
-%         summaryData.v_roughness = v_roughness;
-%         summaryData.eRegionPx   = eRegionPx;
-%         summaryData.fRegionPx   = fRegionPx;
-%         summaryData.eMaxFreqMHz = eMaxFreqMHz;
-% 
+%         % Save updated summary back to disk
+%         summaryData = summaryDataArray{m};
+%         save(summaryPaths{m}, 'summaryData', '-v7.3');
 %     end
 % 
 %     % =====================================================================
-%     % STEP 2: TASK 1 - PIPELINE COVERAGE STATISTICS
+%     % STEP 4: MULTI-MODEL DIURNAL PLOTS (MEDIANS + IQR SHADING)
 %     % =====================================================================
-%     N_total = numel(summaryData.nPtsV);
-%     hasV    = summaryData.nPtsV > 0;
-%     hasR    = summaryData.nPtsR > 0;
-%     vNoR    = hasV & ~hasR;
-% 
-%     fprintf('\n====================================================================\n');
-%     fprintf('   TASK 1: CADI %s %d ANNUAL PIPELINE STATISTICS\n', sStation, targetYear);
-%     fprintf('====================================================================\n');
-%     fprintf('1. Total Processed Sessions (*.mat)       : %7d (100.00%%)\n', N_total);
-%     fprintf('2. Virtual Profile Extracted (ScaleV > 0) : %7d (%6.2f%%)\n', nnz(hasV), 100*nnz(hasV)/N_total);
-%     fprintf('3. Real Profile Inverted (ScaleR > 0)     : %7d (%6.2f%%)\n', nnz(hasR), 100*nnz(hasR)/N_total);
-%     fprintf('4. ScaleV Defined, but ScaleR Empty       : %7d (%6.2f%% of total | %5.2f%% of ScaleV)\n', ...
-%         nnz(vNoR), 100*nnz(vNoR)/N_total, 100*nnz(vNoR)/max(1, nnz(hasV)));
-% 
-%     if any(vNoR)
-%         fprintf('   Breakdown of ScaleV -> ScaleR drops:\n');
-%         fprintf('     - Very short trace (1-2 pts < min_pts) : %d\n', nnz(vNoR & summaryData.nPtsV < 3));
-%         fprintf('     - Duplicate/non-unique freqs (<3 uniq) : %d\n', nnz(vNoR & summaryData.nPtsV >= 3 & summaryData.polStatus == "INSUFFICIENT_UNIQUE_FREQS"));
-%         fprintf('     - POLAN convergence / inversion failure: %d\n', nnz(vNoR & summaryData.nPtsV >= 3 & summaryData.polStatus ~= "INSUFFICIENT_UNIQUE_FREQS"));
-%     end
-% 
-%     % =====================================================================
-%     % STEP 3: TASK 4 - AUTOMATIC 6-CATEGORY QUALITY CLASSIFICATION
-%     % =====================================================================
-%     catID = zeros(N_total, 1);
-% 
-%     % --- A. Sessions WITHOUT a Virtual Profile (~hasV) ---
-%     isNoV = ~hasV;
-%     isBlanketedEs = isNoV & (summaryData.eRegionPx >= 18 | summaryData.eMaxFreqMHz >= 3.2) & (summaryData.fRegionPx < 35);
-%     isMissedF2    = isNoV & (summaryData.fRegionPx >= 35);
-%     isWeakIono    = isNoV & ~isBlanketedEs & ~isMissedF2;
-% 
-%     catID(isBlanketedEs) = 4;
-%     catID(isWeakIono)    = 5;
-%     catID(isMissedF2)    = 6;
-% 
-%     % --- B. Sessions WITH a Virtual Profile (hasV) ---
-%     isE_as_F2 = hasV & ((summaryData.hmF2 < 165) | (summaryData.v_hMean < 160 & (summaryData.v_hMax - summaryData.v_hMin) < 30));
-% 
-%     isJaggedOrBad = hasV & ~isE_as_F2 & ( ...
-%         ~hasR | ...
-%         summaryData.v_maxJumpUp > 45 | ...
-%         summaryData.v_maxJumpDn < -18 | ...
-%         summaryData.v_roughness > 30 | ...
-%         summaryData.hmF2 > 520 | ...
-%         summaryData.H_scale < 5 | summaryData.H_scale > 120 | ...
-%         summaryData.SlabT < 10  | summaryData.SlabT > 600);
-% 
-%     isGoodF2 = hasV & ~isE_as_F2 & ~isJaggedOrBad;
-% 
-%     catID(isGoodF2)      = 1;
-%     catID(isE_as_F2)     = 2;
-%     catID(isJaggedOrBad) = 3;
-% 
-%     summaryData.qualityCategory = catID;
-% 
-%     catNames = {
-%         '1. Realistic F2 Profile (Good)', ...
-%         '2. E / Es Misidentified as F2', ...
-%         '3. Jagged / Unrealistic Profile', ...
-%         '4. No Profile: Blanketing Es', ...
-%         '5. No Profile: Weak Ionosphere / Blackout', ...
-%         '6. No Profile: Missed Valid F-Region Trace'
-%     };
-% 
-%     fprintf('\n====================================================================\n');
-%     fprintf('   TASK 4: AUTOMATIC IONOGRAM & PROFILE CLASSIFICATION\n');
-%     fprintf('====================================================================\n');
-%     for c = 1:6
-%         cnt = nnz(catID == c);
-%         fprintf('  %-44s : %7d (%6.2f%%)\n', catNames{c}, cnt, 100*cnt/N_total);
-%     end
-%     fprintf('====================================================================\n');
-% 
-%     % =====================================================================
-%     % STEP 4: TASK 2 - MONTHLY DIURNAL PLOTS (6 INDIVIDUAL PARAMETERS)
-%     %         Points + Mean (Solid Black) + Median (Solid Red)
-%     % =====================================================================
-%     validMask = (catID == 1); 
-% 
 %     paramsToPlot = {
-%         'foF2',      'foF2 (MHz)',                [0, 10];
-%         'foF2_unet', 'foF2\_unet (MHz)',          [0, 10];
-%         'hmF2',      'hmF2 (km)',                 [150, 500];
-%         'TEC',       'TEC (TECU, 10^{16} m^{-2})',[0, 50];
-%         'H_scale',   'Scale Height H (km)',       [10, 100];
-%         'SlabT',     'Slab Thickness (km)',       [50, 450]
+%         'foF2',      'foF2 (POLAN Real Profile, MHz)', [0, 10];
+%         'hmF2',      'hmF2 (km)',                      [150, 500];
+%         'TEC',       'TEC (TECU, 10^{16} m^{-2})',     [0, 50]
 %     };
 % 
-%     monthNames = {'January','February','March','April','May','June', ...
-%                   'July','August','September','October','November','December'};
-% 
-%     dtValid    = summaryData.dt(validMask);
+%     monthNames = {'Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'};
+%     dtValid    = summaryDataArray{1}.dt; 
 %     mVec       = month(dtValid);
 %     utHours    = hour(dtValid) + minute(dtValid)/60 + second(dtValid)/3600;
 % 
 %     binStep    = 0.25; 
-%     binCenters = (0 : binStep : (24 - binStep)) + binStep/2;
+%     t_edges    = 0 : binStep : 24;
+%     t_centers  = t_edges(1:end-1) + binStep/2;
 % 
 %     for pIdx = 1:size(paramsToPlot, 1)
 %         pField = paramsToPlot{pIdx, 1};
 %         pLabel = paramsToPlot{pIdx, 2};
 %         pYLim  = paramsToPlot{pIdx, 3};
 % 
-%         yDataAll = summaryData.(pField)(validMask);
-% 
-%         hFig = figure('Visible', 'off', 'Position', [50, 50, 2400, 1300], 'Color', 'w');
-%         sgtitle(sprintf('CADI %s %d - Monthly Diurnal Variation of %s (Black: Mean, Red: Median)', ...
+%         hFig = figure('Visible', 'off', 'Position', [50, 50, 2000, 1200], 'Color', 'w');
+%         sgtitle(sprintf('CADI %s %d - Multi-Model Diurnal Variation: %s (Medians)', ...
 %             sStation, targetYear, pLabel), 'FontSize', 16, 'FontWeight', 'bold');
 % 
-%         for m = 1:12
-%             ax = subplot(3, 4, m, 'Parent', hFig);
-%             hold(ax, 'on');
+%         for mo = 1:12
+%             ax = subplot(3, 4, mo, 'Parent', hFig);
+%             hold(ax, 'on'); grid(ax, 'on'); box(ax, 'on');
+%             title(ax, monthNames{mo});
 % 
-%             idxM = (mVec == m) & ~isnan(yDataAll);
-%             tM   = utHours(idxM);
-%             yM   = yDataAll(idxM);
+%             idx_m = (mVec == mo);
 % 
-%             if ~isempty(tM)
-%                 scatter(ax, tM, yM, 8, [0.55 0.68 0.85], 'filled', ...
-%                     'MarkerFaceAlpha', 0.25, 'MarkerEdgeAlpha', 0.25, 'HandleVisibility', 'off');
+%             for m = 1:numModels
+%                 sD = summaryDataArray{m};
+%                 % Use only Category 1 (Good profiles)
+%                 valid_idx = idx_m & (sD.qualityCategory == 1);
 % 
-%                 meanCurve   = nan(size(binCenters));
-%                 medianCurve = nan(size(binCenters));
-%                 for b = 1:numel(binCenters)
-%                     bLow  = (b - 1) * binStep;
-%                     bHigh = b * binStep;
-%                     inBin = (tM >= bLow) & (tM < bHigh);
-%                     if nnz(inBin) >= 3
-%                         meanCurve(b)   = mean(yM(inBin), 'omitnan');
-%                         medianCurve(b) = median(yM(inBin), 'omitnan');
+%                 t_vals = utHours(valid_idx);
+%                 y_vals = sD.(pField)(valid_idx);
+% 
+%                 if isempty(t_vals), continue; end
+% 
+%                 [~, bins] = histc(t_vals, t_edges);
+%                 p25 = nan(1, length(t_centers));
+%                 p50 = nan(1, length(t_centers));
+%                 p75 = nan(1, length(t_centers));
+% 
+%                 for b = 1:length(t_centers)
+%                     y_b = y_vals(bins == b);
+%                     if ~isempty(y_b)
+%                         p25(b) = prctile(y_b, 25);
+%                         p50(b) = median(y_b);
+%                         p75(b) = prctile(y_b, 75);
 %                     end
 %                 end
 % 
-%                 meanSmooth   = movmean(meanCurve, 3, 'omitnan');
-%                 medianSmooth = movmean(medianCurve, 3, 'omitnan');
-% 
-%                 hMean = plot(ax, binCenters, meanSmooth, 'k-', 'LineWidth', 2.0, 'DisplayName', 'Mean');
-%                 hMed  = plot(ax, binCenters, medianSmooth, 'r-', 'LineWidth', 2.0, 'DisplayName', 'Median');
-% 
-%                 if m == 1
-%                     legend(ax, [hMean, hMed], {'Mean', 'Median'}, 'Location', 'northwest', 'FontSize', 9);
+%                 valid_b = ~isnan(p50);
+%                 if any(valid_b)
+%                     tc = t_centers(valid_b);
+%                     % IQR Shading
+%                     x_patch = [tc, fliplr(tc)];
+%                     y_patch = [p25(valid_b), fliplr(p75(valid_b))];
+%                     c_idx = mod(m-1, size(colors,1)) + 1;
+%                     patch(ax, x_patch, y_patch, colors(c_idx,:), 'FaceAlpha', 0.15, 'EdgeColor', 'none', 'HandleVisibility', 'off');
+%                     % Median line
+%                     plot(ax, tc, p50(valid_b), 'Color', colors(c_idx,:), 'LineWidth', 2.0, 'DisplayName', opts.models(m).label);
 %                 end
 %             end
 % 
-%             hold(ax, 'off');
 %             xlim(ax, [0, 24]);
-%             xticks(ax, 0:4:24);
 %             ylim(ax, pYLim);
-%             grid(ax, 'on');
-%             title(ax, sprintf('%s (N = %d)', monthNames{m}, nnz(idxM)), 'FontSize', 11);
-%             xlabel(ax, 'Time (UT, hours)');
-%             ylabel(ax, pLabel);
+%             if mo == 1 || mo == 5 || mo == 9, ylabel(ax, pLabel); end
+%             if mo > 8, xlabel(ax, 'Time (UT, hours)'); end
 %         end
+%         subplot(3,4,1); legend('Location', 'best');
 % 
-%         outPlotPath = fullfile(outBaseDir, sprintf('CADI_%s_%d_Diurnal_%s.png', sStation, targetYear, pField));
+%         outPlotPath = fullfile(outBaseDir, sprintf('CADI_%s_%d_MultiModel_Diurnal_%s.png', sStation, targetYear, pField));
 %         exportgraphics(hFig, outPlotPath, 'Resolution', 150);
 %         close(hFig);
-%         fprintf('Saved diurnal plot: %s\n', outPlotPath);
+%         fprintf('Saved Multi-Model Diurnal plot: %s\n', outPlotPath);
 %     end
 % 
 %     % =====================================================================
-%     % STEP 5: FIGURE 7 - COMPARISON OF foF2 (POLAN) VS foF2_unet
+%     % STEP 5: MULTI-MODEL CORRELATION PLOTS (foF2_Unet vs foF2_POLAN)
 %     % =====================================================================
-%     foF2_pol_all  = summaryData.foF2(validMask);
-%     foF2_unet_all = summaryData.foF2_unet(validMask);
+%     hFigCorr = figure('Visible', 'off', 'Position', [100, 100, 1800, 1200], 'Color', 'w');
+%     sgtitle(sprintf('CADI %s %d - Correlation: foF2 (U-Net) vs foF2 (POLAN)', sStation, targetYear), ...
+%         'FontSize', 16, 'FontWeight', 'bold');
 % 
-%     hFigComp = figure('Visible', 'off', 'Position', [50, 50, 2400, 1300], 'Color', 'w');
-%     sgtitle(sprintf('CADI %s %d - Monthly Diurnal Comparison: foF2 (POLAN) vs foF2\\_unet (Mean & Median)', ...
-%         sStation, targetYear), 'FontSize', 16, 'FontWeight', 'bold');
+%     % Calculate grid layout for subplots based on numModels
+%     cols = ceil(sqrt(numModels));
+%     rows = ceil(numModels / cols);
 % 
-%     for m = 1:12
-%         ax = subplot(3, 4, m, 'Parent', hFigComp);
+%     for m = 1:numModels
+%         ax = subplot(rows, cols, m, 'Parent', hFigCorr);
+%         sD = summaryDataArray{m};
+% 
+%         validMask = (sD.qualityCategory == 1) & ~isnan(sD.foF2) & ~isnan(sD.foF2_unet);
+%         x_unet = sD.foF2_unet(validMask);
+%         y_pol  = sD.foF2(validMask);
+% 
+%         if isempty(x_unet), continue; end
+% 
+%         r_val    = corr(x_unet, y_pol);
+%         err_val  = y_pol - x_unet;
+%         mae_val  = mean(abs(err_val));
+%         rmse_val = sqrt(mean(err_val.^2));
+%         bias_val = mean(err_val);
+% 
+%         c_idx = mod(m-1, size(colors,1)) + 1;
+%         scatter(ax, x_unet, y_pol, 10, colors(c_idx,:), 'filled', 'MarkerFaceAlpha', 0.25);
 %         hold(ax, 'on');
 % 
-%         idxM   = (mVec == m) & (~isnan(foF2_pol_all) | ~isnan(foF2_unet_all));
-%         tM     = utHours(idxM);
-%         yPolM  = foF2_pol_all(idxM);
-%         yUnetM = foF2_unet_all(idxM);
+%         min_f = min([x_unet; y_pol]);
+%         max_f = max([x_unet; y_pol]);
+%         plot(ax, [min_f, max_f], [min_f, max_f], '--k', 'LineWidth', 1.5, 'DisplayName', '1:1 Ideal');
 % 
-%         if ~isempty(tM)
-%             meanPol   = nan(size(binCenters));
-%             medPol    = nan(size(binCenters));
-%             meanUnet  = nan(size(binCenters));
-%             medUnet   = nan(size(binCenters));
+%         p_fit      = polyfit(x_unet, y_pol, 1);
+%         x_fit_line = linspace(min_f, max_f, 100);
+%         y_fit_line = polyval(p_fit, x_fit_line);
+%         plot(ax, x_fit_line, y_fit_line, '-k', 'LineWidth', 2.0, 'DisplayName', sprintf('Fit: y = %.2fx + %.2f', p_fit(1), p_fit(2)));
 % 
-%             for b = 1:numel(binCenters)
-%                 bLow  = (b - 1) * binStep;
-%                 bHigh = b * binStep;
-%                 inBin = (tM >= bLow) & (tM < bHigh);
-%                 if nnz(inBin) >= 3
-%                     meanPol(b)  = mean(yPolM(inBin), 'omitnan');
-%                     medPol(b)   = median(yPolM(inBin), 'omitnan');
-%                     meanUnet(b) = mean(yUnetM(inBin), 'omitnan');
-%                     medUnet(b)  = median(yUnetM(inBin), 'omitnan');
-%                 end
-%             end
+%         hold(ax, 'off'); grid(ax, 'on'); axis(ax, 'equal');
+%         xlim(ax, [min_f, max_f]); ylim(ax, [min_f, max_f]);
 % 
-%             p1 = plot(ax, binCenters, movmean(meanPol, 3, 'omitnan'),  'k-',  'LineWidth', 2.0, 'DisplayName', 'foF2 Mean');
-%             p2 = plot(ax, binCenters, movmean(meanUnet, 3, 'omitnan'), 'k--', 'LineWidth', 1.8, 'DisplayName', 'foF2\_unet Mean');
-%             p3 = plot(ax, binCenters, movmean(medPol, 3, 'omitnan'),   'r-',  'LineWidth', 2.0, 'DisplayName', 'foF2 Median');
-%             p4 = plot(ax, binCenters, movmean(medUnet, 3, 'omitnan'),  'r--', 'LineWidth', 1.8, 'DisplayName', 'foF2\_unet Median');
+%         xlabel(ax, 'foF2 (U-Net, MHz)', 'FontSize', 11, 'FontWeight', 'bold');
+%         ylabel(ax, 'foF2 (POLAN, MHz)', 'FontSize', 11, 'FontWeight', 'bold');
+%         title(ax, sprintf('%s\n(R=%.4f | RMSE=%.3f | Bias=%+.3f)', ...
+%             opts.models(m).label, r_val, rmse_val, bias_val), 'FontSize', 12);
+%         legend(ax, 'Location', 'southeast', 'FontSize', 9);
+%     end
 % 
-%             if m == 1
-%                 legend(ax, [p1, p2, p3, p4], ...
-%                     {'foF2 Mean', 'foF2\_unet Mean', 'foF2 Median', 'foF2\_unet Median'}, ...
-%                     'Location', 'northwest', 'FontSize', 8.5);
-%             end
-%         end
-% 
-%         hold(ax, 'off');
-%         xlim(ax, [0, 24]);
-%         xticks(ax, 0:4:24);
-%         ylim(ax, [1, 9]); 
-%         grid(ax, 'on');
-%         title(ax, sprintf('%s (N = %d)', monthNames{m}, nnz(idxM)), 'FontSize', 11);
-%         xlabel(ax, 'Time (UT, hours)');
-%         ylabel(ax, 'Critical Frequency (MHz)');
-%     end 
-% 
-%     outCompPath = fullfile(outBaseDir, sprintf('CADI_%s_%d_Diurnal_foF2_Comparison.png', sStation, targetYear));
-%     exportgraphics(hFigComp, outCompPath, 'Resolution', 150);
-%     close(hFigComp);
-%     fprintf('Saved foF2 comparison plot: %s\n', outCompPath);
-% 
-%     % =====================================================================
-%     % STEP 6: Saved annual summary dataset
-%     % =====================================================================
-%     save(summaryMatPath, 'summaryData', '-v7.3');
-%     fprintf('Saved annual summary dataset to: %s\n', summaryMatPath);
+%     outCorrPath = fullfile(outBaseDir, sprintf('CADI_%s_%d_MultiModel_Correlation.png', sStation, targetYear));
+%     exportgraphics(hFigCorr, outCorrPath, 'Resolution', 150);
+%     close(hFigCorr);
+%     fprintf('Saved Multi-Model Correlation plot: %s\n', outCorrPath);
 % 
 % end
 
-function summaryData = cadi_analyze_annual_stats(outBaseDir, sStation, targetYear, opts)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+function summaryDataArray = cadi_analyze_annual_stats(outBaseDir, sStation, targetYear, opts)
 % CADI_ANALYZE_ANNUAL_STATS Scans all processed *_ion.mat files for a full year,
-% compiles a fast summary table, computes pipeline & quality classification 
-% statistics, and exports monthly diurnal variation, comparison, and correlation plots.
-%
-% SYNTAX:
-%   summaryData = cadi_analyze_annual_stats(outBaseDir, sStation, targetYear, opts)
-%
-% INPUTS:
-%   - outBaseDir : Root directory containing station subfolders (e.g., 'N:/cadi_out_test/')
-%   - sStation   : Two-letter station code string defining the station subfolder (e.g., 'RB')
-%   - targetYear : Numeric target year to be processed (e.g., 2008)
-%   - opts       : (Optional) Structure containing advanced configuration fields:
-%                  * opts.forceRebuild   : Logical flag. When set to true, forces 
-%                                          re-scanning of all *_ion.mat files and 
-%                                          rebuilds the annual summary MAT file from 
-%                                          scratch, ignoring any existing cached summary. 
-%                                          When false (default), loads the pre-existing 
-%                                          summary file if available to save processing time.
-%                  * opts.tecScaleFactor : Numeric multiplier applied to raw POLAN TEC 
-%                                          values (default: 10.0). Used to adjust 
-%                                          total electron content units so that data 
-%                                          properly scales and fits standard plotting 
-%                                          ranges (e.g., [0, 50] TECU).
-%
-% OUTPUTS:
-%   - summaryData: Structure containing compiled annual parameters, session timestamps, 
-%                  pipeline coverage statistics, U-Net metrics, and automatic 
-%                  6-category quality classification IDs for every record.
+% compiles fast summary tables for MULTIPLE neural network models simultaneously, 
+% computes pipeline & quality classification statistics for each, and exports 
+% joint multi-model diurnal variation and correlation plots.
 
     if nargin < 4 || isempty(opts), opts = struct(); end
     if ~isfield(opts, 'forceRebuild'), opts.forceRebuild = false; end
-    if ~isfield(opts, 'tecScaleFactor'), opts.tecScaleFactor = 10.0; end % Multiply raw polanRes.TEC by 10 if needed
+    if ~isfield(opts, 'tecScaleFactor'), opts.tecScaleFactor = 1.0; end
+    if ~isfield(opts, 'models')
+        opts.models(1).netID = ''; 
+        opts.models(1).label = 'base-model';
+    end
 
-    sYear = sprintf('%04d', targetYear);
-    yearDir = fullfile(outBaseDir, sStation, sYear);
-    summaryMatPath = fullfile(outBaseDir, sprintf('CADI_Summary_%s_%s.mat', sStation, sYear));
+    numModels = length(opts.models);
+    sYear     = sprintf('%04d', targetYear);
+    yearDir   = fullfile(outBaseDir, sStation, sYear);
+
+    summaryDataArray = cell(numModels, 1);
+    allSummariesExist = true;
+    summaryPaths = cell(numModels, 1);
+
+    for m = 1:numModels
+        safeLabel = strrep(opts.models(m).label, '-', '_'); 
+        safeLabel = strrep(safeLabel, ' ', '_');
+        summaryPaths{m} = fullfile(outBaseDir, sprintf('CADI_Summary_%s_%s_%s.mat', sStation, sYear, safeLabel));
+        if ~isfile(summaryPaths{m})
+            allSummariesExist = false;
+        end
+    end
 
     % =====================================================================
-    % STEP 1: LOAD OR BUILD FAST ANNUAL SUMMARY TABLE
+    % STEP 1: LOAD OR BUILD FAST ANNUAL SUMMARY TABLES FOR ALL MODELS
     % =====================================================================
-    if isfile(summaryMatPath) && ~opts.forceRebuild
-        fprintf('Loading existing annual summary from: %s\n', summaryMatPath);
-        load(summaryMatPath, 'summaryData');
-        
-        % Normalize TEC scale if loaded from an older summary file so it fits [0, 50] TECU
-        medTEC = median(summaryData.TEC(summaryData.TEC > 0), 'omitnan');
-        if ~isnan(medTEC)
-            if medTEC < 1.5
-                fprintf('Scaling loaded summaryData.TEC by x10 (median was %.2f)...\n', medTEC);
-                summaryData.TEC = summaryData.TEC * 10.0;
-                save(summaryMatPath, 'summaryData', '-v7.3');
-            elseif medTEC > 50.0
-                fprintf('Scaling loaded summaryData.TEC by /10 to fit [0, 50] TECU (median was %.2f)...\n', medTEC);
-                summaryData.TEC = summaryData.TEC / 10.0;
-                save(summaryMatPath, 'summaryData', '-v7.3');
-            end
+    if allSummariesExist && ~opts.forceRebuild
+        fprintf('Loading existing annual summaries for all %d models...\n', numModels);
+        for m = 1:numModels
+            tmp = load(summaryPaths{m}, 'summaryData');
+            summaryDataArray{m} = tmp.summaryData;
         end
     else
-        fprintf('Scanning directory: %s ...\n', yearDir);
+        fprintf('Scanning directory: %s for %d models...\n', yearDir, numModels);
+        fprintf('Applying TEC Scale Factor: %g\n', opts.tecScaleFactor);
+        
         allFiles = dir(fullfile(yearDir, '*_ion.mat'));
         
-        % Keep only 10-character minute session files (exclude 8-char hourly files)
         baseNames = erase({allFiles.name}, '_ion.mat');
         isMinuteFile = cellfun(@(s) length(s) == 10, baseNames);
         matFiles = allFiles(isMinuteFile);
@@ -514,93 +477,111 @@ function summaryData = cadi_analyze_annual_stats(outBaseDir, sStation, targetYea
 
         fprintf('Found %d minute *_ion.mat files. Extracting metrics...\n', N);
 
-        % Preallocate arrays for speed
-        fNames       = {matFiles.name}';
-        dtNums       = nan(N, 1);
-        nPtsV        = zeros(N, 1);
-        nPtsR        = zeros(N, 1);
-        foF2_unet    = nan(N, 1);
-        foF2_pol     = nan(N, 1);
-        hmF2_pol     = nan(N, 1);
-        TEC_pol      = nan(N, 1);
-        Hscale_pol   = nan(N, 1);
-        SlabT_pol    = nan(N, 1);
-        devH_pol     = nan(N, 1);
-        polStatus    = strings(N, 1);
+        fNames = {matFiles.name}';
+        dtNums = nan(N, 1);
+        
+        MData = repmat(struct(), numModels, 1);
+        for m = 1:numModels
+            MData(m).nPtsV       = zeros(N, 1);
+            MData(m).nPtsR       = zeros(N, 1);
+            MData(m).foF2_unet   = nan(N, 1);
+            MData(m).foF2        = nan(N, 1);
+            MData(m).hmF2        = nan(N, 1);
+            MData(m).TEC         = nan(N, 1);
+            MData(m).H_scale     = nan(N, 1);
+            MData(m).SlabT       = nan(N, 1);
+            MData(m).devH        = nan(N, 1);
+            MData(m).polStatus   = strings(N, 1);
+            MData(m).v_hMin      = nan(N, 1);
+            MData(m).v_hMax      = nan(N, 1);
+            MData(m).v_hMean     = nan(N, 1);
+            MData(m).v_maxJumpUp = nan(N, 1);
+            MData(m).v_maxJumpDn = nan(N, 1);
+            MData(m).v_roughness = nan(N, 1);
+        end
 
-        % Feature arrays for Task 4 automatic classification
-        v_hMin       = nan(N, 1);
-        v_hMax       = nan(N, 1);
-        v_hMean      = nan(N, 1);
-        v_maxJumpUp  = nan(N, 1);
-        v_maxJumpDn  = nan(N, 1);
-        v_roughness  = nan(N, 1);
-        eRegionPx    = zeros(N, 1);
-        fRegionPx    = zeros(N, 1);
-        eMaxFreqMHz  = nan(N, 1);
+        eRegionPx   = zeros(N, 1);
+        fRegionPx   = zeros(N, 1);
+        eMaxFreqMHz = nan(N, 1);
+
+        varsToLoad = {'DT', 'X_tensor_filt', 'f_grid'};
+        for m = 1:numModels
+            netID = opts.models(m).netID;
+            varsToLoad = [varsToLoad, ...
+                {['ScaleV_unet', netID], ['ScaleR_polan', netID], ...
+                 ['foF2_unet', netID], ['polanRes', netID]}]; %#ok<AGROW>
+        end
 
         tTimer = tic;
+        w = warning('off', 'MATLAB:load:variableNotFound');
+        
         for i = 1:N
             fPath = fullfile(matFiles(i).folder, matFiles(i).name);
             try
-                w = warning('off', 'MATLAB:load:variableNotFound');
-                d = load(fPath, 'DT', 'ScaleV_unet', 'ScaleR_polan', 'foF2_unet', ...
-                                'polanRes', 'X_tensor_filt', 'f_grid', 'h_grid');
-                warning(w);
+                d = load(fPath, varsToLoad{:});
 
                 if isfield(d, 'DT') && numel(d.DT) >= 6
                     dtNums(i) = datenum(double(d.DT(1:6)));
                 end
 
-                % Virtual profile metrics
-                if isfield(d, 'ScaleV_unet') && ~isempty(d.ScaleV_unet)
-                    sv = double(d.ScaleV_unet);
-                    nPtsV(i)   = size(sv, 1);
-                    v_hMin(i)  = min(sv(:, 2));
-                    v_hMax(i)  = max(sv(:, 2));
-                    v_hMean(i) = mean(sv(:, 2));
-                    if size(sv, 1) >= 2
-                        dh = diff(sv(:, 2));
-                        v_maxJumpUp(i) = max(dh);
-                        v_maxJumpDn(i) = min(dh);
-                        v_roughness(i) = sum(abs(dh(dh < 0)));
-                    else
-                        v_maxJumpUp(i) = 0; v_maxJumpDn(i) = 0; v_roughness(i) = 0;
-                    end
-                end
-
-                if isfield(d, 'foF2_unet') && ~isempty(d.foF2_unet)
-                    foF2_unet(i) = double(d.foF2_unet);
-                end
-
-                % Real profile & POLAN parameters
-                if isfield(d, 'ScaleR_polan') && ~isempty(d.ScaleR_polan)
-                    nPtsR(i) = size(d.ScaleR_polan, 1);
-                end
-
-                if isfield(d, 'polanRes') && isstruct(d.polanRes)
-                    pr = d.polanRes;
-                    if isfield(pr, 'foF2') && ~isempty(pr.foF2),       foF2_pol(i)   = double(pr.foF2);    end
-                    if isfield(pr, 'hmF2') && ~isempty(pr.hmF2),       hmF2_pol(i)   = double(pr.hmF2);    end
-                    if isfield(pr, 'TEC') && ~isempty(pr.TEC),         TEC_pol(i)    = double(pr.TEC) * opts.tecScaleFactor; end
-                    if isfield(pr, 'H_scale') && ~isempty(pr.H_scale), Hscale_pol(i) = double(pr.H_scale); end
-                    if isfield(pr, 'SlabT') && ~isempty(pr.SlabT),     SlabT_pol(i)  = double(pr.SlabT);   end
-                    if isfield(pr, 'dev_h') && ~isempty(pr.dev_h),     devH_pol(i)   = double(pr.dev_h);   end
-                    if isfield(pr, 'status') && ~isempty(pr.status),   polStatus(i)  = string(pr.status);  end
-                end
-
-                % Tensor energy features for E/Es vs F region
                 if isfield(d, 'X_tensor_filt') && ~isempty(d.X_tensor_filt)
                     ampFilt = double(d.X_tensor_filt(1:171, 1:92, 1));
-                    eRows = 30:49;
-                    fRows = 60:160;
-                    eMask = ampFilt(eRows, :) > 0.15;
-                    fMask = ampFilt(fRows, :) > 0.12;
+                    eMask = ampFilt(30:49, :) > 0.15;
+                    fMask = ampFilt(60:160, :) > 0.12;
                     eRegionPx(i) = nnz(eMask);
                     fRegionPx(i) = nnz(fMask);
                     if any(eMask(:)) && isfield(d, 'f_grid') && numel(d.f_grid) >= 92
                         colsE = find(any(eMask, 1));
                         eMaxFreqMHz(i) = double(d.f_grid(max(colsE)));
+                    end
+                end
+
+                for m = 1:numModels
+                    netID = opts.models(m).netID;
+                    vScaleV = ['ScaleV_unet', netID];
+                    vScaleR = ['ScaleR_polan', netID];
+                    vfoF2   = ['foF2_unet', netID];
+                    vRes    = ['polanRes', netID];
+
+                    if isfield(d, vScaleV) && ~isempty(d.(vScaleV))
+                        sv = double(d.(vScaleV));
+                        MData(m).nPtsV(i)   = size(sv, 1);
+                        MData(m).v_hMin(i)  = min(sv(:, 2));
+                        MData(m).v_hMax(i)  = max(sv(:, 2));
+                        MData(m).v_hMean(i) = mean(sv(:, 2));
+                        if size(sv, 1) >= 2
+                            dh = diff(sv(:, 2));
+                            MData(m).v_maxJumpUp(i) = max(dh);
+                            MData(m).v_maxJumpDn(i) = min(dh);
+                            MData(m).v_roughness(i) = sum(abs(dh(dh < 0)));
+                        else
+                            MData(m).v_maxJumpUp(i) = 0; 
+                            MData(m).v_maxJumpDn(i) = 0; 
+                            MData(m).v_roughness(i) = 0;
+                        end
+                    end
+
+                    if isfield(d, vfoF2) && ~isempty(d.(vfoF2))
+                        MData(m).foF2_unet(i) = double(d.(vfoF2));
+                    end
+
+                    if isfield(d, vScaleR) && ~isempty(d.(vScaleR))
+                        MData(m).nPtsR(i) = size(d.(vScaleR), 1);
+                    end
+
+                    if isfield(d, vRes) && isstruct(d.(vRes))
+                        pr = d.(vRes);
+                        if isfield(pr, 'foF2') && ~isempty(pr.foF2),       MData(m).foF2(i)      = double(pr.foF2);    end
+                        if isfield(pr, 'hmF2') && ~isempty(pr.hmF2),       MData(m).hmF2(i)      = double(pr.hmF2);    end
+                        if isfield(pr, 'H_scale') && ~isempty(pr.H_scale), MData(m).H_scale(i)   = double(pr.H_scale); end
+                        if isfield(pr, 'SlabT') && ~isempty(pr.SlabT),     MData(m).SlabT(i)     = double(pr.SlabT);   end
+                        if isfield(pr, 'dev_h') && ~isempty(pr.dev_h),     MData(m).devH(i)      = double(pr.dev_h);   end
+                        if isfield(pr, 'status') && ~isempty(pr.status),   MData(m).polStatus(i) = string(pr.status);  end
+                        
+                        % Load TEC directly from POLAN output and apply user scale factor
+                        if isfield(pr, 'TEC') && ~isempty(pr.TEC)
+                            MData(m).TEC(i) = double(pr.TEC) * opts.tecScaleFactor;
+                        end
                     end
                 end
 
@@ -615,327 +596,273 @@ function summaryData = cadi_analyze_annual_stats(outBaseDir, sStation, targetYea
                     i, N, 100*i/N, el, eta);
             end
         end
+        warning(w);
 
-        % Auto-check TEC magnitude so majority of points lie within [0, 50] TECU
-        medTEC = median(TEC_pol(TEC_pol > 0), 'omitnan');
-        if ~isnan(medTEC) && medTEC > 50.0
-            while median(TEC_pol(TEC_pol > 0), 'omitnan') > 50.0
-                TEC_pol = TEC_pol / 10.0;
-            end
-        elseif ~isnan(medTEC) && medTEC < 1.5
-            TEC_pol = TEC_pol * 10.0;
+        for m = 1:numModels
+            summaryData = struct();
+            summaryData.station     = sStation;
+            summaryData.year        = targetYear;
+            summaryData.modelLabel  = opts.models(m).label;
+            summaryData.fNames      = fNames;
+            summaryData.dt          = datetime(dtNums, 'ConvertFrom', 'datenum');
+            summaryData.nPtsV       = MData(m).nPtsV;
+            summaryData.nPtsR       = MData(m).nPtsR;
+            summaryData.foF2_unet   = MData(m).foF2_unet;
+            summaryData.foF2        = MData(m).foF2;
+            summaryData.hmF2        = MData(m).hmF2;
+            summaryData.TEC         = MData(m).TEC;
+            summaryData.H_scale     = MData(m).H_scale;
+            summaryData.SlabT       = MData(m).SlabT;
+            summaryData.devH        = MData(m).devH;
+            summaryData.polStatus   = MData(m).polStatus;
+            
+            summaryData.eRegionPx   = eRegionPx;
+            summaryData.fRegionPx   = fRegionPx;
+            summaryData.eMaxFreqMHz = eMaxFreqMHz;
+            
+            summaryData.v_hMin      = MData(m).v_hMin;
+            summaryData.v_hMax      = MData(m).v_hMax;
+            summaryData.v_hMean     = MData(m).v_hMean;
+            summaryData.v_maxJumpUp = MData(m).v_maxJumpUp;
+            summaryData.v_maxJumpDn = MData(m).v_maxJumpDn;
+            summaryData.v_roughness = MData(m).v_roughness;
+
+            summaryDataArray{m} = summaryData;
+            save(summaryPaths{m}, 'summaryData', '-v7.3');
+        end
+    end
+
+    colors = [
+        0.85, 0.15, 0.15; % Model 1: Red
+        0.15, 0.35, 0.85; % Model 2: Blue
+        0.20, 0.80, 0.20; % Model 3: Green
+        0.70, 0.20, 0.70; % Model 4: Magenta
+        0.10, 0.80, 0.80  % Model 5: Cyan
+    ];
+
+    % =====================================================================
+    % STEP 2 & 3: COVERAGE STATISTICS & AUTOMATIC QUALITY CLASSIFICATION
+    % =====================================================================
+    for m = 1:numModels
+        sD = summaryDataArray{m};
+        N_total = numel(sD.nPtsV);
+        hasV    = sD.nPtsV > 0;
+        hasR    = sD.nPtsR > 0;
+
+        fprintf('\n====================================================================\n');
+        fprintf('   MODEL: %s | CADI %s %d PIPELINE STATISTICS\n', opts.models(m).label, sStation, targetYear);
+        fprintf('====================================================================\n');
+        fprintf('1. Total Processed Sessions (*.mat)       : %7d (100.00%%)\n', N_total);
+        fprintf('2. Virtual Profile Extracted (ScaleV > 0) : %7d (%6.2f%%)\n', nnz(hasV), 100*nnz(hasV)/N_total);
+        fprintf('3. Real Profile Inverted (ScaleR > 0)     : %7d (%6.2f%%)\n', nnz(hasR), 100*nnz(hasR)/N_total);
+        
+        catID = zeros(N_total, 1);
+        isNoV = ~hasV;
+        isBlanketedEs = isNoV & (sD.eRegionPx >= 18 | sD.eMaxFreqMHz >= 3.2) & (sD.fRegionPx < 35);
+        isMissedF2    = isNoV & (sD.fRegionPx >= 35);
+        isWeakIono    = isNoV & ~isBlanketedEs & ~isMissedF2;
+
+        catID(isBlanketedEs) = 4;
+        catID(isWeakIono)    = 5;
+        catID(isMissedF2)    = 6;
+
+        isE_as_F2 = hasV & ((sD.hmF2 < 165) | (sD.v_hMean < 160 & (sD.v_hMax - sD.v_hMin) < 30));
+        isJaggedOrBad = hasV & ~isE_as_F2 & ( ...
+            ~hasR | ...
+            sD.v_maxJumpUp > 45 | sD.v_maxJumpDn < -18 | sD.v_roughness > 30 | ...
+            sD.hmF2 > 520 | sD.H_scale < 5 | sD.H_scale > 120 | ...
+            sD.SlabT < 10  | sD.SlabT > 600);
+
+        isGoodF2 = hasV & ~isE_as_F2 & ~isJaggedOrBad;
+
+        catID(isGoodF2)      = 1;
+        catID(isE_as_F2)     = 2;
+        catID(isJaggedOrBad) = 3;
+
+        summaryDataArray{m}.qualityCategory = catID;
+
+        catNames = {
+            '1. Realistic F2 Profile (Good)', ...
+            '2. E / Es Misidentified as F2', ...
+            '3. Jagged / Unrealistic Profile', ...
+            '4. No Profile: Blanketing Es', ...
+            '5. No Profile: Weak Ionosphere / Blackout', ...
+            '6. No Profile: Missed Valid F-Region Trace'
+        };
+
+        fprintf('--- AUTOMATIC CLASSIFICATION ---\n');
+        for c = 1:6
+            cnt = nnz(catID == c);
+            fprintf('  %-44s : %7d (%6.2f%%)\n', catNames{c}, cnt, 100*cnt/N_total);
         end
 
-        % Assemble into summary structure
-        summaryData = struct();
-        summaryData.station     = sStation;
-        summaryData.year        = targetYear;
-        summaryData.fNames      = fNames;
-        summaryData.dt          = datetime(dtNums, 'ConvertFrom', 'datenum');
-        summaryData.nPtsV       = nPtsV;
-        summaryData.nPtsR       = nPtsR;
-        summaryData.foF2_unet   = foF2_unet;
-        summaryData.foF2        = foF2_pol;
-        summaryData.hmF2        = hmF2_pol;
-        summaryData.TEC         = TEC_pol;
-        summaryData.H_scale     = Hscale_pol;
-        summaryData.SlabT       = SlabT_pol;
-        summaryData.devH        = devH_pol;
-        summaryData.polStatus   = polStatus;
-        summaryData.v_hMin      = v_hMin;
-        summaryData.v_hMax      = v_hMax;
-        summaryData.v_hMean     = v_hMean;
-        summaryData.v_maxJumpUp = v_maxJumpUp;
-        summaryData.v_maxJumpDn = v_maxJumpDn;
-        summaryData.v_roughness = v_roughness;
-        summaryData.eRegionPx   = eRegionPx;
-        summaryData.fRegionPx   = fRegionPx;
-        summaryData.eMaxFreqMHz = eMaxFreqMHz;
-
+        summaryData = summaryDataArray{m};
+        save(summaryPaths{m}, 'summaryData', '-v7.3');
     end
 
     % =====================================================================
-    % STEP 2: TASK 1 - PIPELINE COVERAGE STATISTICS
+    % STEP 4: MULTI-MODEL DIURNAL PLOTS (DYNAMIC LIMITS + IQR SHADING)
     % =====================================================================
-    N_total = numel(summaryData.nPtsV);
-    hasV    = summaryData.nPtsV > 0;
-    hasR    = summaryData.nPtsR > 0;
-    vNoR    = hasV & ~hasR;
-
-    fprintf('\n====================================================================\n');
-    fprintf('   TASK 1: CADI %s %d ANNUAL PIPELINE STATISTICS\n', sStation, targetYear);
-    fprintf('====================================================================\n');
-    fprintf('1. Total Processed Sessions (*.mat)       : %7d (100.00%%)\n', N_total);
-    fprintf('2. Virtual Profile Extracted (ScaleV > 0) : %7d (%6.2f%%)\n', nnz(hasV), 100*nnz(hasV)/N_total);
-    fprintf('3. Real Profile Inverted (ScaleR > 0)     : %7d (%6.2f%%)\n', nnz(hasR), 100*nnz(hasR)/N_total);
-    fprintf('4. ScaleV Defined, but ScaleR Empty       : %7d (%6.2f%% of total | %5.2f%% of ScaleV)\n', ...
-        nnz(vNoR), 100*nnz(vNoR)/N_total, 100*nnz(vNoR)/max(1, nnz(hasV)));
-
-    if any(vNoR)
-        fprintf('   Breakdown of ScaleV -> ScaleR drops:\n');
-        fprintf('     - Very short trace (1-2 pts < min_pts) : %d\n', nnz(vNoR & summaryData.nPtsV < 3));
-        fprintf('     - Duplicate/non-unique freqs (<3 uniq) : %d\n', nnz(vNoR & summaryData.nPtsV >= 3 & summaryData.polStatus == "INSUFFICIENT_UNIQUE_FREQS"));
-        fprintf('     - POLAN convergence / inversion failure: %d\n', nnz(vNoR & summaryData.nPtsV >= 3 & summaryData.polStatus ~= "INSUFFICIENT_UNIQUE_FREQS"));
-    end
-
-    % =====================================================================
-    % STEP 3: TASK 4 - AUTOMATIC 6-CATEGORY QUALITY CLASSIFICATION
-    % =====================================================================
-    catID = zeros(N_total, 1);
-
-    % --- A. Sessions WITHOUT a Virtual Profile (~hasV) ---
-    isNoV = ~hasV;
-    isBlanketedEs = isNoV & (summaryData.eRegionPx >= 18 | summaryData.eMaxFreqMHz >= 3.2) & (summaryData.fRegionPx < 35);
-    isMissedF2    = isNoV & (summaryData.fRegionPx >= 35);
-    isWeakIono    = isNoV & ~isBlanketedEs & ~isMissedF2;
-
-    catID(isBlanketedEs) = 4;
-    catID(isWeakIono)    = 5;
-    catID(isMissedF2)    = 6;
-
-    % --- B. Sessions WITH a Virtual Profile (hasV) ---
-    isE_as_F2 = hasV & ((summaryData.hmF2 < 165) | (summaryData.v_hMean < 160 & (summaryData.v_hMax - summaryData.v_hMin) < 30));
-    
-    isJaggedOrBad = hasV & ~isE_as_F2 & ( ...
-        ~hasR | ...
-        summaryData.v_maxJumpUp > 45 | ...
-        summaryData.v_maxJumpDn < -18 | ...
-        summaryData.v_roughness > 30 | ...
-        summaryData.hmF2 > 520 | ...
-        summaryData.H_scale < 5 | summaryData.H_scale > 120 | ...
-        summaryData.SlabT < 10  | summaryData.SlabT > 600);
-
-    isGoodF2 = hasV & ~isE_as_F2 & ~isJaggedOrBad;
-
-    catID(isGoodF2)      = 1;
-    catID(isE_as_F2)     = 2;
-    catID(isJaggedOrBad) = 3;
-
-    summaryData.qualityCategory = catID;
-
-    catNames = {
-        '1. Realistic F2 Profile (Good)', ...
-        '2. E / Es Misidentified as F2', ...
-        '3. Jagged / Unrealistic Profile', ...
-        '4. No Profile: Blanketing Es', ...
-        '5. No Profile: Weak Ionosphere / Blackout', ...
-        '6. No Profile: Missed Valid F-Region Trace'
-    };
-
-    fprintf('\n====================================================================\n');
-    fprintf('   TASK 4: AUTOMATIC IONOGRAM & PROFILE CLASSIFICATION\n');
-    fprintf('====================================================================\n');
-    for c = 1:6
-        cnt = nnz(catID == c);
-        fprintf('  %-44s : %7d (%6.2f%%)\n', catNames{c}, cnt, 100*cnt/N_total);
-    end
-    fprintf('====================================================================\n');
-
-    % =====================================================================
-    % STEP 4: TASK 2 - MONTHLY DIURNAL PLOTS (6 INDIVIDUAL PARAMETERS)
-    %         Points + Mean (Solid Black) + Median (Solid Red)
-    % =====================================================================
-    validMask = (catID == 1); 
-
     paramsToPlot = {
-        'foF2',      'foF2 (MHz)',                [0, 10];
-        'foF2_unet', 'foF2\_unet (MHz)',          [0, 10];
-        'hmF2',      'hmF2 (km)',                 [150, 500];
-        'TEC',       'TEC (TECU, 10^{16} m^{-2})',[0, 50];
-        'H_scale',   'Scale Height H (km)',       [10, 100];
-        'SlabT',     'Slab Thickness (km)',       [50, 450]
+        'foF2',      'foF2 (POLAN Real Profile, MHz)';
+        'hmF2',      'hmF2 (km)';
+        'TEC',       'TEC (TECU, 10^{16} m^{-2})'
     };
-
-    monthNames = {'January','February','March','April','May','June', ...
-                  'July','August','September','October','November','December'};
-
-    dtValid    = summaryData.dt(validMask);
+    
+    monthNames = {'Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'};
+    dtValid    = summaryDataArray{1}.dt; 
     mVec       = month(dtValid);
     utHours    = hour(dtValid) + minute(dtValid)/60 + second(dtValid)/3600;
-
+    
     binStep    = 0.25; 
-    binCenters = (0 : binStep : (24 - binStep)) + binStep/2;
+    t_edges    = 0 : binStep : 24;
+    t_centers  = t_edges(1:end-1) + binStep/2;
 
     for pIdx = 1:size(paramsToPlot, 1)
         pField = paramsToPlot{pIdx, 1};
         pLabel = paramsToPlot{pIdx, 2};
-        pYLim  = paramsToPlot{pIdx, 3};
 
-        yDataAll = summaryData.(pField)(validMask);
-
-        hFig = figure('Visible', 'off', 'Position', [50, 50, 2400, 1300], 'Color', 'w');
-        sgtitle(sprintf('CADI %s %d - Monthly Diurnal Variation of %s (Black: Mean, Red: Median)', ...
-            sStation, targetYear, pLabel), 'FontSize', 16, 'FontWeight', 'bold');
-
-        for m = 1:12
-            ax = subplot(3, 4, m, 'Parent', hFig);
-            hold(ax, 'on');
-
-            idxM = (mVec == m) & ~isnan(yDataAll);
-            tM   = utHours(idxM);
-            yM   = yDataAll(idxM);
-
-            if ~isempty(tM)
-                scatter(ax, tM, yM, 8, [0.55 0.68 0.85], 'filled', ...
-                    'MarkerFaceAlpha', 0.25, 'MarkerEdgeAlpha', 0.25, 'HandleVisibility', 'off');
-
-                meanCurve   = nan(size(binCenters));
-                medianCurve = nan(size(binCenters));
-                for b = 1:numel(binCenters)
-                    bLow  = (b - 1) * binStep;
-                    bHigh = b * binStep;
-                    inBin = (tM >= bLow) & (tM < bHigh);
-                    if nnz(inBin) >= 3
-                        meanCurve(b)   = mean(yM(inBin), 'omitnan');
-                        medianCurve(b) = median(yM(inBin), 'omitnan');
+        plotData = cell(12, numModels);
+        all_y_bounds = [];
+        
+        for mo = 1:12
+            idx_m = (mVec == mo);
+            for m = 1:numModels
+                sD = summaryDataArray{m};
+                valid_idx = idx_m & (sD.qualityCategory == 1);
+                t_vals = utHours(valid_idx);
+                y_vals = sD.(pField)(valid_idx);
+                
+                if isempty(t_vals), continue; end
+                
+                [~, bins] = histc(t_vals, t_edges);
+                p25 = nan(1, length(t_centers));
+                p50 = nan(1, length(t_centers));
+                p75 = nan(1, length(t_centers));
+                
+                for b = 1:length(t_centers)
+                    y_b = y_vals(bins == b);
+                    if ~isempty(y_b)
+                        p25(b) = prctile(y_b, 25);
+                        p50(b) = median(y_b);
+                        p75(b) = prctile(y_b, 75);
                     end
                 end
-
-                meanSmooth   = movmean(meanCurve, 3, 'omitnan');
-                medianSmooth = movmean(medianCurve, 3, 'omitnan');
-
-                hMean = plot(ax, binCenters, meanSmooth, 'k-', 'LineWidth', 2.0, 'DisplayName', 'Mean');
-                hMed  = plot(ax, binCenters, medianSmooth, 'r-', 'LineWidth', 2.0, 'DisplayName', 'Median');
-
-                if m == 1
-                    legend(ax, [hMean, hMed], {'Mean', 'Median'}, 'Location', 'northwest', 'FontSize', 9);
+                
+                valid_b = ~isnan(p50);
+                plotData{mo, m} = struct('tc', t_centers(valid_b), 'p25', p25(valid_b), ...
+                                         'p50', p50(valid_b), 'p75', p75(valid_b), 'valid', valid_b);
+                                         
+                if any(valid_b)
+                    all_y_bounds = [all_y_bounds, p25(valid_b), p75(valid_b)]; %#ok<AGROW>
                 end
             end
-
-            hold(ax, 'off');
-            xlim(ax, [0, 24]);
-            xticks(ax, 0:4:24);
-            ylim(ax, pYLim);
-            grid(ax, 'on');
-            title(ax, sprintf('%s (N = %d)', monthNames{m}, nnz(idxM)), 'FontSize', 11);
-            xlabel(ax, 'Time (UT, hours)');
-            ylabel(ax, pLabel);
+        end
+        
+        if ~isempty(all_y_bounds)
+            y_min_bound = prctile(all_y_bounds, 2);  
+            y_max_bound = prctile(all_y_bounds, 98); 
+            y_span = y_max_bound - y_min_bound;
+            if y_span == 0, y_span = 1; end
+            
+            calc_min = y_min_bound - y_span * 0.10;
+            calc_max = y_max_bound + y_span * 0.15;
+            
+            if strcmp(pField, 'hmF2')
+                pYLim = [calc_min, calc_max];
+            else
+                pYLim = [max(0, calc_min), calc_max]; 
+            end
+        else
+            pYLim = [0, 1]; 
         end
 
-        outPlotPath = fullfile(outBaseDir, sprintf('CADI_%s_%d_Diurnal_%s.png', sStation, targetYear, pField));
+        hFig = figure('Visible', 'off', 'Position', [50, 50, 2000, 1200], 'Color', 'w');
+        sgtitle(sprintf('CADI %s %d - Multi-Model Diurnal Variation: %s (Medians)', ...
+            sStation, targetYear, pLabel), 'FontSize', 16, 'FontWeight', 'bold', 'Interpreter', 'none');
+
+        for mo = 1:12
+            ax = subplot(3, 4, mo, 'Parent', hFig);
+            hold(ax, 'on'); grid(ax, 'on'); box(ax, 'on');
+            title(ax, monthNames{mo}, 'Interpreter', 'none');
+            
+            for m = 1:numModels
+                if isempty(plotData{mo, m}), continue; end
+                pd = plotData{mo, m};
+                if ~any(pd.valid), continue; end
+                
+                c_idx = mod(m-1, size(colors,1)) + 1;
+                
+                x_patch = [pd.tc, fliplr(pd.tc)];
+                y_patch = [pd.p25, fliplr(pd.p75)];
+                patch(ax, x_patch, y_patch, colors(c_idx,:), 'FaceAlpha', 0.15, 'EdgeColor', 'none', 'HandleVisibility', 'off');
+                plot(ax, pd.tc, pd.p50, 'Color', colors(c_idx,:), 'LineWidth', 2.0, 'DisplayName', opts.models(m).label);
+            end
+            
+            xlim(ax, [0, 24]);
+            ylim(ax, pYLim);
+            if mo == 1 || mo == 5 || mo == 9, ylabel(ax, pLabel, 'Interpreter', 'tex'); end
+            if mo > 8, xlabel(ax, 'Time (UT, hours)'); end
+        end
+        subplot(3,4,1); legend('Location', 'best', 'Interpreter', 'none');
+
+        outPlotPath = fullfile(outBaseDir, sprintf('CADI_%s_%d_MultiModel_Diurnal_%s.png', sStation, targetYear, pField));
         exportgraphics(hFig, outPlotPath, 'Resolution', 150);
         close(hFig);
-        fprintf('Saved diurnal plot: %s\n', outPlotPath);
+        fprintf('Saved Multi-Model Diurnal plot: %s\n', outPlotPath);
     end
 
     % =====================================================================
-    % STEP 5: FIGURE 7 - COMPARISON OF foF2 (POLAN) VS foF2_unet
+    % STEP 5: MULTI-MODEL CORRELATION PLOTS (foF2_Unet vs foF2_POLAN)
     % =====================================================================
-    foF2_pol_all  = summaryData.foF2(validMask);
-    foF2_unet_all = summaryData.foF2_unet(validMask);
+    hFigCorr = figure('Visible', 'off', 'Position', [100, 100, 1800, 1200], 'Color', 'w');
+    sgtitle(sprintf('CADI %s %d - Correlation: foF2 (U-Net) vs foF2 (POLAN)', sStation, targetYear), ...
+        'FontSize', 16, 'FontWeight', 'bold', 'Interpreter', 'none');
 
-    hFigComp = figure('Visible', 'off', 'Position', [50, 50, 2400, 1300], 'Color', 'w');
-    sgtitle(sprintf('CADI %s %d - Monthly Diurnal Comparison: foF2 (POLAN) vs foF2\\_unet (Mean & Median)', ...
-        sStation, targetYear), 'FontSize', 16, 'FontWeight', 'bold');
+    cols = ceil(sqrt(numModels));
+    rows = ceil(numModels / cols);
 
-    for m = 1:12
-        ax = subplot(3, 4, m, 'Parent', hFigComp);
-        hold(ax, 'on');
+    for m = 1:numModels
+        ax = subplot(rows, cols, m, 'Parent', hFigCorr);
+        sD = summaryDataArray{m};
+        
+        validMask = (sD.qualityCategory == 1) & ~isnan(sD.foF2) & ~isnan(sD.foF2_unet);
+        x_unet = sD.foF2_unet(validMask);
+        y_pol  = sD.foF2(validMask);
 
-        idxM   = (mVec == m) & (~isnan(foF2_pol_all) | ~isnan(foF2_unet_all));
-        tM     = utHours(idxM);
-        yPolM  = foF2_pol_all(idxM);
-        yUnetM = foF2_unet_all(idxM);
-
-        if ~isempty(tM)
-            meanPol   = nan(size(binCenters));
-            medPol    = nan(size(binCenters));
-            meanUnet  = nan(size(binCenters));
-            medUnet   = nan(size(binCenters));
-
-            for b = 1:numel(binCenters)
-                bLow  = (b - 1) * binStep;
-                bHigh = b * binStep;
-                inBin = (tM >= bLow) & (tM < bHigh);
-                if nnz(inBin) >= 3
-                    meanPol(b)  = mean(yPolM(inBin), 'omitnan');
-                    medPol(b)   = median(yPolM(inBin), 'omitnan');
-                    meanUnet(b) = mean(yUnetM(inBin), 'omitnan');
-                    medUnet(b)  = median(yUnetM(inBin), 'omitnan');
-                end
-            end
-
-            p1 = plot(ax, binCenters, movmean(meanPol, 3, 'omitnan'),  'k-',  'LineWidth', 2.0, 'DisplayName', 'foF2 Mean');
-            p2 = plot(ax, binCenters, movmean(meanUnet, 3, 'omitnan'), 'k--', 'LineWidth', 1.8, 'DisplayName', 'foF2\_unet Mean');
-            p3 = plot(ax, binCenters, movmean(medPol, 3, 'omitnan'),   'r-',  'LineWidth', 2.0, 'DisplayName', 'foF2 Median');
-            p4 = plot(ax, binCenters, movmean(medUnet, 3, 'omitnan'),  'r--', 'LineWidth', 1.8, 'DisplayName', 'foF2\_unet Median');
-
-            if m == 1
-                legend(ax, [p1, p2, p3, p4], ...
-                    {'foF2 Mean', 'foF2\_unet Mean', 'foF2 Median', 'foF2\_unet Median'}, ...
-                    'Location', 'northwest', 'FontSize', 8.5);
-            end
-        end
-
-        hold(ax, 'off');
-        xlim(ax, [0, 24]);
-        xticks(ax, 0:4:24);
-        ylim(ax, [1, 9]); 
-        grid(ax, 'on');
-        title(ax, sprintf('%s (N = %d)', monthNames{m}, nnz(idxM)), 'FontSize', 11);
-        xlabel(ax, 'Time (UT, hours)');
-        ylabel(ax, 'Critical Frequency (MHz)');
-    end 
-
-    outCompPath = fullfile(outBaseDir, sprintf('CADI_%s_%d_Diurnal_foF2_Comparison.png', sStation, targetYear));
-    exportgraphics(hFigComp, outCompPath, 'Resolution', 150);
-    close(hFigComp);
-    fprintf('Saved foF2 comparison plot: %s\n', outCompPath);
-
-    % =====================================================================
-    % STEP 6: FIGURE 8 - PEARSON CORRELATION & REGRESSION: foF2_unet vs foF2 (POLAN)
-    % =====================================================================
-    foF2_pol_corr  = summaryData.foF2(validMask);
-    foF2_unet_corr = summaryData.foF2_unet(validMask);
-    validCorr = ~isnan(foF2_pol_corr) & ~isnan(foF2_unet_corr);
-
-    x_unet = foF2_unet_corr(validCorr);
-    y_pol  = foF2_pol_corr(validCorr);
-
-    if ~isempty(x_unet)
+        if isempty(x_unet), continue; end
+        
         r_val    = corr(x_unet, y_pol);
         err_val  = y_pol - x_unet;
-        mae_val  = mean(abs(err_val));
         rmse_val = sqrt(mean(err_val.^2));
         bias_val = mean(err_val);
 
-        hFigCorr = figure('Visible', 'off', 'Position', [100, 100, 900, 800], 'Color', 'w');
-        scatter(x_unet, y_pol, 15, [0.15, 0.45, 0.75], 'filled', 'MarkerFaceAlpha', 0.35);
-        hold on;
+        c_idx = mod(m-1, size(colors,1)) + 1;
+        scatter(ax, x_unet, y_pol, 10, colors(c_idx,:), 'filled', 'MarkerFaceAlpha', 0.25);
+        hold(ax, 'on');
         
         min_f = min([x_unet; y_pol]);
         max_f = max([x_unet; y_pol]);
-        plot([min_f, max_f], [min_f, max_f], '--k', 'LineWidth', 1.5, 'DisplayName', '1:1 Ideal');
+        plot(ax, [min_f, max_f], [min_f, max_f], '--k', 'LineWidth', 1.5, 'DisplayName', '1:1 Ideal');
 
-        % Linear fit line
         p_fit      = polyfit(x_unet, y_pol, 1);
         x_fit_line = linspace(min_f, max_f, 100);
         y_fit_line = polyval(p_fit, x_fit_line);
-        plot(x_fit_line, y_fit_line, '-r', 'LineWidth', 1.8, 'DisplayName', sprintf('Linear Fit: y = %.2fx + %.2f', p_fit(1), p_fit(2)));
+        plot(ax, x_fit_line, y_fit_line, '-k', 'LineWidth', 2.0, 'DisplayName', sprintf('Fit: y = %.2fx + %.2f', p_fit(1), p_fit(2)));
 
-        hold off;
-        grid on;
-        axis equal;
-        xlim([min_f, max_f]);
-        ylim([min_f, max_f]);
+        hold(ax, 'off'); grid(ax, 'on'); axis(ax, 'equal');
+        xlim(ax, [min_f, max_f]); ylim(ax, [min_f, max_f]);
         
-        xlabel('foF2 (U-Net before POLAN, MHz)', 'FontSize', 12, 'FontWeight', 'bold');
-        ylabel('foF2 (POLAN Real Profile, MHz)', 'FontSize', 12, 'FontWeight', 'bold');
-        title(sprintf('CADI %s %d - Pearson Correlation & Regression: foF2 (U-Net) vs foF2 (POLAN)\n(N = %d | R = %.4f | MAE = %.3f MHz | RMSE = %.3f MHz | Bias = %+.3f MHz)', ...
-            sStation, targetYear, numel(x_unet), r_val, mae_val, rmse_val, bias_val), ...
-            'FontSize', 12, 'FontWeight', 'bold');
-        legend('Location', 'southeast', 'FontSize', 10);
-
-        outCorrPath = fullfile(outBaseDir, sprintf('CADI_%s_%d_Correlation_foF2_Unet_vs_POLAN.png', sStation, targetYear));
-        exportgraphics(hFigCorr, outCorrPath, 'Resolution', 150);
-        close(hFigCorr);
-        fprintf('Saved foF2 Pearson correlation plot: %s\n', outCorrPath);
+        xlabel(ax, 'foF2 (U-Net, MHz)', 'FontSize', 11, 'FontWeight', 'bold', 'Interpreter', 'none');
+        ylabel(ax, 'foF2 (POLAN, MHz)', 'FontSize', 11, 'FontWeight', 'bold', 'Interpreter', 'none');
+        title(ax, sprintf('%s\n(R=%.4f | RMSE=%.3f | Bias=%+.3f)', ...
+            opts.models(m).label, r_val, rmse_val, bias_val), 'FontSize', 12, 'Interpreter', 'none');
+        legend(ax, 'Location', 'southeast', 'FontSize', 9, 'Interpreter', 'none');
     end
 
-    % =====================================================================
-    % STEP 7: Save annual summary dataset with category info
-    % =====================================================================
-    save(summaryMatPath, 'summaryData', '-v7.3');
-    fprintf('Saved annual summary dataset to: %s\n', summaryMatPath);
+    outCorrPath = fullfile(outBaseDir, sprintf('CADI_%s_%d_MultiModel_Correlation.png', sStation, targetYear));
+    exportgraphics(hFigCorr, outCorrPath, 'Resolution', 150);
+    close(hFigCorr);
+    fprintf('Saved Multi-Model Correlation plot: %s\n', outCorrPath);
 
 end
