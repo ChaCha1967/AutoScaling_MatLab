@@ -50,10 +50,25 @@ function statusReport = cadi_stage1_md2_to_mat(inBaseDir, outBaseDir, sStation, 
             continue;
         end
 
+        % try
+        %     yDigit = str2double(fname(1));
+        %     fileYear = 2000 + yDigit;
+        % 
+        %     mChar = upper(fname(2));
         try
             yDigit = str2double(fname(1));
-            fileYear = 2000 + yDigit;
-            
+
+            % Dynamically resolve the correct decade based on target yearVal
+            decade = yearVal - mod(yearVal, 10);
+            fileYear = decade + yDigit;
+
+            % Handle edge cases for cross-decade time ranges (e.g., Dec 2009 to Jan 2010)
+            if (fileYear - yearVal) > 5
+                fileYear = fileYear - 10;
+            elseif (yearVal - fileYear) > 5
+                fileYear = fileYear + 10;
+            end
+
             mChar = upper(fname(2));
             fileMonth = strfind(monthLetters, mChar);
             fileDay = str2double(fname(3:4));

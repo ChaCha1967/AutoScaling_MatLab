@@ -12,8 +12,8 @@ outBaseDir = 'N:/cadi_proc/';
 sStation   = 'RB'; 
 
 % 2. Define target time range [YYYY, MM, DD, hh, mm, ss]
-startDT = [2009, 01, 01, 00, 00, 00];
-endDT   = [2009, 12, 31, 23, 55, 00];
+startDT = [2013, 01, 01, 00, 00, 00];
+endDT   = [2013, 12, 31, 23, 55, 00];
 
 % 3. Define neural network models to process
 % The first element must be the BASELINE model. 
@@ -24,7 +24,8 @@ models = struct();
 models(1).path      = 'N:/cadi_proc/cadi_unet_6ch_combined.mat';
 models(1).netID     = ''; 
 % models(1).runStages = [1, 2, 3, 4, 5]; % Build raw data, filter, infer, invert, and plot
-models(1).runStages = [3, 4]; % Build raw data, filter, infer, invert, and plot
+models(1).runStages = [1, 2, 3, 4]; % Build raw data, filter, infer, invert, and plot
+% models(1).runStages = [3, 4]; % Build raw data, filter, infer, invert, and plot
 
 % --- ADDITIONAL MODELS (Appended) ---
 models(2).path      = 'N:/cadi_proc/cadi_unet_3ch_mixed.mat';
