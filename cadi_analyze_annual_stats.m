@@ -2,11 +2,7 @@ function summaryDataArray = cadi_analyze_annual_stats(outBaseDir, sStation, targ
 % CADI_ANALYZE_ANNUAL_STATS Scans all processed *_ion.mat files for a full year,
 % compiles fast summary tables for MULTIPLE neural network models simultaneously, 
 % computes pipeline & quality classification statistics for each, and exports 
-% joint multi-model diurnal variation and correlation plots.
-%
-% Generates plots:
-%   1. Default (no suffix) : Only highly reliable F2 profiles (Category 1).
-%   2. _AllExtracted       : All extracted profiles (Categories 1, 2, and 3).
+% joint multi-model diurnal variation, correlation plots, and pairwise comparisons.
 
     if nargin < 4 || isempty(opts), opts = struct(); end
     if ~isfield(opts, 'forceRebuild'), opts.forceRebuild = false; end
@@ -289,11 +285,8 @@ function summaryDataArray = cadi_analyze_annual_stats(outBaseDir, sStation, targ
 
     % =====================================================================
     % SETUP FOR MULTI-GROUP PLOTTING
-    % Group 1: Filtered Cat 1 Only (Clean) -> No suffix in filename
-    % Group 2: All Extracted Profiles (Cat 1, 2, 3) -> Suffix '_AllExtracted'
     % =====================================================================
     plotGroups = struct();
-    
     plotGroups(1).name = ''; 
     plotGroups(1).allowedCats = 1;
     plotGroups(1).titleStr = '(Filtered: Good F2 Only)';
@@ -305,7 +298,8 @@ function summaryDataArray = cadi_analyze_annual_stats(outBaseDir, sStation, targ
     paramsToPlot = {
         'foF2',      'foF2 (POLAN Real Profile, MHz)';
         'hmF2',      'hmF2 (km)';
-        'TEC',       'TEC (TECU, 10^{16} m^{-2})'
+        'TEC',       'TEC (TECU, 10^{16} m^{-2})';
+        'SlabT',     'Slab Thickness (km)'
     };
     
     monthNames = {'Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'};
@@ -318,14 +312,14 @@ function summaryDataArray = cadi_analyze_annual_stats(outBaseDir, sStation, targ
     t_centers  = t_edges(1:end-1) + binStep/2;
 
     % =====================================================================
-    % STEP 4: MULTI-MODEL DIURNAL PLOTS
+    % STEP 4: MULTI-MODEL DIURNAL PLOTS (OVERALL COMPARISON)
     % =====================================================================
     for g = 1:length(plotGroups)
         grpName  = plotGroups(g).name;
         grpCats  = plotGroups(g).allowedCats;
         grpTitle = plotGroups(g).titleStr;
 
-        fprintf('\nGenerating Diurnal Plots for Group%s...\n', grpName);
+        fprintf('\nGenerating Multi-Model Diurnal Plots for Group%s...\n', grpName);
 
         for pIdx = 1:size(paramsToPlot, 1)
             pField = paramsToPlot{pIdx, 1};
@@ -377,7 +371,7 @@ function summaryDataArray = cadi_analyze_annual_stats(outBaseDir, sStation, targ
                 calc_min = y_min_bound - y_span * 0.10;
                 calc_max = y_max_bound + y_span * 0.15;
                 
-                if strcmp(pField, 'hmF2')
+                if strcmp(pField, 'hmF2') || strcmp(pField, 'SlabT')
                     pYLim = [calc_min, calc_max];
                 else
                     pYLim = [max(0, calc_min), calc_max]; 
@@ -409,6 +403,7 @@ function summaryDataArray = cadi_analyze_annual_stats(outBaseDir, sStation, targ
                 end
                 
                 xlim(ax, [0, 24]);
+                xticks(ax, 0:2:24);
                 ylim(ax, pYLim);
                 if mo == 1 || mo == 5 || mo == 9, ylabel(ax, pLabel, 'Interpreter', 'tex'); end
                 if mo > 8, xlabel(ax, 'Time (UT, hours)'); end
@@ -423,11 +418,8 @@ function summaryDataArray = cadi_analyze_annual_stats(outBaseDir, sStation, targ
 
     % =====================================================================
     % STEP 5: MULTI-MODEL CORRELATION PLOTS (foF2_Unet vs foF2_POLAN)
-    % Note: Only generated for Category 1 (Good F2) as poor profiles 
-    % contain Inf/NaNs causing polyfit/corr to fail.
     % =====================================================================
-    fprintf('\nGenerating Correlation Plots (Filtered: Good F2 Only)...\n');
-    
+    fprintf('\nGenerating Multi-Model Correlation Plots (Filtered: Good F2 Only)...\n');
     cols = ceil(sqrt(numModels));
     rows = ceil(numModels / cols);
 
@@ -439,7 +431,6 @@ function summaryDataArray = cadi_analyze_annual_stats(outBaseDir, sStation, targ
         ax = subplot(rows, cols, m, 'Parent', hFigCorr);
         sD = summaryDataArray{m};
         
-        % isfinite() protects against Inf/NaNs breaking the correlation/regression
         validMask = (sD.qualityCategory == 1) & isfinite(sD.foF2) & isfinite(sD.foF2_unet);
         x_unet = sD.foF2_unet(validMask);
         y_pol  = sD.foF2(validMask);
@@ -477,6 +468,259 @@ function summaryDataArray = cadi_analyze_annual_stats(outBaseDir, sStation, targ
     outCorrPath = fullfile(outBaseDir, sprintf('CADI_%s_%d_MultiModel_Correlation.png', sStation, targetYear));
     exportgraphics(hFigCorr, outCorrPath, 'Resolution', 150);
     close(hFigCorr);
+
+    % =====================================================================
+    % STEP 6: PAIRWISE COMPARISONS (BASE MODEL VS ALL OTHER MODELS)
+    % Heatmap, ErrorHist, Scatter, and Pairwise Diurnal (IQR Corridors)
+    % =====================================================================
+    if numModels > 1
+        fprintf('\n====================================================================\n');
+        fprintf('   STEP 6: PAIRWISE COMPARISONS (Base Model vs Others)\n');
+        fprintf('====================================================================\n');
+        
+        base_sD    = summaryDataArray{1};
+        base_label = opts.models(1).label;
+        catNamesShort = {'C1 (Good)', 'C2 (E/Es)', 'C3 (Jagged)', 'C4 (Es Block)', 'C5 (Weak)', 'C6 (Missed)', 'TOTAL'};
+        
+        for m = 2:numModels
+            comp_sD    = summaryDataArray{m};
+            comp_label = opts.models(m).label;
+            fprintf('Processing Pairwise: %s vs %s...\n', base_label, comp_label);
+            
+            % --- 6.1 Heatmap (Quality Category Matrix) ---
+            cat_base = base_sD.qualityCategory;
+            cat_comp = comp_sD.qualityCategory;
+            
+            confMat = zeros(7, 7);
+            for i = 1:6
+                for j = 1:6
+                    confMat(i, j) = sum(cat_base == i & cat_comp == j);
+                end
+            end
+            confMat(7, 1:6) = sum(confMat(1:6, 1:6), 1);
+            confMat(1:6, 7) = sum(confMat(1:6, 1:6), 2);
+            confMat(7, 7)   = sum(confMat(7, 1:6));
+            
+            hFigHM = figure('Visible', 'off', 'Position', [100, 100, 1200, 1000], 'Color', 'w');
+            imagesc(confMat);
+            colormap('parula'); colorbar;
+            
+            max_val = max(confMat(:));
+            for i = 1:7
+                for j = 1:7
+                    val = confMat(i,j);
+                    txtColor = 'w';
+                    if val > max_val * 0.5, txtColor = 'k'; end
+                    if val == 0, txtColor = [0.8 0.8 0.8]; end % Grey out zeros for cleaner look
+                    text(j, i, num2str(val), 'HorizontalAlignment', 'center', ...
+                        'Color', txtColor, 'FontWeight', 'bold', 'FontSize', 12);
+                end
+            end
+            
+            xticks(1:7); yticks(1:7);
+            xticklabels(catNamesShort); yticklabels(catNamesShort);
+            xlabel(sprintf('Compared Model: %s', comp_label), 'FontSize', 14, 'FontWeight', 'bold', 'Interpreter', 'none');
+            ylabel(sprintf('Base Model: %s', base_label), 'FontSize', 14, 'FontWeight', 'bold', 'Interpreter', 'none');
+            title(sprintf('Quality Category Matrix: %s vs %s', base_label, comp_label), 'FontSize', 16, 'Interpreter', 'none');
+            
+            % Draw internal grid lines for the 7x7 matrix
+            hold on;
+            for k = 0.5:1:7.5
+                plot([0.5, 7.5], [k, k], 'k-', 'LineWidth', 0.5);
+                plot([k, k], [0.5, 7.5], 'k-', 'LineWidth', 0.5);
+            end
+            hold off;
+
+            outHM = fullfile(outBaseDir, sprintf('Heatmap_Cat_%s_vs_%s.png', base_label, comp_label));
+            exportgraphics(hFigHM, outHM, 'Resolution', 150);
+            close(hFigHM);
+            
+            % --- Prep Data for ErrorHist and Scatter ---
+            % We only compare physical values where both networks produced a Category 1 profile
+            validPair = (cat_base == 1) & (cat_comp == 1);
+            
+            % --- 6.2 ErrorHist (Histograms of Delta) ---
+            hFigEH = figure('Visible', 'off', 'Position', [100, 100, 1400, 1200], 'Color', 'w');
+            sgtitle(sprintf('Error Distribution: %s vs %s', base_label, comp_label), 'FontSize', 18, 'Interpreter', 'none');
+            
+            for pIdx = 1:size(paramsToPlot, 1)
+                pField = paramsToPlot{pIdx, 1};
+                pLabel = paramsToPlot{pIdx, 2};
+                % Extract unit string from label for clean display
+                unitStr = regexp(pLabel, '\((.*?)\)', 'tokens');
+                if ~isempty(unitStr), unitStr = ['[', unitStr{1}{1}, ']']; else, unitStr = ''; end
+                if contains(unitStr, 'POLAN'), unitStr = '[MHz]'; end
+                
+                b_val = base_sD.(pField)(validPair);
+                c_val = comp_sD.(pField)(validPair);
+                
+                valid_pts = isfinite(b_val) & isfinite(c_val);
+                delta = b_val(valid_pts) - c_val(valid_pts); % Delta = Base - Comp
+                
+                subplot(2, 2, pIdx);
+                if ~isempty(delta)
+                    histogram(delta, 100, 'FaceColor', [0.4 0.6 0.9], 'EdgeColor', 'none');
+                    hold on;
+                    xline(0, 'k-', 'LineWidth', 1.5);
+                    xline(mean(delta), 'r--', 'LineWidth', 2.0);
+                    hold off;
+                    title(sprintf('\\Delta %s (Bias=%+.2f, MAE=%.2f)', pField, mean(delta), mean(abs(delta))), 'FontSize', 14);
+                else
+                    title(sprintf('\\Delta %s (No Valid Data)', pField), 'FontSize', 14);
+                end
+                xlabel(sprintf('%s - %s %s', base_label, comp_label, unitStr), 'FontSize', 12, 'Interpreter', 'none');
+                ylabel('Count', 'FontSize', 12);
+                grid on;
+            end
+            outEH = fullfile(outBaseDir, sprintf('ErrorHist_%s_vs_%s.png', base_label, comp_label));
+            exportgraphics(hFigEH, outEH, 'Resolution', 150);
+            close(hFigEH);
+            
+            % --- 6.3 Scatter (Pearson Regression) ---
+            hFigScat = figure('Visible', 'off', 'Position', [100, 100, 1400, 1200], 'Color', 'w');
+            sgtitle(sprintf('Regression Analysis: %s vs %s', base_label, comp_label), 'FontSize', 18, 'Interpreter', 'none');
+            
+            for pIdx = 1:size(paramsToPlot, 1)
+                pField = paramsToPlot{pIdx, 1};
+                pLabel = paramsToPlot{pIdx, 2};
+                unitStr = regexp(pLabel, '\((.*?)\)', 'tokens');
+                if ~isempty(unitStr), unitStr = ['[', unitStr{1}{1}, ']']; else, unitStr = ''; end
+                if contains(unitStr, 'POLAN'), unitStr = '[MHz]'; end
+                
+                Y = base_sD.(pField)(validPair); % Base on Y-axis
+                X = comp_sD.(pField)(validPair); % Comp on X-axis
+                
+                valid_pts = isfinite(X) & isfinite(Y);
+                X = X(valid_pts); Y = Y(valid_pts);
+                
+                ax = subplot(2, 2, pIdx);
+                if ~isempty(X)
+                    scatter(X, Y, 4, [0.3 0.5 0.9], 'filled', 'MarkerFaceAlpha', 0.25);
+                    hold on;
+                    
+                    min_val = min([X; Y]); max_val = max([X; Y]);
+                    plot([min_val, max_val], [min_val, max_val], '--k', 'LineWidth', 1.5);
+                    
+                    p_fit = polyfit(X, Y, 1);
+                    x_fit = linspace(min_val, max_val, 100);
+                    plot(x_fit, polyval(p_fit, x_fit), '-r', 'LineWidth', 2.0);
+                    
+                    r_val = corr(X, Y);
+                    rmse_val = sqrt(mean((Y - X).^2));
+                    
+                    title(sprintf('%s (R=%.3f, RMSE=%.2f)', pField, r_val, rmse_val), 'FontSize', 14);
+                    xlim([min_val, max_val]); ylim([min_val, max_val]);
+                    axis equal;
+                else
+                    title(sprintf('%s (No Valid Data)', pField), 'FontSize', 14);
+                end
+                xlabel(sprintf('%s %s', comp_label, unitStr), 'FontSize', 12, 'Interpreter', 'none');
+                ylabel(sprintf('%s %s', base_label, unitStr), 'FontSize', 12, 'Interpreter', 'none');
+                grid on;
+            end
+            outScat = fullfile(outBaseDir, sprintf('Scatter_%s_vs_%s.png', base_label, comp_label));
+            exportgraphics(hFigScat, outScat, 'Resolution', 150);
+            close(hFigScat);
+
+            % --- 6.4 Pairwise Diurnal (IQR Corridors) ---
+            % We will generate this ONLY for Group 1 (Good F2 profiles) to keep pairwise comparisons clean.
+            for pIdx = 1:size(paramsToPlot, 1)
+                pField = paramsToPlot{pIdx, 1};
+                pLabel = paramsToPlot{pIdx, 2};
+                
+                plotData = cell(12, 2); % 2 models: Base and Comp
+                all_y_bounds = [];
+                
+                for mo = 1:12
+                    idx_m = (mVec == mo);
+                    for pairIdx = 1:2
+                        if pairIdx == 1, current_sD = base_sD; else, current_sD = comp_sD; end
+                        
+                        v_idx = idx_m & (current_sD.qualityCategory == 1);
+                        t_vals = utHours(v_idx);
+                        y_vals = current_sD.(pField)(v_idx);
+                        
+                        if isempty(t_vals), continue; end
+                        
+                        [~, bins] = histc(t_vals, t_edges);
+                        p25 = nan(1, length(t_centers));
+                        p50 = nan(1, length(t_centers));
+                        p75 = nan(1, length(t_centers));
+                        
+                        for b = 1:length(t_centers)
+                            y_b = y_vals(bins == b);
+                            if ~isempty(y_b)
+                                p25(b) = prctile(y_b, 25);
+                                p50(b) = median(y_b);
+                                p75(b) = prctile(y_b, 75);
+                            end
+                        end
+                        
+                        valid_b = ~isnan(p50);
+                        plotData{mo, pairIdx} = struct('tc', t_centers(valid_b), 'p25', p25(valid_b), ...
+                                                 'p50', p50(valid_b), 'p75', p75(valid_b), 'valid', valid_b);
+                                                 
+                        if any(valid_b)
+                            all_y_bounds = [all_y_bounds, p25(valid_b), p75(valid_b)]; %#ok<AGROW>
+                        end
+                    end
+                end
+                
+                if ~isempty(all_y_bounds)
+                    y_min_bound = prctile(all_y_bounds, 2);  
+                    y_max_bound = prctile(all_y_bounds, 98); 
+                    y_span = y_max_bound - y_min_bound;
+                    if y_span == 0, y_span = 1; end
+                    
+                    calc_min = y_min_bound - y_span * 0.10;
+                    calc_max = y_max_bound + y_span * 0.15;
+                    
+                    if strcmp(pField, 'hmF2') || strcmp(pField, 'SlabT')
+                        pYLim = [calc_min, calc_max];
+                    else
+                        pYLim = [max(0, calc_min), calc_max]; 
+                    end
+                else
+                    pYLim = [0, 1]; 
+                end
+
+                hFigPD = figure('Visible', 'off', 'Position', [50, 50, 2000, 1200], 'Color', 'w');
+                sgtitle(sprintf('Pairwise Diurnal %s: %s (Base) vs %s', pField, base_label, comp_label), ...
+                    'FontSize', 16, 'FontWeight', 'bold', 'Interpreter', 'none');
+
+                pairColors = [0.85 0.15 0.15; 0.15 0.35 0.85]; % Red for Base, Blue for Comp
+                pairLabels = {base_label, comp_label};
+                
+                for mo = 1:12
+                    ax = subplot(3, 4, mo, 'Parent', hFigPD);
+                    hold(ax, 'on'); grid(ax, 'on'); box(ax, 'on');
+                    title(ax, monthNames{mo}, 'Interpreter', 'none');
+                    
+                    for pairIdx = 1:2
+                        if isempty(plotData{mo, pairIdx}), continue; end
+                        pd = plotData{mo, pairIdx};
+                        if ~any(pd.valid), continue; end
+                        
+                        x_patch = [pd.tc, fliplr(pd.tc)];
+                        y_patch = [pd.p25, fliplr(pd.p75)];
+                        patch(ax, x_patch, y_patch, pairColors(pairIdx,:), 'FaceAlpha', 0.15, 'EdgeColor', 'none', 'HandleVisibility', 'off');
+                        plot(ax, pd.tc, pd.p50, 'Color', pairColors(pairIdx,:), 'LineWidth', 2.0, 'DisplayName', pairLabels{pairIdx});
+                    end
+                    
+                    xlim(ax, [0, 24]);
+                    xticks(ax, 0:2:24);
+                    ylim(ax, pYLim);
+                    if mo == 1 || mo == 5 || mo == 9, ylabel(ax, pLabel, 'Interpreter', 'tex'); end
+                    if mo > 8, xlabel(ax, 'Time (UT, hours)'); end
+                end
+                subplot(3,4,1); legend('Location', 'best', 'Interpreter', 'none');
+
+                outPD = fullfile(outBaseDir, sprintf('Diurnal_%s_%s_vs_%s.png', pField, base_label, comp_label));
+                exportgraphics(hFigPD, outPD, 'Resolution', 150);
+                close(hFigPD);
+            end
+        end
+    end
 
     fprintf('All plots saved successfully.\n');
 end
