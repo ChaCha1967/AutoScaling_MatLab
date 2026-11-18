@@ -12,8 +12,8 @@ outBaseDir = 'N:/cadi_proc/';
 sStation   = 'RB'; 
 
 % 2. Define target time range [YYYY, MM, DD, hh, mm, ss]
-startDT = [2013, 01, 01, 00, 00, 00];
-endDT   = [2013, 12, 31, 23, 55, 00];
+startDT = [2012, 01, 01, 00, 00, 00];
+endDT   = [2012, 12, 31, 23, 55, 00];
 
 % 3. Define neural network models to process
 % The first element must be the BASELINE model. 

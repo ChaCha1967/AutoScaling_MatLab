@@ -43,7 +43,7 @@ clear; clc; close all;
 
 outBaseDir = 'N:/cadi_proc/';
 sStation   = 'RB'; 
-targetYear = 2009;
+targetYear = 2012;
 
 opts = struct();
 % Set to FALSE to quickly redraw plots using existing summary files.
